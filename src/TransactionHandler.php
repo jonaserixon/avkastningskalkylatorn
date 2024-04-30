@@ -72,7 +72,7 @@ class TransactionHandler
                 case 'other':
                     $nextTransaction = $transactions[$index + 1];
 
-                    if ($transaction->bank === 'avanza' && $nextTransaction->bank === 'avanza') {
+                    if ($transaction->bank === 'AVANZA' && $nextTransaction->bank === 'AVANZA') {
                         $shareSplitQuantity = $this->lookForShareSplitsAvanza($transaction, $nextTransaction);
 
                         if ($shareSplitQuantity) {

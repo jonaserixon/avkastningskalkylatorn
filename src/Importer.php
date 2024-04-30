@@ -4,60 +4,55 @@ class Importer
 {
     public function parseBankTransactions()
     {
-        // TODO: gör den här mer dynamisk så att man slipper hårdkoda filnamnet
-        // $result = static::parseAvanzaTransactions(__DIR__ . '/../imports/avanza.csv');
-        $result = static::parseNordnetTransactions(__DIR__ . '/../imports/nordnet.csv');
-
+        $result = [];
 
         $files = glob(__DIR__ . '/../imports/*.csv');
-
-        $result = [];
         foreach($files as $filepath) {
             $bank = $this->determineBankByHeaders($filepath);
 
             switch ($bank) {
-                case 'AVANZA':
-                    $result = array_merge($result, static::parseAvanzaTransactions($filepath));
+                case Bank::AVANZA:
+                    $result = array_merge($result, static::parseAvanzaTransactions($filepath, $bank));
                     break;
-                case 'NORDNET':
-                    $result = array_merge($result, static::parseNordnetTransactions($filepath));
+                case Bank::NORDNET:
+                    $result = array_merge($result, static::parseNordnetTransactions($filepath, $bank));
                     break;
-                case 'UNKNOWN_BANK':
-                    throw new Exception('Unable to determine which bank in file: ' . basename($filepath));
             }
         }
 
         return $result;
     }
 
-    private function determineBankByHeaders(string $filePath): string
+    private function determineBankByHeaders(string $filePath): Bank
     {
+        // TODO: Förbättra hur man avgör vilken bank det är.
         if (($handle = fopen($filePath, "r")) !== false) {
-            // Första kollen
+            // semi-colon separerad
             if (($headers = fgetcsv($handle, 1000, ";")) !== false) {
                 if (count($headers) === 11) {
-                    return 'AVANZA';
+                    return Bank::AVANZA;
                 }
             }
-            
+
+            // tab separerad
             if (($headers = fgetcsv($handle, 1000, "\t")) !== false) {
                 if (count($headers) === 29) {
-                    return 'NORDNET';
+                    return Bank::NORDNET;
                 }
             }
 
             fclose($handle);
         }
-        
-        return 'UNKNOWN_BANK';
+
+        throw new Exception('Unable to determine which bank in file: ' . basename($filePath));
     }
 
     /**
      * @return Transaction[]
      */
-    private static function parseAvanzaTransactions(string $filename): array
+    private static function parseAvanzaTransactions(string $fileName, Bank $bank): array
     {
-        $file = fopen($filename, 'r');
+        $file = fopen($fileName, 'r');
 
         $result = [];
         while (($fields = fgetcsv($file, 0, ";")) !== false) {
@@ -67,18 +62,18 @@ class Importer
             }
 
             $transaction = new Transaction();
-            $transaction->bank = 'avanza';
-            $transaction->date = $fields[0];
-            $transaction->account = $fields[1];
-            $transaction->transactionType = $transactionType->value;
-            $transaction->name = $fields[3];
-            $transaction->quantity = abs((int) $fields[4]);
-            $transaction->rawQuantity = (int) $fields[4];
-            $transaction->price = abs(static::convertToFloat($fields[5]));
-            $transaction->amount = abs(static::convertToFloat($fields[6]));
-            $transaction->fee = static::convertToFloat($fields[7]);
-            $transaction->currency = $fields[8];
-            $transaction->isin = $fields[9];
+            $transaction->bank = $bank->value;
+            $transaction->date = $fields[0]; // Datum
+            $transaction->account = $fields[1]; // Konto
+            $transaction->transactionType = $transactionType->value; // Typ av transaktion
+            $transaction->name = $fields[3]; // Värdepapper/beskrivning
+            $transaction->quantity = abs((int) $fields[4]); // Antal
+            $transaction->rawQuantity = (int) $fields[4]; // Antal
+            $transaction->price = abs(static::convertToFloat($fields[5])); // Kurs
+            $transaction->amount = abs(static::convertToFloat($fields[6])); // Belopp
+            $transaction->fee = static::convertToFloat($fields[7]); // Courtage
+            $transaction->currency = $fields[8]; // Valuta
+            $transaction->isin = $fields[9]; // ISIN
 
             $result[] = $transaction;
         }
@@ -91,9 +86,9 @@ class Importer
     /**
      * @return Transaction[]
      */
-    private static function parseNordnetTransactions(string $filename): array
+    private static function parseNordnetTransactions(string $fileName, Bank $bank): array
     {
-        $file = fopen($filename, 'r');
+        $file = fopen($fileName, 'r');
 
         $result = [];
         while (($fields = fgetcsv($file, 0, "\t")) !== false) {
@@ -103,18 +98,18 @@ class Importer
             }
 
             $transaction = new Transaction();
-            $transaction->bank = 'nordnet';
+            $transaction->bank = $bank->value;
             $transaction->date = $fields[1]; // Affärsdag
-            $transaction->account = $fields[4];
-            $transaction->transactionType = $transactionType->value;
-            $transaction->name = $fields[6];
-            $transaction->quantity = abs((int) $fields[9]);
-            $transaction->rawQuantity = (int) $fields[9];
-            $transaction->price = abs(static::convertToFloat($fields[10]));
+            $transaction->account = $fields[4]; // Depå
+            $transaction->transactionType = $transactionType->value; // Transaktionstyp
+            $transaction->name = $fields[6]; // Värdepapper
+            $transaction->quantity = abs((int) $fields[9]); // Antal
+            $transaction->rawQuantity = (int) $fields[9]; // Antal
+            $transaction->price = abs(static::convertToFloat($fields[10])); // Kurs
             $transaction->amount = abs(static::convertToFloat($fields[14])); // Belopp
-            $transaction->fee = static::convertToFloat($fields[12]);
-            $transaction->currency = $fields[17];
-            $transaction->isin = $fields[8];
+            $transaction->fee = static::convertToFloat($fields[12]); // Total Avgift
+            $transaction->currency = $fields[17]; // Valuta
+            $transaction->isin = $fields[8]; // ISIN
 
             $result[] = $transaction;
         }

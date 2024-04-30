@@ -8,6 +8,11 @@ class Presenter
      */
     public function presentResult(array $summaries, array $currentSharePrices): void
     {
+        if (empty($summaries)) {
+            echo 'No transaction file in csv format in the imports directory.' . PHP_EOL;
+            return;
+        }
+
         usort($summaries, function($a, $b) {
             return strcmp($a->name, $b->name);
         });
@@ -35,15 +40,14 @@ class Presenter
         echo "Utdelningar: " . number_format($summary->dividendAmountTotal, 2) . " SEK\n";
         echo "Avgifter: " . number_format($summary->feeAmountTotal, 2) . " SEK\n";
 
-        // TODO: fixa det här.
-        // if ((-1 * abs($summary->buyAmountTotal)) + $summary->sellAmountTotal > 0) {
-        //     echo "Inköpsvärde: " . number_format((-1 * abs($summary->buyAmountTotal)) + $summary->sellAmountTotal, 2) . " SEK\n";
-        // }
-
-        if ($currentValueOfShares) {
-            echo "Nuvarande antal aktier: " . $summary->currentNumberOfShares . " st\n";
-            echo "Nuvarande pris per aktie: " . number_format($currentPricePerShare, 2) . " SEK\n";
-            echo "Nuvarande marknadsvärde för aktier: " . number_format($currentValueOfShares, 2) . " SEK\n";
+        if ($summary->currentNumberOfShares > 0) {
+            if ($currentValueOfShares) {
+                echo "Nuvarande antal aktier: " . $summary->currentNumberOfShares . " st\n";
+                echo "Nuvarande pris per aktie: " . number_format($currentPricePerShare, 2) . " SEK\n";
+                echo "Nuvarande marknadsvärde för aktier: " . number_format($currentValueOfShares, 2) . " SEK\n";
+            } else {
+                echo "* Lägg in aktiens nuvarande pris för att se nuvarande marknadsvärde.\n";
+            }
         }
 
         echo "Total vinst/förlust: " . number_format($totalProfit, 2) . " SEK\n";

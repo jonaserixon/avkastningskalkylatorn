@@ -1,6 +1,7 @@
 <?php
 
-enum TransactionType: string {
+enum TransactionType: string
+{
     case BUY = 'buy';
     case SELL = 'sell';
     case DIVIDEND = 'dividend';

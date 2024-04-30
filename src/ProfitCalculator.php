@@ -3,6 +3,7 @@
 require_once 'DataStructure/Transaction.php';
 require_once 'DataStructure/TransactionSummary.php';
 require_once 'Enum/TransactionType.php';
+require_once 'Enum/Bank.php';
 require_once 'Presenter.php';
 require_once 'Importer.php';
 require_once 'TransactionHandler.php';
