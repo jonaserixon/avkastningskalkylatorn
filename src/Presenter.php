@@ -8,6 +8,10 @@ class Presenter
      */
     public function presentResult(array $summaries, array $currentSharePrices): void
     {
+        usort($summaries, function($a, $b) {
+            return strcmp($a->name, $b->name);
+        });
+
         echo '**********************************' . PHP_EOL;
         foreach ($summaries as $summary) {
             $currentPricePerShare = $currentSharePrices[$summary->name] ?? null;
@@ -30,6 +34,10 @@ class Presenter
         echo "Säljbelopp: " . number_format($summary->sellAmountTotal, 2) . " SEK\n";
         echo "Utdelningar: " . number_format($summary->dividendAmountTotal, 2) . " SEK\n";
         echo "Avgifter: " . number_format($summary->feeAmountTotal, 2) . " SEK\n";
+
+        if ($summary->buyAmountTotal - $summary->sellAmountTotal > 0) {
+            echo "Inköpsvärde: " . number_format($summary->buyAmountTotal - $summary->sellAmountTotal, 2) . " SEK\n";
+        }
 
         if ($currentValueOfShares) {
             echo "Nuvarande antal aktier: " . $summary->currentNumberOfShares . " st\n";

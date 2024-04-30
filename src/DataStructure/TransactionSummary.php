@@ -8,4 +8,5 @@ class TransactionSummary
     public float $dividendAmountTotal = 0;
     public float $feeAmountTotal = 0;
     public int $currentNumberOfShares = 0;
+    // TODO: lägg till antal köp/sälj/utdelningar
 }

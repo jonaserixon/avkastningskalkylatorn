@@ -20,9 +20,18 @@ class TransactionHandler
     {
         // TODO: förbättra hanteringen av transaktioner som inte ska räknas med här.
         $blackListedTransactionNames = [
-            'överföring mellan egna konton',
             'utdelning',
             'källskatt',
+            'avkastningsskatt',
+            'riskpremie',
+            'uttag',
+            'nollställning',
+            'överföring',
+            'direktinsättning',
+            'avgift',
+            'fraktionslikvid',
+            'preliminär skatt',
+            'ränta',
         ];
 
         $groupedTransactions = [];
@@ -33,12 +42,11 @@ class TransactionHandler
                 continue;
             }
 
-            if (in_array(strtolower($transaction->name), $blackListedTransactionNames)) {
+            if (in_array(mb_strtolower($transaction->name), $blackListedTransactionNames) || empty($transaction->name)) {
                 continue;
             }
             foreach ($blackListedTransactionNames as $blackListedTransactionName) {
-                if (str_contains(strtolower($transaction->name), $blackListedTransactionName)) {
-                    print_r($transaction->name);
+                if (str_contains(mb_strtolower($transaction->name), $blackListedTransactionName)) {
                     continue 2;
                 }
             }
@@ -130,7 +138,7 @@ class TransactionHandler
         
         if (
             ($currentTransaction->transactionType === 'Övrigt' && $nextTransaction->transactionType === 'Övrigt') &&
-            (empty($currentTransaction->price) && empty($nextTransaction->price))
+            (empty($currentTransaction->amount) && empty($nextTransaction->amount))
         ) {
             if ($currentTransaction->quantity > $nextTransaction->quantity) {
                 return $currentTransaction->quantity - $nextTransaction->quantity;

@@ -13,6 +13,7 @@ try {
     $transactionHandler = new TransactionHandler();
     $summaries = $transactionHandler->getTransactionOverview($bankTransactions);
 
+    // Konverterat till SEK.
     $currentSharePrices = [
         'Evolution' => 1224.50,
         'Fast. Balder B' => 69.46,
