@@ -5,7 +5,7 @@ class Transaction
     public string $date;
     public string $account;
     public string $transactionType;
-    public string $companyName;
+    public string $name;
     public int $quantity;
     public int $rawQuantity;
     public float $price;
