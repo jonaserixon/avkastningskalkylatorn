@@ -5,7 +5,7 @@ class TransactionHandler
     /**
      * @param Transaction[] $transactions
      */
-    public function getTransactionOverview(array $transactions)
+    public function getTransactionsOverview(array $transactions)
     {
         $groupedTransactions = $this->groupTransactions($transactions);
         $summaries = $this->summarizeTransactions($groupedTransactions);
@@ -60,25 +60,29 @@ class TransactionHandler
                 ];
             }
             switch ($transaction->transactionType) {
-                case 'Köp':
+                case 'buy':
                     $groupedTransactions[$transaction->name]['buy'][] = $transaction;
                     break;
-                case 'Sälj':
+                case 'sell':
                     $groupedTransactions[$transaction->name]['sell'][] = $transaction;
                     break;
-                case 'Utdelning':
+                case 'dividend':
                     $groupedTransactions[$transaction->name]['dividend'][] = $transaction;
                     break;
-                case 'Övrigt':
+                case 'other':
                     $nextTransaction = $transactions[$index + 1];
-                    $shareSplitQuantity = $this->lookForShareSplits($transaction, $nextTransaction);
 
-                    if ($shareSplitQuantity) {
-                        $transaction->quantity = $shareSplitQuantity;
-                        $groupedTransactions[$transaction->name]['shareSplit'][] = $transaction;
-                        // $groupedTransactions[$transaction->name]['shareSplit'][] = $nextTransaction;
-                        $indexToSkip = $index + 1;
+                    if ($transaction->bank === 'avanza' && $nextTransaction->bank === 'avanza') {
+                        $shareSplitQuantity = $this->lookForShareSplitsAvanza($transaction, $nextTransaction);
+
+                        if ($shareSplitQuantity) {
+                            $transaction->quantity = $shareSplitQuantity;
+                            $groupedTransactions[$transaction->name]['shareSplit'][] = $transaction;
+                            // $groupedTransactions[$transaction->name]['shareSplit'][] = $nextTransaction;
+                            $indexToSkip = $index + 1;
+                        }
                     }
+                    
                     break;
             }
         }
@@ -130,14 +134,14 @@ class TransactionHandler
         return $summaries;
     }
 
-    private function lookForShareSplits(Transaction $currentTransaction, Transaction $nextTransaction): ?int
+    private function lookForShareSplitsAvanza(Transaction $currentTransaction, Transaction $nextTransaction): ?int
     {
         if ($currentTransaction->name !== $nextTransaction->name) {
             return null;
         }
         
         if (
-            ($currentTransaction->transactionType === 'Övrigt' && $nextTransaction->transactionType === 'Övrigt') &&
+            ($currentTransaction->transactionType === 'other' && $nextTransaction->transactionType === 'other') &&
             (empty($currentTransaction->amount) && empty($nextTransaction->amount))
         ) {
             if ($currentTransaction->quantity > $nextTransaction->quantity) {

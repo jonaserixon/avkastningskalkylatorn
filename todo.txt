@@ -1,0 +1,5 @@
+1. Hantera värdepappersflytt
+2. Beräkna inköpsvärde
+3. Hantera fler typer av avgifter (t.ex. ADR)
+4. Hantera valutaväxlingsavgift
+

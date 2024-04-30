@@ -2,6 +2,7 @@
 
 require_once 'DataStructure/Transaction.php';
 require_once 'DataStructure/TransactionSummary.php';
+require_once 'Enum/TransactionType.php';
 require_once 'Presenter.php';
 require_once 'Importer.php';
 require_once 'TransactionHandler.php';
@@ -11,7 +12,7 @@ try {
     $bankTransactions = $importer->parseBankTransactions();
 
     $transactionHandler = new TransactionHandler();
-    $summaries = $transactionHandler->getTransactionOverview($bankTransactions);
+    $summaries = $transactionHandler->getTransactionsOverview($bankTransactions);
 
     // Konverterat till SEK.
     $currentSharePrices = [

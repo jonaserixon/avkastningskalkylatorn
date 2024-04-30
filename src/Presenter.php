@@ -4,7 +4,7 @@ class Presenter
 {
     /**
      * @param TransactionSummary[] $summaries
-     * @param float[] $currentSharePrices
+     * @param array $currentSharePrices
      */
     public function presentResult(array $summaries, array $currentSharePrices): void
     {
@@ -35,9 +35,10 @@ class Presenter
         echo "Utdelningar: " . number_format($summary->dividendAmountTotal, 2) . " SEK\n";
         echo "Avgifter: " . number_format($summary->feeAmountTotal, 2) . " SEK\n";
 
-        if ($summary->buyAmountTotal - $summary->sellAmountTotal > 0) {
-            echo "Inköpsvärde: " . number_format($summary->buyAmountTotal - $summary->sellAmountTotal, 2) . " SEK\n";
-        }
+        // TODO: fixa det här.
+        // if ((-1 * abs($summary->buyAmountTotal)) + $summary->sellAmountTotal > 0) {
+        //     echo "Inköpsvärde: " . number_format((-1 * abs($summary->buyAmountTotal)) + $summary->sellAmountTotal, 2) . " SEK\n";
+        // }
 
         if ($currentValueOfShares) {
             echo "Nuvarande antal aktier: " . $summary->currentNumberOfShares . " st\n";

@@ -3,6 +3,7 @@
 class Transaction
 {
     public string $date;
+    public string $bank;
     public string $account;
     public string $transactionType;
     public string $name;
@@ -12,4 +13,5 @@ class Transaction
     public float $amount;
     public float $fee;
     public string $currency;
+    public string $isin;
 }
