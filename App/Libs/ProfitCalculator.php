@@ -3,10 +3,8 @@
 namespace App\Libs;
 
 use App\DataStructure\TransactionSummary;
-use App\Libs\Exporter;
-use App\Libs\Importer;
-use App\Libs\Presenter;
-use App\Libs\TransactionHandler;
+use App\Libs\FileManager\Exporter;
+use App\Libs\FileManager\Importer;
 use stdClass;
 
 class ProfitCalculator
@@ -21,31 +19,38 @@ class ProfitCalculator
         'US7181721090' => 1072.5336 // PM
     ];
 
+    private bool $generateCsv;
+    private Presenter $presenter;
+
+    public function __construct(bool $generateCsv = false)
+    {
+        $this->generateCsv = $generateCsv;
+        $this->presenter = new Presenter();
+    }
+
+
     public function init()
     {
-        $generateCsv = getenv('GENERATE_CSV') === 'yes' ? true : false;
-
-        $presenter = new Presenter();
-
         $importer = new Importer();
+
         $bankTransactions = $importer->parseBankTransactions();
     
-        $transactionHandler = new TransactionHandler($presenter);
+        $transactionHandler = new TransactionHandler($this->presenter);
         $summaries = $transactionHandler->getTransactionsOverview($bankTransactions);
 
-        if ($generateCsv) {
+        if ($this->generateCsv) {
             Exporter::generateCsvExport($summaries, static::CURRENT_SHARE_PRICES);
         }
 
-        $this->presentResult($presenter, $summaries, static::CURRENT_SHARE_PRICES);
+        $this->presentResult($summaries, static::CURRENT_SHARE_PRICES);
     }
 
     /**
      * @param TransactionSummary[] $summaries
      */
-    protected function presentResult(Presenter $presenter, array $summaries, array $currentSharePrices): void
+    protected function presentResult(array $summaries, array $currentSharePrices): void
     {
-        echo $presenter->createSeparator('-') . PHP_EOL;
+        echo $this->presenter->createSeparator('-') . PHP_EOL;
 
         $currentHoldingsMissingPricePerShare = [];
         foreach ($summaries as $summary) {
@@ -57,14 +62,14 @@ class ProfitCalculator
             }
 
             $calculatedReturns = $this->calculateReturns($summary, $currentValueOfShares);
-            $presenter->displayFormattedSummary($summary, $currentPricePerShare, $currentValueOfShares, $currentHoldingsMissingPricePerShare, $calculatedReturns);
+            $this->presenter->displayFormattedSummary($summary, $currentPricePerShare, $currentValueOfShares, $currentHoldingsMissingPricePerShare, $calculatedReturns);
         }
 
-        echo PHP_EOL . $presenter->createSeparator('*') . PHP_EOL;
+        echo PHP_EOL . $this->presenter->createSeparator('*') . PHP_EOL;
         echo PHP_EOL;
 
         foreach ($currentHoldingsMissingPricePerShare as $companyMissingPrice) {
-            echo $presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
+            echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
 
         echo PHP_EOL;

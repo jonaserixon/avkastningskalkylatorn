@@ -1,7 +1,7 @@
 <?php
 
 spl_autoload_register(function ($className) {
-    $baseDir = __DIR__ . '/../';  // Går upp en nivå från nuvarande mapp
+    $baseDir = __DIR__ . '/../';
 
     $className = str_replace("\\", DIRECTORY_SEPARATOR, $className);
     

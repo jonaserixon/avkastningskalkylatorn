@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Libs;
+namespace App\Libs\FileManager;
 
 use App\DataStructure\Transaction;
 use App\Enum\Bank;
@@ -13,16 +13,16 @@ class Importer
     {
         $result = [];
 
-        if (!file_exists(__DIR__ . '/../../imports/avanza')) {
-            mkdir(__DIR__ . '/../../imports/avanza', 0777, true);
+        if (!file_exists(IMPORT_DIR . '/avanza')) {
+            mkdir(IMPORT_DIR . '/avanza', 0777, true);
         }
-        if (!file_exists(__DIR__ . '/../../imports/nordnet')) {
-            mkdir(__DIR__ . '/../../imports/nordnet', 0777, true);
+        if (!file_exists(IMPORT_DIR . '/nordnet')) {
+            mkdir(IMPORT_DIR . '/nordnet', 0777, true);
         }
 
         $bankImports = [
-            'avanza' => glob(__DIR__ . '/../../imports/avanza/*.csv'),
-            'nordnet' => glob(__DIR__ . '/../../imports/nordnet/*.csv')
+            'avanza' => glob(IMPORT_DIR . '/avanza/*.csv'),
+            'nordnet' => glob(IMPORT_DIR . '/nordnet/*.csv')
         ];
 
         foreach($bankImports as $bank => $files) {

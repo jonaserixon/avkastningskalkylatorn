@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Libs;
+namespace App\Libs\FileManager;
 
 class Exporter
 {
