@@ -13,9 +13,8 @@ jobs:
         with:
           php-version: '8.2'
           ini-values: xdebug.mode=off
-          extensions: soap, memcache, dom, mysqli, uuid, xml # https://github.com/shivammathur/setup-php/wiki/Add-extension-from-source#add-extension-from-github
           tools: phan
           coverage: none
 
       - name: Run Phan (Severity 0) - No blocking
-        run: phan --color --config-file .phan/config.php --long-progress-bar --minimum-severity=0
+        run: phan --color --config-file ./.phan/config.php --long-progress-bar --minimum-severity=0
