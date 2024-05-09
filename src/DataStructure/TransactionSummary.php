@@ -11,11 +11,4 @@ class TransactionSummary
     public float $feeSellAmountTotal = 0;
     public float $feeBuyAmountTotal = 0;
     public int $currentNumberOfShares = 0;
-    public float $purchaseValue = 0;
-
-    // TODO: lägg till antal köp/sälj/utdelningar
-
-    public function updatePurchaseValue() {
-        $this->purchaseValue = $this->buyAmountTotal - $this->sellAmountTotal; // - $this->feeAmountTotal;
-    }
 }

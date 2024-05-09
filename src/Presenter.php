@@ -33,20 +33,20 @@ class Presenter
         }
 
         echo "\n------ ". $summary->name ." (".$summary->isin.") ------\n";
-        echo "Köpbelopp: \t\t\t\t" . number_format($summary->buyAmountTotal, 2) . " SEK\n";
-        echo "Säljbelopp: \t\t\t" . number_format($summary->sellAmountTotal, 2) . " SEK\n";
-        echo "Utdelningar: \t\t\t" . number_format($summary->dividendAmountTotal, 2) . " SEK\n";
+        echo "Köpbelopp: \t\t\t\t" . number_format($summary->buyAmountTotal, 2, '.', ' ') . " SEK\n";
+        echo "Säljbelopp: \t\t\t" . number_format($summary->sellAmountTotal, 2, '.', ' ') . " SEK\n";
+        echo "Utdelningar: \t\t\t" . $this->colorPicker($summary->dividendAmountTotal) . " SEK\n";
         echo "\n";
-        echo "Tot. avgifter: \t\t\t" . number_format($summary->feeAmountTotal, 2) . " SEK\n";
-        echo "Köpavgifter: \t\t\t" . number_format($summary->feeBuyAmountTotal, 2) . " SEK\n";
-        echo "Säljavgifter: \t\t\t" . number_format($summary->feeSellAmountTotal, 2) . " SEK\n";
+        echo "Tot. avgifter: \t\t\t" . $this->colorPicker($summary->feeAmountTotal) . " SEK\n";
+        echo "Köpavgifter: \t\t\t" . $this->colorPicker($summary->feeBuyAmountTotal) . " SEK\n";
+        echo "Säljavgifter: \t\t\t" . $this->colorPicker($summary->feeSellAmountTotal) . " SEK\n";
         echo "\n";
 
         if ($summary->currentNumberOfShares > 0) {
             if ($currentValueOfShares) {
                 echo "Nuvarande antal aktier: \t\t" . $summary->currentNumberOfShares . " st\n";
-                echo "Nuvarande pris per aktie: \t\t" . number_format($currentPricePerShare, 2) . " SEK\n";
-                echo "Nuvarande marknadsvärde för aktier: " . number_format($currentValueOfShares, 2) . " SEK\n";
+                echo "Nuvarande pris/aktie: \t\t" . number_format($currentPricePerShare, 2, '.', ' ') . " SEK\n";
+                echo "Nuvarande markn.värde av aktier: \t" . number_format($currentValueOfShares, 2, '.', ' ') . " SEK \n";
             } else {
                 echo "** Lägg in aktiens nuvarande pris för att beräkna avkastning etc. **.\n";
             }
@@ -56,14 +56,30 @@ class Presenter
 
         $returns = $this->calculateReturns($summary, $currentValueOfShares);
 
-        echo "Tot. avkastning: \t\t\t" . number_format($returns->totalReturnExclFees, 2) . " SEK\n";
-        echo "Tot. avkastning: \t\t\t" . $returns->totalReturnExclFeesPercent . "%\n";
+        echo "Tot. avkastning: \t\t\t" . $this->colorPicker($returns->totalReturnExclFees) . " SEK\n";
+        echo "Tot. avkastning: \t\t\t" . $this->colorPicker($returns->totalReturnExclFeesPercent) . " %\n";
+   
+        echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($returns->totalReturnInclFees) . " SEK\n";
+        echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($returns->totalReturnInclFeesPercent) . " %\n";
+        
 
-        echo "Tot. avkastning (m. avgifter): \t" . number_format($returns->totalReturnInclFees, 2) . " SEK\n";
-        echo "Tot. avkastning (m. avgifter): \t" . $returns->totalReturnInclFeesPercent . "%\n";
         echo "\n";
-
         echo "----------------------------------------\n";
+    }
+
+    private function colorPicker(float $value): string
+    {
+        return $value > 0 ? $this->greenText(number_format($value, 2, '.', ' ')) : $this->redText(number_format($value, 2, '.', ' '));
+    }
+
+    private function greenText(string $text): string
+    {
+        return "\033[32m" . $text . "\033[0m";
+    }
+    
+    private function redText(string $text): string
+    {
+        return "\033[31m" . $text . "\033[0m";
     }
 
     private function calculateReturns(TransactionSummary $summary, ?float $currentValueOfShares): stdClass

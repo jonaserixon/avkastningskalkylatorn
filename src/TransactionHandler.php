@@ -141,10 +141,6 @@ class TransactionHandler
                         throw new Exception('Unknown transaction type: ' . $transactionType);
                     }
 
-                    if ($summary->currentNumberOfShares > 0) {
-                        $summary->updatePurchaseValue();
-                    }
-
                     // TODO: Förbättra det här fulhacket...
                     if (!in_array($transaction->name, $names)) {
                         $names[] = $transaction->name;

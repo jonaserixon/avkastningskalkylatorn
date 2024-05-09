@@ -67,9 +67,22 @@ class Importer
     {
         $file = fopen($fileName, 'r');
 
-        $result = [];
+        $sortedFields = [];
         while (($fields = fgetcsv($file, 0, ";")) !== false) {
+            $sortedFields[] = $fields;
+        }
+
+        usort($sortedFields, function($a, $b) {
+            $dateA = strtotime($a[0]);  // Antag att datumet är i första kolumnen
+            $dateB = strtotime($b[0]);
+            return $dateA <=> $dateB;
+        });
+
+        $result = [];
+        // while (($fields = fgetcsv($file, 0, ";")) !== false) {
+        foreach ($sortedFields as $fields) {
             $transactionType = static::mapToTransactionType($fields[2]);
+
             if (!$transactionType) {
                 continue;
             }
