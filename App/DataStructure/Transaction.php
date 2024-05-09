@@ -1,5 +1,7 @@
 <?php
 
+namespace App\DataStructure;
+
 class Transaction
 {
     public string $date;

@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Libs;
+
 class Exporter
 {
     public static function generateCsvExport(array $summaries, array $currentSharePrices): void

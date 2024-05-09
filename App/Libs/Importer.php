@@ -1,21 +1,28 @@
 <?php
 
+namespace App\Libs;
+
+use App\DataStructure\Transaction;
+use App\Enum\Bank;
+use App\Enum\TransactionType;
+use Exception;
+
 class Importer
 {
     public function parseBankTransactions(): array
     {
         $result = [];
 
-        if (!file_exists('/../imports/avanza')) {
-            mkdir('/../imports/avanza', 0777, true);
+        if (!file_exists(__DIR__ . '/../../imports/avanza')) {
+            mkdir(__DIR__ . '/../../imports/avanza', 0777, true);
         }
-        if (!file_exists('/../imports/nordnet')) {
-            mkdir('/../imports/nordnet', 0777, true);
+        if (!file_exists(__DIR__ . '/../../imports/nordnet')) {
+            mkdir(__DIR__ . '/../../imports/nordnet', 0777, true);
         }
 
         $bankImports = [
-            'avanza' => glob(__DIR__ . '/../imports/avanza/*.csv'),
-            'nordnet' => glob(__DIR__ . '/../imports/nordnet/*.csv')
+            'avanza' => glob(__DIR__ . '/../../imports/avanza/*.csv'),
+            'nordnet' => glob(__DIR__ . '/../../imports/nordnet/*.csv')
         ];
 
         foreach($bankImports as $bank => $files) {

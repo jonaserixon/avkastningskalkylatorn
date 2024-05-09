@@ -1,14 +1,22 @@
 <?php
-declare(strict_types=1);
 
-require_once 'DataStructure/Transaction.php';
-require_once 'DataStructure/TransactionSummary.php';
-require_once 'Enum/TransactionType.php';
-require_once 'Enum/Bank.php';
-require_once 'Presenter.php';
-require_once 'Importer.php';
-require_once 'Exporter.php';
-require_once 'TransactionHandler.php';
+namespace App\Libs;
+
+// require_once 'DataStructure/Transaction.php';
+// require_once 'DataStructure/TransactionSummary.php';
+// require_once 'Enum/TransactionType.php';
+// require_once 'Enum/Bank.php';
+// require_once 'Presenter.php';
+// require_once 'Importer.php';
+// require_once 'Exporter.php';
+// require_once 'TransactionHandler.php';
+
+use App\DataStructure\TransactionSummary;
+use App\Libs\Exporter;
+use App\Libs\Importer;
+use App\Libs\Presenter;
+use App\Libs\TransactionHandler;
+use stdClass;
 
 class ProfitCalculator
 {
@@ -103,8 +111,8 @@ class ProfitCalculator
     }
 }
 
-try {
-    (new ProfitCalculator())->init();
-} catch (Exception $e) {
-    echo 'Error: ' . $e->getMessage();
-}
+// try {
+//     (new ProfitCalculator())->init();
+// } catch (Exception $e) {
+//     echo 'Error: ' . $e->getMessage();
+// }

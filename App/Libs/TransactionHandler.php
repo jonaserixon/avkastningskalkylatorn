@@ -1,5 +1,12 @@
 <?php
 
+namespace App\Libs;
+
+use App\DataStructure\Transaction;
+use App\DataStructure\TransactionSummary;
+use App\Enum\TransactionType;
+use Exception;
+
 class TransactionHandler
 {
     private Presenter $presenter;

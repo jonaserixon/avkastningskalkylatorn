@@ -1,5 +1,10 @@
 <?php
 
+namespace App\Libs;
+
+use App\DataStructure\TransactionSummary;
+use stdClass;
+
 class Presenter
 {
     public const HYPHEN_LINE_SEPARATOR = '----------------------------------------';

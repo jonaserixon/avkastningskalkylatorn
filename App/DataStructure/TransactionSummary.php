@@ -1,5 +1,7 @@
 <?php
 
+namespace App\DataStructure;
+
 class TransactionSummary
 {
     public string $name;

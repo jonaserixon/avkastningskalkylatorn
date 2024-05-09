@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Enum;
+
 enum Bank: string
 {
     case AVANZA = 'AVANZA';
