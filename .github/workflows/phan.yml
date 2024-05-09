@@ -19,5 +19,5 @@ jobs:
           tools: phan
           coverage: none
 
-      - name: Run Phan (Severity 0) - No blocking
+      - name: Run Phan (Severity 0)
         run: phan --color --config-file .phan/config.php --long-progress-bar --minimum-severity=0

@@ -29,7 +29,7 @@ $config = [
     // Thus, both first-party and third-party code being used by
     // your application should be included in this list.
     'directory_list' => [
-        'src'
+        'App'
     ],
 
     // If we add stubs here we also need to include the stubs directory under 'directory_list' above.
