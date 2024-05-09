@@ -29,7 +29,7 @@ $config = [
     // Thus, both first-party and third-party code being used by
     // your application should be included in this list.
     'directory_list' => [
-        'App'
+
     ],
 
     // If we add stubs here we also need to include the stubs directory under 'directory_list' above.
@@ -185,5 +185,46 @@ $config = [
     // type to be cast to null.
     'null_casts_as_any_type' => true, // TODO: set as 'false' if we want stricter checks
 ];
+
+function getDirectoriesWithPhpFiles($rootDir, &$subdirs = [], $baseDir = '')
+{
+    $currentDir = $rootDir . '' . $baseDir;
+
+    if (!is_dir($currentDir)) {
+        return;
+    }
+
+    $contents = scandir($currentDir);
+    $hasPhpFile = false;
+
+    foreach ($contents as $item) {
+        if ($item !== '.' && $item !== '..') {
+            $itemPath = $currentDir . '/' . $item;
+            if (is_dir($itemPath)) {
+                getDirectoriesWithPhpFiles($rootDir, $subdirs, $baseDir . '/' . $item);
+            } elseif (pathinfo($itemPath, PATHINFO_EXTENSION) === 'php') {
+                $hasPhpFile = true;
+            }
+        }
+    }
+
+    if ($hasPhpFile && !in_array($currentDir, $subdirs)) {
+        $subdirs[] = $currentDir;
+    }
+}
+
+$directories = [
+    'App' => ['exclude_analysis' => false],
+];
+
+foreach ($directories as $dirPath => $dirConfig) {
+    $directoriesWithPhpFiles = [];
+    getDirectoriesWithPhpFiles($dirPath, $directoriesWithPhpFiles);
+    $config['directory_list'] = array_merge($config['directory_list'], $directoriesWithPhpFiles);
+
+    if ($dirConfig['exclude_analysis']) {
+        $config['exclude_analysis_directory_list'] = array_merge($config['exclude_analysis_directory_list'], $directoriesWithPhpFiles);
+    }
+}
 
 return $config;
