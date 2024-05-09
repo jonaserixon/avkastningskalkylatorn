@@ -2,6 +2,8 @@
 
 namespace App\Libs\FileManager;
 
+use App\Libs\ProfitCalculator;
+
 class Exporter
 {
     public static function generateCsvExport(array $summaries, array $currentSharePrices): void

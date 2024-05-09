@@ -33,8 +33,8 @@ class Presenter
 
         echo PHP_EOL;
 
-        if ($summary->currentNumberOfShares > 0) {
-            echo "Nuvarande antal aktier: \t\t\t" . $summary->currentNumberOfShares . " st" . PHP_EOL;
+        if ((int) $summary->currentNumberOfShares > 0) {
+            echo "Nuvarande antal aktier: \t\t\t" . number_format($summary->currentNumberOfShares, 2, '.', ' ') . " st" . PHP_EOL;
 
             if ($currentValueOfShares) {
                 echo "Nuvarande pris/aktie: \t\t\t" . number_format($currentPricePerShare, 2, '.', ' ') . " SEK" . PHP_EOL;
