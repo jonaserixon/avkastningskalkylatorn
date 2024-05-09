@@ -72,14 +72,12 @@ class Importer
             $sortedFields[] = $fields;
         }
 
+        // Vi måste sortera på datum här så att vi enkelt kan hitta eventuella aktiesplittar.
         usort($sortedFields, function($a, $b) {
-            $dateA = strtotime($a[0]);  // Antag att datumet är i första kolumnen
-            $dateB = strtotime($b[0]);
-            return $dateA <=> $dateB;
+            return strtotime($a[0]) <=> strtotime($b[0]);
         });
 
         $result = [];
-        // while (($fields = fgetcsv($file, 0, ";")) !== false) {
         foreach ($sortedFields as $fields) {
             $transactionType = static::mapToTransactionType($fields[2]);
 

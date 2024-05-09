@@ -1,6 +1,3 @@
 1. Hantera värdepappersflytt
-2. Beräkna inköpsvärde
-3. Hantera fler typer av avgifter (t.ex. ADR)
-4. Hantera valutaväxlingsavgift
-5. Hantera samma bolagsnamn men olika ISIN koder
-
+2. Hantera fler typer av avgifter (t.ex. ADR)
+3. Hantera valutaväxlingsavgift (kan bli svår om vi saknar valutan (avanza), en lösning är att göra en ungefärlig beräkning baserat på värdepapprets ISIN-kod)
