@@ -8,6 +8,8 @@ require_once 'Presenter.php';
 require_once 'Importer.php';
 require_once 'TransactionHandler.php';
 
+$generateCsv = getenv('GENERATE_CSV') === 'yes' ? true : false;
+
 try {
     $importer = new Importer();
     $bankTransactions = $importer->parseBankTransactions();
@@ -17,18 +19,53 @@ try {
 
     // Konverterat till SEK.
     $currentSharePrices = [
-        // 'Evolution' => 1235,
-        // 'Fast. Balder B' => 70.34,
-        // 'British American Tobacco ADR' => 329.0456,
-        // 'Diageo ADR' => 1537.3281,
-        // 'Philip Morris' => 1071.9075,
-        // 'Energy Fuels' => 63.4962,
-        // 'Uranium Royalty' => 27.3841,
-        'SE0020050417' => 321.50, // Boliden
+        'SE0020050417' => 356.50, // Boliden
     ];
+
+    if ($generateCsv) {
+        generateCsvExport($summaries, $currentSharePrices);
+    }
 
     $presenter = new Presenter();
     $presenter->presentResult($summaries, $currentSharePrices);
 } catch (Exception $e) {
     echo 'Error: ' . $e->getMessage();
+}
+
+function generateCsvExport(array $summaries, array $currentSharePrices): void
+{
+    usort($summaries, function($a, $b) {
+        return strcmp($a->name, $b->name);
+    });
+
+    $filePath = "/exports/export_".date('Y-m-d_His').".csv";
+    $csvHeaders = ['date', 'name', 'isin', 'buyAmountTotal', 'sellAmountTotal', 'dividendAmountTotal', 'feeAmountTotal', 'currentNumberOfShares', 'currentPricePerShare', 'currentValueOfShares', 'totalProfit'];
+    $f = fopen($filePath, "w");
+    fputcsv($f, $csvHeaders, ',');
+
+    foreach ($summaries as $summary) {
+        $currentPricePerShare = $currentSharePrices[$summary->isin] ?? null;
+        $currentValueOfShares = null;
+        if ($currentPricePerShare) {
+            $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
+        }
+
+        $totalProfit = ($summary->sellAmountTotal + $summary->dividendAmountTotal + $currentValueOfShares) - ($summary->buyAmountTotal + $summary->feeAmountTotal);
+
+        $row = [
+            'date' => date('Y-m-d'),
+            'name' => $summary->name,
+            'isin' => $summary->isin,
+            'buyAmountTotal' => $summary->buyAmountTotal,
+            'sellAmountTotal' => $summary->sellAmountTotal,
+            'dividendAmountTotal' => $summary->dividendAmountTotal,
+            'feeAmountTotal' => $summary->feeAmountTotal,
+            'currentNumberOfShares' => $summary->currentNumberOfShares,
+            'currentPricePerShare' => $currentPricePerShare,
+            'currentValueOfShares' => $currentValueOfShares,
+            'totalProfit' => $totalProfit,
+        ];
+
+        fputcsv($f, array_values($row), ',');
+    }
 }

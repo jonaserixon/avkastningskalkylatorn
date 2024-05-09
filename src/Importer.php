@@ -50,7 +50,7 @@ class Importer
             fclose($handle);
         }
 
-        throw new Exception('Unable to determine which bank in file: ' . basename($filePath));
+        throw new Exception('Unable to determine the bank in file: ' . basename($filePath));
     }
 
     /**
@@ -83,7 +83,7 @@ class Importer
 
             $result[] = $transaction;
         }
-    
+
         fclose($file);
 
         return $result;
@@ -125,26 +125,6 @@ class Importer
         return $result;
     }
 
-    private static function convertToUTF8(string $text): string
-    {
-        $encoding = mb_detect_encoding($text, mb_detect_order(), false);
-        if ($encoding == "UTF-8") {
-            $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
-        }
-    
-        $out = iconv(mb_detect_encoding($text, mb_detect_order(), false), "UTF-8//IGNORE", $text);
-    
-        return $out;
-    }
-
-    private static function convertToFloat(string $value): float
-    {
-        $value = str_replace(' ', '', $value);
-        $value = str_replace(',', '.', str_replace('.', '', $value));
-
-        return (float) $value;
-    }
-
     private static function mapToTransactionType(?string $input): ?TransactionType
     {
         if (empty($input)) {
@@ -181,5 +161,25 @@ class Importer
         $input = mb_strtolower($input);
     
         return $input;
+    }
+
+    private static function convertToUTF8(string $text): string
+    {
+        $encoding = mb_detect_encoding($text, mb_detect_order(), false);
+        if ($encoding == "UTF-8") {
+            $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        }
+    
+        $out = iconv(mb_detect_encoding($text, mb_detect_order(), false), "UTF-8//IGNORE", $text);
+    
+        return $out;
+    }
+
+    private static function convertToFloat(string $value): float
+    {
+        $value = str_replace(' ', '', $value);
+        $value = str_replace(',', '.', str_replace('.', '', $value));
+
+        return (float) $value;
     }
 }

@@ -2,6 +2,25 @@
 
 class TransactionHandler
 {
+    // TODO: förbättra hanteringen av transaktioner som inte ska räknas med här.
+    /**
+     * @var string[]
+     */
+    private const BLACKLISTED_TRANSACTION_NAMES = [
+        'utdelning',
+        'källskatt',
+        'avkastningsskatt',
+        'riskpremie',
+        'uttag',
+        'nollställning',
+        'överföring',
+        'direktinsättning',
+        'avgift',
+        'fraktionslikvid',
+        'preliminär skatt',
+        'ränta',
+    ];
+
     /**
      * @param Transaction[] $transactions
      */
@@ -18,22 +37,6 @@ class TransactionHandler
      */
     private function groupTransactions(array $transactions): array
     {
-        // TODO: förbättra hanteringen av transaktioner som inte ska räknas med här.
-        $blackListedTransactionNames = [
-            'utdelning',
-            'källskatt',
-            'avkastningsskatt',
-            'riskpremie',
-            'uttag',
-            'nollställning',
-            'överföring',
-            'direktinsättning',
-            'avgift',
-            'fraktionslikvid',
-            'preliminär skatt',
-            'ränta',
-        ];
-
         $groupedTransactions = [];
         $indexToSkip = null;
         foreach ($transactions as $index => $transaction) {
@@ -42,10 +45,10 @@ class TransactionHandler
                 continue;
             }
 
-            if (in_array(mb_strtolower($transaction->name), $blackListedTransactionNames) || empty($transaction->name)) {
+            if (in_array(mb_strtolower($transaction->name), static::BLACKLISTED_TRANSACTION_NAMES) || empty($transaction->name)) {
                 continue;
             }
-            foreach ($blackListedTransactionNames as $blackListedTransactionName) {
+            foreach (static::BLACKLISTED_TRANSACTION_NAMES as $blackListedTransactionName) {
                 if (str_contains(mb_strtolower($transaction->name), $blackListedTransactionName)) {
                     continue 2;
                 }
@@ -59,6 +62,7 @@ class TransactionHandler
                     'shareSplit' => []
                 ];
             }
+
             switch ($transaction->transactionType) {
                 case 'buy':
                     $groupedTransactions[$transaction->isin]['buy'][] = $transaction;
@@ -84,7 +88,9 @@ class TransactionHandler
                             $indexToSkip = $index + 1;
                         }
                     }
-                    
+
+                    // TODO: hantera aktiesplittar från nordnet.
+
                     break;
             }
         }
@@ -148,7 +154,7 @@ class TransactionHandler
         if ($currentTransaction->name !== $nextTransaction->name) {
             return null;
         }
-        
+
         if (
             ($currentTransaction->transactionType === 'other' && $nextTransaction->transactionType === 'other') &&
             (empty($currentTransaction->amount) && empty($nextTransaction->amount))

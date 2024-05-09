@@ -1,0 +1,7 @@
+services:
+  avkastningskalkylatorn:
+    build: .
+    volumes:
+      - ./exports:/exports
+    environment:
+      - GENERATE_CSV=yes  # Sätt till 'no' för att inte generera CSV
