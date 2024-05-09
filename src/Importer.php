@@ -6,6 +6,13 @@ class Importer
     {
         $result = [];
 
+        if (!file_exists('/../imports/avanza')) {
+            mkdir('/../imports/avanza', 0777, true);
+        }
+        if (!file_exists('/../imports/nordnet')) {
+            mkdir('/../imports/nordnet', 0777, true);
+        }
+
         $bankImports = [
             'avanza' => glob(__DIR__ . '/../imports/avanza/*.csv'),
             'nordnet' => glob(__DIR__ . '/../imports/nordnet/*.csv')

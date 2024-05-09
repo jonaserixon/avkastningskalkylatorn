@@ -3,5 +3,6 @@ services:
     build: .
     volumes:
       - ./exports:/exports
+      - ./imports:/imports
     environment:
       - GENERATE_CSV=yes  # Sätt till 'no' för att inte generera CSV
