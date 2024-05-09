@@ -1,0 +1,18 @@
+name: Phan
+on:
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup PHP with phan
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          ini-values: xdebug.mode=off
+          extensions: soap, memcache, dom, mysqli, uuid, xml # https://github.com/shivammathur/setup-php/wiki/Add-extension-from-source#add-extension-from-github
+          tools: phan
+          coverage: none
