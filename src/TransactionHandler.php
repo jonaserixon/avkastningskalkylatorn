@@ -2,6 +2,13 @@
 
 class TransactionHandler
 {
+    private Presenter $presenter;
+
+    public function __construct(Presenter $presenter)
+    {
+        $this->presenter = $presenter;
+    }
+
     // TODO: förbättra hanteringen av transaktioner som inte ska räknas med här.
     /**
      * @var string[]
@@ -13,12 +20,14 @@ class TransactionHandler
         'riskpremie',
         'uttag',
         'nollställning',
-        'överföring',
+        // 'överföring',
         'direktinsättning',
         'avgift',
         'fraktionslikvid',
         'preliminär skatt',
         'ränta',
+        'kreditkonto',
+        'återbetalning',
     ];
 
     /**
@@ -47,17 +56,17 @@ class TransactionHandler
     {
         $groupedTransactions = [];
         $indexToSkip = null;
+
         foreach ($transactions as $index => $transaction) {
             if ($indexToSkip === $index) {
-                print_r(PHP_EOL . '!!OBS!! ' . $transaction->name . ' (ISIN: '. $transaction->isin .') innehåller en eller flera aktiesplittar. Dubbelkolla alltid.' . PHP_EOL);
                 continue;
             }
-
             if (in_array(mb_strtolower($transaction->name), static::BLACKLISTED_TRANSACTION_NAMES) || empty($transaction->name)) {
                 continue;
             }
             foreach (static::BLACKLISTED_TRANSACTION_NAMES as $blackListedTransactionName) {
-                if (str_contains(mb_strtolower($transaction->name), $blackListedTransactionName)) {
+                // If the transaction name contains a blacklisted word and the transaction type is unknown, skip the transaction.
+                if (str_contains(mb_strtolower($transaction->name), $blackListedTransactionName) || !TransactionType::tryFrom($transaction->transactionType)) {
                     continue 2;
                 }
             }
@@ -67,7 +76,8 @@ class TransactionHandler
                     'buy' => [],
                     'sell' => [],
                     'dividend' => [],
-                    'shareSplit' => []
+                    'shareSplit' => [],
+                    'shareTransfer' => []
                 ];
             }
 
@@ -87,21 +97,25 @@ class TransactionHandler
                     }
                     $nextTransaction = $transactions[$index + 1];
 
+                    // Avanza strategy
                     if ($transaction->bank === 'AVANZA' && $nextTransaction->bank === 'AVANZA') {
                         $shareSplitQuantity = $this->lookForShareSplitsAvanza($transaction, $nextTransaction);
 
                         if ($shareSplitQuantity) {
                             $transaction->quantity = $shareSplitQuantity;
-
                             $groupedTransactions[$transaction->isin]['shareSplit'][] = $transaction;
-                            // $groupedTransactions[$transaction->name]['shareSplit'][] = $nextTransaction;
 
                             $indexToSkip = $index + 1;
+
+                            echo $this->presenter->yellowText('!!OBS!! ' . $transaction->name . ' (ISIN: '. $transaction->isin .') innehåller ev. aktiesplittar. Dubbelkolla alltid.') . PHP_EOL;
                         }
                     }
 
                     // TODO: hantera aktiesplittar från nordnet.
 
+                    break;
+                case 'share_transfer':
+                    $groupedTransactions[$transaction->isin]['shareTransfer'][] = $transaction;
                     break;
             }
         }
@@ -115,30 +129,37 @@ class TransactionHandler
      */
     private function summarizeTransactions(array $groupedTransactions): array
     {
+        // print_r($groupedTransactions);exit;
         $summaries = [];
         foreach ($groupedTransactions as $isin => $companyTransactions) {
             $summary = new TransactionSummary();
-
+            $summary->isin = $isin;
+            
             $names = [];
             foreach ($companyTransactions as $transactionType => $transactions) {
-                foreach ($transactions as $transaction) {
-                    // $transactionAmount = $transaction->price * $transaction->quantity; // Det funkar inte om avanza inte skickar med valutan i exporten
+                $indexToSkip = null;
+                $transactionTypeToSkip = null;
+
+                foreach ($transactions as $index => $transaction) {
+                    if ($indexToSkip === $index && $transactionTypeToSkip === $transaction->transactionType) {
+                        echo $this->presenter->blueText("Skipping: {$transaction->name} ({$isin}) [{$transaction->date}]") . PHP_EOL;
+                        continue;
+                    }
+
                     $transactionAmount = $transaction->amount;
 
                     // echo $transaction->date . ': ' . $transaction->transactionType . ': avgift: ' . $transaction->fee . ' SEK' . PHP_EOL;
 
-                    // TODO: Inkludera andra typer av avgifter och skatter. T.ex. ADR och källskatt(?)
-
                     switch ($transactionType) {
                         case 'buy':
                             $summary->buyAmountTotal += $transactionAmount;
-                            $summary->currentNumberOfShares += $transaction->quantity;
+                            $summary->currentNumberOfShares += round($transaction->quantity, 2);
                             $summary->feeAmountTotal += $transaction->fee;
                             $summary->feeBuyAmountTotal += $transaction->fee;
                             break;
                         case 'sell':
                             $summary->sellAmountTotal += $transactionAmount;
-                            $summary->currentNumberOfShares -= $transaction->quantity;
+                            $summary->currentNumberOfShares -= round($transaction->quantity, 2);
                             $summary->feeAmountTotal += $transaction->fee;
                             $summary->feeSellAmountTotal += $transaction->fee;
                             break;
@@ -146,10 +167,44 @@ class TransactionHandler
                             $summary->dividendAmountTotal += $transactionAmount;
                             break;
                         case 'shareSplit':
-                            $summary->currentNumberOfShares += $transaction->quantity;
+                            $summary->currentNumberOfShares += round($transaction->quantity, 2);
+                            break;
+                        case 'shareTransfer':
+                            if (!isset($transactions[$index + 1])) {
+                                echo $this->presenter->blueText("Värdepappersflytt behandlas som såld för det finns inte några fler sådana transaktioner. {$transaction->name} ({$isin}) [{$transaction->date}]") . PHP_EOL;
+                                $summary->sellAmountTotal += round($transaction->price * $transaction->quantity, 2);
+                                $summary->currentNumberOfShares -= round($transaction->quantity, 2);
+                                break;
+                            }
+
+                            $nextTransaction = $transactions[$index + 1];
+
+                            // Avanza strategy
+                            if ($transaction->bank === 'AVANZA' && $nextTransaction->bank === 'AVANZA') {
+                                if ($transaction->isin !== $nextTransaction->isin) {
+                                    break;
+                                }
+
+                                // Om den nästa transaktionen är av samma typ och samma (fast inverterade) quantity samt gjorda på samma datum så är det förmodligen en intern överföring inom samma bank. skippa dessa.
+                                if ($transaction->transactionType === 'share_transfer' && $nextTransaction->transactionType === 'share_transfer') {
+                                    if ($transaction->rawQuantity + $nextTransaction->rawQuantity == 0 && $transaction->date === $nextTransaction->date) {
+                                        echo $this->presenter->blueText("Intern överföring inom samma bank: {$transaction->name} ({$isin}) [{$transaction->date}]") . PHP_EOL;
+                                        $indexToSkip = $index + 1;
+                                        $transactionTypeToSkip = 'share_transfer';
+                                        break;
+                                    } else {
+                                        // behandla den som såld här?
+                                        $summary->sellAmountTotal += round($transaction->price * $transaction->quantity, 2);
+                                        $summary->currentNumberOfShares -= round($transaction->quantity, 2);
+                                        break;
+                                    }
+                                }
+                            }
+
                             break;
                         default:
-                            throw new Exception('Unknown transaction type: ' . $transactionType);
+                            echo $this->presenter->redText("Unknown transaction type: '{$transactionType}' in {$transaction->name} ({$isin}) [{$transaction->date}]") . PHP_EOL;
+                            break;
                     }
 
                     if (!in_array($transaction->name, $names)) {
@@ -158,6 +213,11 @@ class TransactionHandler
                 }
             }
 
+            // TODO: Fulfix. Kolla upp orsaken.
+            if (empty($names)) {
+                print_r($summary);
+                continue;
+            }
             $summary->name = $names[0];
             $summary->isin = $isin;
             $summaries[] = $summary;
@@ -168,7 +228,7 @@ class TransactionHandler
 
     private function lookForShareSplitsAvanza(Transaction $currentTransaction, Transaction $nextTransaction): ?int
     {
-        if ($currentTransaction->name !== $nextTransaction->name) {
+        if ($currentTransaction->isin !== $nextTransaction->isin) {
             return null;
         }
 

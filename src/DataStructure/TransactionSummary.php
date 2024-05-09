@@ -10,5 +10,5 @@ class TransactionSummary
     public float $feeAmountTotal = 0; // TODO: dela upp i köp/sälj/ADR-avgifter etc.
     public float $feeSellAmountTotal = 0;
     public float $feeBuyAmountTotal = 0;
-    public int $currentNumberOfShares = 0;
+    public float $currentNumberOfShares = 0; // float to handle fractional shares
 }

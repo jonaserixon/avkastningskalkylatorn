@@ -91,8 +91,8 @@ class Importer
             $transaction->account = $fields[1]; // Konto
             $transaction->transactionType = $transactionType->value; // Typ av transaktion
             $transaction->name = $fields[3]; // Värdepapper/beskrivning
-            $transaction->quantity = abs((int) $fields[4]); // Antal
-            $transaction->rawQuantity = (int) $fields[4]; // Antal
+            $transaction->quantity = abs(static::convertToFloat($fields[4])); // Antal
+            $transaction->rawQuantity = static::convertToFloat($fields[4]); // Antal
             $transaction->price = abs(static::convertToFloat($fields[5])); // Kurs
             $transaction->amount = abs(static::convertToFloat($fields[6])); // Belopp
             $transaction->fee = static::convertToFloat($fields[7]); // Courtage
@@ -158,7 +158,8 @@ class Importer
             'utdelning' => 'dividend',
             'köp' => 'buy',
             'sälj' => 'sell',
-            'övrigt' => 'other'
+            // 'övrigt' => 'other',
+            'värdepappersöverföring' => 'share_transfer',
         ];
 
         if (array_key_exists($normalizedInput, $mapping)) {

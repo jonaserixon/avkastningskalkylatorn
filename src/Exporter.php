@@ -9,18 +9,37 @@ class Exporter
         });
 
         $filePath = "/exports/export_".date('Y-m-d_His').".csv";
-        $csvHeaders = ['date', 'name', 'isin', 'buyAmountTotal', 'sellAmountTotal', 'dividendAmountTotal', 'feeAmountTotal', 'currentNumberOfShares', 'currentPricePerShare', 'currentValueOfShares', 'totalProfit'];
+        $csvHeaders = [
+            'date',
+            'name',
+            'isin',
+            'buyAmountTotal',
+            'sellAmountTotal',
+            'dividendAmountTotal',
+            'feeAmountTotal',
+            'feeSellAmountTotal',
+            'feeBuyAmountTotal',
+            'currentNumberOfShares',
+            'currentPricePerShare',
+            'currentValueOfShares',
+            'totalReturnExclFees',
+            'totalReturnExclFeesPercent',
+            'totalReturnInclFees',
+            'totalReturnInclFeesPercent'
+        ];
         $f = fopen($filePath, "w");
         fputcsv($f, $csvHeaders, ',');
 
         foreach ($summaries as $summary) {
             $currentPricePerShare = $currentSharePrices[$summary->isin] ?? null;
             $currentValueOfShares = null;
-            if ($currentPricePerShare) {
+            $currentValueOfShares = null;
+            if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
             }
 
-            $totalProfit = ($summary->sellAmountTotal + $summary->dividendAmountTotal + $currentValueOfShares) - ($summary->buyAmountTotal + $summary->feeAmountTotal);
+            $profitCalculator = new ProfitCalculator();
+            $calculatedReturns = $profitCalculator->calculateReturns($summary, $currentValueOfShares);
 
             $row = [
                 'date' => date('Y-m-d'),
@@ -30,10 +49,15 @@ class Exporter
                 'sellAmountTotal' => $summary->sellAmountTotal,
                 'dividendAmountTotal' => $summary->dividendAmountTotal,
                 'feeAmountTotal' => $summary->feeAmountTotal,
+                'feeSellAmountTotal' => $summary->feeSellAmountTotal,
+                'feeBuyAmountTotal' => $summary->feeBuyAmountTotal,
                 'currentNumberOfShares' => $summary->currentNumberOfShares,
                 'currentPricePerShare' => $currentPricePerShare,
                 'currentValueOfShares' => $currentValueOfShares,
-                'totalProfit' => $totalProfit,
+                'totalReturnExclFees' => $calculatedReturns->totalReturnExclFees,
+                'totalReturnExclFeesPercent' => $calculatedReturns->totalReturnExclFeesPercent,
+                'totalReturnInclFees' => $calculatedReturns->totalReturnInclFees,
+                'totalReturnInclFeesPercent' => $calculatedReturns->totalReturnInclFeesPercent
             ];
 
             fputcsv($f, array_values($row), ',');

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 require_once 'DataStructure/Transaction.php';
 require_once 'DataStructure/TransactionSummary.php';
@@ -18,33 +19,33 @@ class ProfitCalculator
         'SE0012673267' => 1235.00, // Evolution,
         'NO0012470089' => 139.57427, // Tomra
         'US25243Q2057' => 1543.4232, // Diageo
+        'US7181721090' => 1072.5336 // PM
     ];
 
     public function init()
     {
         $generateCsv = getenv('GENERATE_CSV') === 'yes' ? true : false;
 
+        $presenter = new Presenter();
+
         $importer = new Importer();
         $bankTransactions = $importer->parseBankTransactions();
     
-        $transactionHandler = new TransactionHandler();
+        $transactionHandler = new TransactionHandler($presenter);
         $summaries = $transactionHandler->getTransactionsOverview($bankTransactions);
 
         if ($generateCsv) {
             Exporter::generateCsvExport($summaries, static::CURRENT_SHARE_PRICES);
         }
 
-        $this->presentResult($summaries, static::CURRENT_SHARE_PRICES);
+        $this->presentResult($presenter, $summaries, static::CURRENT_SHARE_PRICES);
     }
 
     /**
      * @param TransactionSummary[] $summaries
      */
-    protected function presentResult(array $summaries, array $currentSharePrices): void
+    protected function presentResult(Presenter $presenter, array $summaries, array $currentSharePrices): void
     {
-        $presenter = new Presenter();
-
-        // echo Presenter::STAR_LINE_SEPARATOR . PHP_EOL;
         echo $presenter->createSeparator('-') . PHP_EOL;
 
         $currentHoldingsMissingPricePerShare = [];
@@ -70,7 +71,7 @@ class ProfitCalculator
         echo PHP_EOL;
     }
 
-    private function calculateReturns(TransactionSummary $summary, ?float $currentValueOfShares): ?stdClass
+    public function calculateReturns(TransactionSummary $summary, ?float $currentValueOfShares): ?stdClass
     {
         if ($currentValueOfShares === null) {
             $currentValueOfShares = 0;
