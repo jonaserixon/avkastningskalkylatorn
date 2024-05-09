@@ -2,43 +2,16 @@
 
 class Presenter
 {
-    /**
-     * @param TransactionSummary[] $summaries
-     * @param array $currentSharePrices
-     */
-    public function presentResult(array $summaries, array $currentSharePrices): void
-    {
-        if (empty($summaries)) {
-            echo 'No transaction file in csv format in the imports directory.' . PHP_EOL;
-            return;
-        }
+    public const HYPHEN_LINE_SEPARATOR = '----------------------------------------';
+    public const STAR_LINE_SEPARATOR = '****************************************';
 
-        usort($summaries, function($a, $b) {
-            return strcmp($a->name, $b->name);
-        });
-
-        echo '**********************************' . PHP_EOL;
-        $currentHoldingsMissingPricePerShare = [];
-        foreach ($summaries as $summary) {
-            $currentPricePerShare = $currentSharePrices[$summary->isin] ?? null;
-            $this->displayFormattedSummary($summary, $currentPricePerShare, $currentHoldingsMissingPricePerShare);
-        }
-        echo PHP_EOL . '**********************************' . PHP_EOL;
-
-        echo PHP_EOL;
-        foreach ($currentHoldingsMissingPricePerShare as $companyMissingPrice) {
-            echo $this->blueText("Info: Kurspris saknas för: " . $companyMissingPrice) . PHP_EOL;
-        }
-        echo PHP_EOL;
-    }
-
-    private function displayFormattedSummary(TransactionSummary $summary, ?float $currentPricePerShare, array &$currentHoldingsMissingPricePerShare): void
-    {
-        $currentValueOfShares = null;
-        if ($currentPricePerShare) {
-            $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
-        }
-
+    public function displayFormattedSummary(
+        TransactionSummary $summary,
+        ?float $currentPricePerShare,
+        ?float $currentValueOfShares,
+        array &$currentHoldingsMissingPricePerShare,
+        ?stdClass $calculatedReturns
+    ): void {
         echo "\n------ ". $summary->name ." (".$summary->isin.") ------\n";
         echo "Köpbelopp: \t\t\t\t" . number_format($summary->buyAmountTotal, 2, '.', ' ') . " SEK\n";
         echo "Säljbelopp: \t\t\t" . number_format($summary->sellAmountTotal, 2, '.', ' ') . " SEK\n";
@@ -62,21 +35,19 @@ class Presenter
             echo PHP_EOL;
         }
 
-        $returns = $this->calculateReturns($summary, $currentValueOfShares);
-
-        if ($returns) {
-            echo "Tot. avkastning: \t\t\t" . $this->colorPicker($returns->totalReturnExclFees) . " SEK\n";
-            echo "Tot. avkastning: \t\t\t" . $this->colorPicker($returns->totalReturnExclFeesPercent) . " %\n";
+        if ($calculatedReturns) {
+            echo "Tot. avkastning: \t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFees) . " SEK\n";
+            echo "Tot. avkastning: \t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . " %\n";
        
-            echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($returns->totalReturnInclFees) . " SEK\n";
-            echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($returns->totalReturnInclFeesPercent) . " %\n";
+            echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($calculatedReturns->totalReturnInclFees) . " SEK\n";
+            echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . " %\n";
         }
 
         echo PHP_EOL;
-        echo "----------------------------------------\n";
+        echo static::HYPHEN_LINE_SEPARATOR . PHP_EOL;
     }
 
-    private function colorPicker(float $value): string
+    public function colorPicker(float $value): string
     {
         if ($value == 0) {
             return number_format($value, 2, '.', ' ');
@@ -84,49 +55,18 @@ class Presenter
         return $value > 0 ? $this->greenText(number_format($value, 2, '.', ' ')) : $this->redText(number_format($value, 2, '.', ' '));
     }
 
-    private function greenText(string $text): string
+    public function greenText(string $text): string
     {
         return "\033[32m" . $text . "\033[0m";
     }
     
-    private function redText(string $text): string
+    public function redText(string $text): string
     {
         return "\033[31m" . $text . "\033[0m";
     }
 
-    private function blueText(string $text): string
+    public function blueText(string $text): string
     {
         return "\033[1;34m" . $text . "\033[0m";
-    }
-
-    private function calculateReturns(TransactionSummary $summary, ?float $currentValueOfShares): ?stdClass
-    {
-        if ($currentValueOfShares === null) {
-            $currentValueOfShares = 0;
-        }
-
-        if ($summary->buyAmountTotal <= 0) {
-            return null;
-        }
-
-        $adjustedTotalBuyAmount = $summary->buyAmountTotal + $summary->feeBuyAmountTotal;
-        $adjustedTotalSellAmount = $summary->sellAmountTotal + $summary->dividendAmountTotal - $summary->feeSellAmountTotal;
-        
-        // Beräkna total avkastning exklusive avgifter
-        $totalReturnExclFees = $summary->sellAmountTotal + $summary->dividendAmountTotal + $currentValueOfShares - $summary->buyAmountTotal;
-        
-        $totalReturnExclFeesPercent = round($totalReturnExclFees / $summary->buyAmountTotal * 100, 2);
-
-        // Beräkna total avkastning inklusive avgifter
-        $totalReturnInclFees = $adjustedTotalSellAmount + $currentValueOfShares - $adjustedTotalBuyAmount;
-        $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
-
-        $result = new stdClass();
-        $result->totalReturnExclFees = $totalReturnExclFees;
-        $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
-        $result->totalReturnInclFees = $totalReturnInclFees;
-        $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
-
-        return $result;
     }
 }

@@ -29,6 +29,14 @@ class TransactionHandler
         $groupedTransactions = $this->groupTransactions($transactions);
         $summaries = $this->summarizeTransactions($groupedTransactions);
 
+        if (empty($summaries)) {
+            throw new Exception('No transaction file in csv format in the imports directory.');
+        }
+
+        usort($summaries, function($a, $b) {
+            return strcasecmp($a->name, $b->name);
+        });
+
         return $summaries;
     }
 
