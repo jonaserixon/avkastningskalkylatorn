@@ -94,6 +94,7 @@ $config = [
         'PhanTypeArraySuspiciousNullable',
         'PhanTypePossiblyInvalidDimOffset',
         'PhanPossiblyNullTypeMismatchProperty',
+        'PhanPossiblyUndeclaredVariable',
         'PhanTypeInvalidDimOffset',
 
         'PhanTypeSuspiciousStringExpression',

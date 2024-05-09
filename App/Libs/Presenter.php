@@ -65,7 +65,7 @@ class Presenter
         $lineLength = $totalWidth - strlen($text);
 
         if ($lineLength > 0) {
-            $halfLine = str_repeat($character, floor($lineLength / 2));
+            $halfLine = str_repeat($character, (int) floor($lineLength / 2));
             $line = $halfLine . $text . $halfLine;
 
             // Lägg till ett extra bindestreck om det totala antalet behöver jämnas ut
@@ -87,24 +87,24 @@ class Presenter
         return $value > 0 ? $this->greenText(number_format($value, 2, '.', ' ')) : $this->redText(number_format($value, 2, '.', ' '));
     }
 
-    public function pinkText(string $text): string
+    public function pinkText($value): string
     {
-        return "\033[38;5;213m" . $text . "\033[0m";
+        return "\033[38;5;213m" . $value . "\033[0m";
     }
 
-    public function greenText(string $text): string
+    public function greenText($value): string
     {
-        return "\033[32m" . $text . "\033[0m";
+        return "\033[32m" . $value . "\033[0m";
     }
     
-    public function redText(string $text): string
+    public function redText($value): string
     {
-        return "\033[31m" . $text . "\033[0m";
+        return "\033[31m" . $value . "\033[0m";
     }
 
-    public function blueText(string $text): string
+    public function blueText($value): string
     {
-        return "\033[1;34m" . $text . "\033[0m";
+        return "\033[1;34m" . $value . "\033[0m";
     }
 
     public function cyanText(string $text): string

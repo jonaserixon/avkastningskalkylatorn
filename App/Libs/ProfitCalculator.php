@@ -2,15 +2,6 @@
 
 namespace App\Libs;
 
-// require_once 'DataStructure/Transaction.php';
-// require_once 'DataStructure/TransactionSummary.php';
-// require_once 'Enum/TransactionType.php';
-// require_once 'Enum/Bank.php';
-// require_once 'Presenter.php';
-// require_once 'Importer.php';
-// require_once 'Exporter.php';
-// require_once 'TransactionHandler.php';
-
 use App\DataStructure\TransactionSummary;
 use App\Libs\Exporter;
 use App\Libs\Importer;
@@ -110,9 +101,3 @@ class ProfitCalculator
         return $result;
     }
 }
-
-// try {
-//     (new ProfitCalculator())->init();
-// } catch (Exception $e) {
-//     echo 'Error: ' . $e->getMessage();
-// }

@@ -233,7 +233,7 @@ class TransactionHandler
         return $summaries;
     }
 
-    private function lookForShareSplitsAvanza(Transaction $currentTransaction, Transaction $nextTransaction): ?int
+    private function lookForShareSplitsAvanza(Transaction $currentTransaction, Transaction $nextTransaction): ?float
     {
         if ($currentTransaction->isin !== $nextTransaction->isin) {
             return null;
