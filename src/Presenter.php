@@ -12,39 +12,65 @@ class Presenter
         array &$currentHoldingsMissingPricePerShare,
         ?stdClass $calculatedReturns
     ): void {
-        echo "\n------ ". $summary->name ." (".$summary->isin.") ------\n";
-        echo "Köpbelopp: \t\t\t\t" . number_format($summary->buyAmountTotal, 2, '.', ' ') . " SEK\n";
-        echo "Säljbelopp: \t\t\t" . number_format($summary->sellAmountTotal, 2, '.', ' ') . " SEK\n";
-        echo "Utdelningar: \t\t\t" . $this->colorPicker($summary->dividendAmountTotal) . " SEK\n";
         echo PHP_EOL;
-        echo "Tot. avgifter: \t\t\t" . $this->redText($summary->feeAmountTotal) . " SEK\n";
-        echo "Köpavgifter: \t\t\t" . $this->redText($summary->feeBuyAmountTotal) . " SEK\n";
-        echo "Säljavgifter: \t\t\t" . $this->redText($summary->feeSellAmountTotal) . " SEK\n";
+
+        echo $this->pinkText($this->createSeparator('-', $summary->name ." (".$summary->isin.")")) . PHP_EOL;
+
+        echo "Köpbelopp: \t\t\t\t\t" . $this->cyanText(number_format($summary->buyAmountTotal, 2, '.', ' ')) . " SEK" . PHP_EOL;
+        echo "Säljbelopp: \t\t\t\t" . $this->blueText(number_format($summary->sellAmountTotal, 2, '.', ' ')) . " SEK" . PHP_EOL;
+        echo "Utdelningar: \t\t\t\t" . $this->colorPicker($summary->dividendAmountTotal) . " SEK" . PHP_EOL;
+
+        echo PHP_EOL;
+
+        echo "Tot. avgifter: \t\t\t\t" . $this->redText($summary->feeAmountTotal) . " SEK" . PHP_EOL;
+        echo "Köpavgifter: \t\t\t\t" . $this->redText($summary->feeBuyAmountTotal) . " SEK" . PHP_EOL;
+        echo "Säljavgifter: \t\t\t\t" . $this->redText($summary->feeSellAmountTotal) . " SEK" . PHP_EOL;
+
         echo PHP_EOL;
 
         if ($summary->currentNumberOfShares > 0) {
             if ($currentValueOfShares) {
-                echo "Nuvarande antal aktier: \t\t" . $summary->currentNumberOfShares . " st\n";
-                echo "Nuvarande pris/aktie: \t\t" . number_format($currentPricePerShare, 2, '.', ' ') . " SEK\n";
-                echo "Nuvarande markn.värde av aktier: \t" . number_format($currentValueOfShares, 2, '.', ' ') . " SEK \n";
+                echo "Nuvarande antal aktier: \t\t\t" . $summary->currentNumberOfShares . " st" . PHP_EOL;
+                echo "Nuvarande pris/aktie: \t\t\t" . number_format($currentPricePerShare, 2, '.', ' ') . " SEK" . PHP_EOL;
+                echo "Nuvarande markn.värde av aktier: \t\t" . number_format($currentValueOfShares, 2, '.', ' ') . " SEK " . PHP_EOL;
             } else {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
-                echo "** Lägg in aktiens nuvarande pris för att beräkna avkastning etc. **.\n";
+                echo $this->yellowText("** Saknar kurspris **") . PHP_EOL;
             }
 
             echo PHP_EOL;
         }
 
         if ($calculatedReturns) {
-            echo "Tot. avkastning: \t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFees) . " SEK\n";
-            echo "Tot. avkastning: \t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . " %\n";
+            echo "Tot. avkastning: \t\t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFees) . " SEK" . PHP_EOL;
+            echo "Tot. avkastning: \t\t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . " %" . PHP_EOL;
        
-            echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($calculatedReturns->totalReturnInclFees) . " SEK\n";
-            echo "Tot. avkastning (m. avgifter): \t" . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . " %\n";
+            echo "Tot. avkastning (m. avgifter): \t\t" . $this->colorPicker($calculatedReturns->totalReturnInclFees) . " SEK" . PHP_EOL;
+            echo "Tot. avkastning (m. avgifter): \t\t" . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . " %" . PHP_EOL;
         }
 
         echo PHP_EOL;
-        echo static::HYPHEN_LINE_SEPARATOR . PHP_EOL;
+    }
+
+
+    public function createSeparator(string $character = '-', string $name = '', int $totalWidth = 60): string
+    {
+        $text = $name;
+        $lineLength = $totalWidth - strlen($text);
+
+        if ($lineLength > 0) {
+            $halfLine = str_repeat($character, floor($lineLength / 2));
+            $line = $halfLine . $text . $halfLine;
+
+            // Lägg till ett extra bindestreck om det totala antalet behöver jämnas ut
+            if ($lineLength % 2 == 1) {
+                $line .= $character;
+            }
+        } else {
+            $line = $text;  // Om det inte finns utrymme för bindestreck, visa bara texten
+        }
+
+        return $line;
     }
 
     public function colorPicker(float $value): string
@@ -53,6 +79,11 @@ class Presenter
             return number_format($value, 2, '.', ' ');
         }
         return $value > 0 ? $this->greenText(number_format($value, 2, '.', ' ')) : $this->redText(number_format($value, 2, '.', ' '));
+    }
+
+    public function pinkText(string $text): string
+    {
+        return "\033[38;5;213m" . $text . "\033[0m";
     }
 
     public function greenText(string $text): string
@@ -68,5 +99,15 @@ class Presenter
     public function blueText(string $text): string
     {
         return "\033[1;34m" . $text . "\033[0m";
+    }
+
+    public function cyanText(string $text): string
+    {
+        return "\033[36m" . $text . "\033[0m";
+    }
+
+    public function yellowText(string $text): string
+    {
+        return "\033[33m" . $text . "\033[0m";
     }
 }

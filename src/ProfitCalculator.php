@@ -33,7 +33,7 @@ class ProfitCalculator
         if ($generateCsv) {
             Exporter::generateCsvExport($summaries, static::CURRENT_SHARE_PRICES);
         }
-    
+
         $this->presentResult($summaries, static::CURRENT_SHARE_PRICES);
     }
 
@@ -43,25 +43,30 @@ class ProfitCalculator
     protected function presentResult(array $summaries, array $currentSharePrices): void
     {
         $presenter = new Presenter();
-        echo Presenter::STAR_LINE_SEPARATOR . PHP_EOL;
+
+        // echo Presenter::STAR_LINE_SEPARATOR . PHP_EOL;
+        echo $presenter->createSeparator('-') . PHP_EOL;
+
         $currentHoldingsMissingPricePerShare = [];
         foreach ($summaries as $summary) {
             $currentPricePerShare = $currentSharePrices[$summary->isin] ?? null;
 
             $currentValueOfShares = null;
-            if ($currentPricePerShare) {
+            if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
             }
 
             $calculatedReturns = $this->calculateReturns($summary, $currentValueOfShares);
             $presenter->displayFormattedSummary($summary, $currentPricePerShare, $currentValueOfShares, $currentHoldingsMissingPricePerShare, $calculatedReturns);
         }
-        echo PHP_EOL . Presenter::STAR_LINE_SEPARATOR . PHP_EOL;
 
+        echo PHP_EOL . $presenter->createSeparator('*') . PHP_EOL;
         echo PHP_EOL;
+
         foreach ($currentHoldingsMissingPricePerShare as $companyMissingPrice) {
-            echo $presenter->blueText("Info: Kurspris saknas för: " . $companyMissingPrice) . PHP_EOL;
+            echo $presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
+
         echo PHP_EOL;
     }
 

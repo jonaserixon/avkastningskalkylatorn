@@ -129,27 +129,29 @@ class TransactionHandler
 
                     // TODO: Inkludera andra typer av avgifter och skatter. T.ex. ADR och källskatt(?)
 
-                    if ($transactionType === 'buy') {
-                        $summary->buyAmountTotal += $transactionAmount;
-                        $summary->currentNumberOfShares += $transaction->quantity;
-                        $summary->feeAmountTotal += $transaction->fee;
-                        $summary->feeBuyAmountTotal += $transaction->fee;
-                    } elseif ($transactionType === 'sell') {
-                        $summary->sellAmountTotal += $transactionAmount;
-                        $summary->currentNumberOfShares -= $transaction->quantity;
-                        $summary->feeAmountTotal += $transaction->fee;
-                        $summary->feeSellAmountTotal += $transaction->fee;
-                    } elseif ($transactionType === 'dividend') {
-                        // $summary->dividendAmountTotal += $price * $quantity;
-
-                        $summary->dividendAmountTotal += $transactionAmount;
-                    } elseif ($transactionType === 'shareSplit') {
-                        $summary->currentNumberOfShares += $transaction->quantity;
-                    } else {
-                        throw new Exception('Unknown transaction type: ' . $transactionType);
+                    switch ($transactionType) {
+                        case 'buy':
+                            $summary->buyAmountTotal += $transactionAmount;
+                            $summary->currentNumberOfShares += $transaction->quantity;
+                            $summary->feeAmountTotal += $transaction->fee;
+                            $summary->feeBuyAmountTotal += $transaction->fee;
+                            break;
+                        case 'sell':
+                            $summary->sellAmountTotal += $transactionAmount;
+                            $summary->currentNumberOfShares -= $transaction->quantity;
+                            $summary->feeAmountTotal += $transaction->fee;
+                            $summary->feeSellAmountTotal += $transaction->fee;
+                            break;
+                        case 'dividend':
+                            $summary->dividendAmountTotal += $transactionAmount;
+                            break;
+                        case 'shareSplit':
+                            $summary->currentNumberOfShares += $transaction->quantity;
+                            break;
+                        default:
+                            throw new Exception('Unknown transaction type: ' . $transactionType);
                     }
 
-                    // TODO: Förbättra det här fulhacket...
                     if (!in_array($transaction->name, $names)) {
                         $names[] = $transaction->name;
                     }
