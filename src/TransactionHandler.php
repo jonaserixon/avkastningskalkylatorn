@@ -38,7 +38,7 @@ class TransactionHandler
         $indexToSkip = null;
         foreach ($transactions as $index => $transaction) {
             if ($indexToSkip === $index) {
-                print_r(PHP_EOL . '!!OBS!! ' . $transaction->name . ' innehåller en eller flera aktiesplittar. Dubbelkolla alltid.' . PHP_EOL);
+                print_r(PHP_EOL . '!!OBS!! ' . $transaction->name . ' (ISIN: '. $transaction->isin .') innehåller en eller flera aktiesplittar. Dubbelkolla alltid.' . PHP_EOL);
                 continue;
             }
 
@@ -51,8 +51,8 @@ class TransactionHandler
                 }
             }
 
-            if (!array_key_exists($transaction->name, $groupedTransactions)) {
-                $groupedTransactions[$transaction->name] = [
+            if (!array_key_exists($transaction->isin, $groupedTransactions)) {
+                $groupedTransactions[$transaction->isin] = [
                     'buy' => [],
                     'sell' => [],
                     'dividend' => [],
@@ -61,13 +61,13 @@ class TransactionHandler
             }
             switch ($transaction->transactionType) {
                 case 'buy':
-                    $groupedTransactions[$transaction->name]['buy'][] = $transaction;
+                    $groupedTransactions[$transaction->isin]['buy'][] = $transaction;
                     break;
                 case 'sell':
-                    $groupedTransactions[$transaction->name]['sell'][] = $transaction;
+                    $groupedTransactions[$transaction->isin]['sell'][] = $transaction;
                     break;
                 case 'dividend':
-                    $groupedTransactions[$transaction->name]['dividend'][] = $transaction;
+                    $groupedTransactions[$transaction->isin]['dividend'][] = $transaction;
                     break;
                 case 'other':
                     $nextTransaction = $transactions[$index + 1];
@@ -77,8 +77,10 @@ class TransactionHandler
 
                         if ($shareSplitQuantity) {
                             $transaction->quantity = $shareSplitQuantity;
-                            $groupedTransactions[$transaction->name]['shareSplit'][] = $transaction;
+
+                            $groupedTransactions[$transaction->isin]['shareSplit'][] = $transaction;
                             // $groupedTransactions[$transaction->name]['shareSplit'][] = $nextTransaction;
+
                             $indexToSkip = $index + 1;
                         }
                     }
@@ -97,9 +99,10 @@ class TransactionHandler
     private function summarizeTransactions(array $groupedTransactions): array
     {
         $summaries = [];
-        foreach ($groupedTransactions as $name => $companyTransactions) {
+        foreach ($groupedTransactions as $isin => $companyTransactions) {
             $summary = new TransactionSummary();
 
+            $names = [];
             foreach ($companyTransactions as $transactionType => $transactions) {
                 foreach ($transactions as $transaction) {
                     // $transactionAmount = $transaction->price * $transaction->quantity; // Det funkar inte om avanza inte skickar med valutan i exporten
@@ -124,10 +127,16 @@ class TransactionHandler
                     } else {
                         throw new Exception('Unknown transaction type: ' . $transactionType);
                     }
+
+                    // TODO: Förbättra det här fulhacket...
+                    if (!in_array($transaction->name, $names)) {
+                        $names[] = $transaction->name;
+                    }
                 }
             }
 
-            $summary->name = $name;
+            $summary->name = $names[0];
+            $summary->isin = $isin;
             $summaries[] = $summary;
         }
 

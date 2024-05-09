@@ -2,4 +2,5 @@
 2. Beräkna inköpsvärde
 3. Hantera fler typer av avgifter (t.ex. ADR)
 4. Hantera valutaväxlingsavgift
+5. Hantera samma bolagsnamn men olika ISIN koder
 

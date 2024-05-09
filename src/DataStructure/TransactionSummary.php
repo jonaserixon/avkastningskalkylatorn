@@ -3,6 +3,7 @@
 class TransactionSummary
 {
     public string $name;
+    public string $isin;
     public float $buyAmountTotal = 0;
     public float $sellAmountTotal = 0;
     public float $dividendAmountTotal = 0;

@@ -19,7 +19,7 @@ class Presenter
 
         echo '**********************************' . PHP_EOL;
         foreach ($summaries as $summary) {
-            $currentPricePerShare = $currentSharePrices[$summary->name] ?? null;
+            $currentPricePerShare = $currentSharePrices[$summary->isin] ?? null;
             $this->displayFormattedSummary($summary, $currentPricePerShare);
         }
         echo PHP_EOL . '**********************************' . PHP_EOL;
@@ -34,7 +34,7 @@ class Presenter
 
         $totalProfit = ($summary->sellAmountTotal + $summary->dividendAmountTotal + $currentValueOfShares) - ($summary->buyAmountTotal + $summary->feeAmountTotal);
 
-        echo "\n------ ". $summary->name ." ------\n";
+        echo "\n------ ". $summary->name ." (".$summary->isin.") ------\n";
         echo "Köpbelopp: " . number_format($summary->buyAmountTotal, 2) . " SEK\n";
         echo "Säljbelopp: " . number_format($summary->sellAmountTotal, 2) . " SEK\n";
         echo "Utdelningar: " . number_format($summary->dividendAmountTotal, 2) . " SEK\n";

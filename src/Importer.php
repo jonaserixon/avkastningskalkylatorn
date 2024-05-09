@@ -2,40 +2,46 @@
 
 class Importer
 {
-    public function parseBankTransactions()
+    public function parseBankTransactions(): array
     {
         $result = [];
 
-        $files = glob(__DIR__ . '/../imports/*.csv');
-        foreach($files as $filepath) {
-            $bank = $this->determineBankByHeaders($filepath);
+        $bankImports = [
+            'avanza' => glob(__DIR__ . '/../imports/avanza/*.csv'),
+            'nordnet' => glob(__DIR__ . '/../imports/nordnet/*.csv')
+        ];
 
-            switch ($bank) {
-                case Bank::AVANZA:
-                    $result = array_merge($result, static::parseAvanzaTransactions($filepath, $bank));
-                    break;
-                case Bank::NORDNET:
-                    $result = array_merge($result, static::parseNordnetTransactions($filepath, $bank));
-                    break;
+        foreach($bankImports as $bank => $files) {
+            foreach ($files as $filepath) {
+                $validatedBank = $this->determineBankByHeaders($filepath, $bank);
+
+                switch ($validatedBank) {
+                    case Bank::AVANZA:
+                        $result = array_merge($result, static::parseAvanzaTransactions($filepath, $validatedBank));
+                        break;
+                    case Bank::NORDNET:
+                        $result = array_merge($result, static::parseNordnetTransactions($filepath, $validatedBank));
+                        break;
+                }
             }
         }
 
         return $result;
     }
 
-    private function determineBankByHeaders(string $filePath): Bank
+    private function determineBankByHeaders(string $filePath, string $bankDirectory): Bank
     {
         // TODO: Förbättra hur man avgör vilken bank det är.
         if (($handle = fopen($filePath, "r")) !== false) {
             // semi-colon separerad
-            if (($headers = fgetcsv($handle, 1000, ";")) !== false) {
+            if ($bankDirectory === 'avanza' && ($headers = fgetcsv($handle, 1000, ";")) !== false) {
                 if (count($headers) === 11) {
                     return Bank::AVANZA;
                 }
             }
 
             // tab separerad
-            if (($headers = fgetcsv($handle, 1000, "\t")) !== false) {
+            if ($bankDirectory === 'nordnet' && ($headers = fgetcsv($handle, 1000, "\t")) !== false) {
                 if (count($headers) === 29) {
                     return Bank::NORDNET;
                 }
@@ -119,6 +125,18 @@ class Importer
         return $result;
     }
 
+    private static function convertToUTF8(string $text): string
+    {
+        $encoding = mb_detect_encoding($text, mb_detect_order(), false);
+        if ($encoding == "UTF-8") {
+            $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+        }
+    
+        $out = iconv(mb_detect_encoding($text, mb_detect_order(), false), "UTF-8//IGNORE", $text);
+    
+        return $out;
+    }
+
     private static function convertToFloat(string $value): float
     {
         $value = str_replace(' ', '', $value);
@@ -127,9 +145,13 @@ class Importer
         return (float) $value;
     }
 
-    private static function mapToTransactionType($input): ?TransactionType
+    private static function mapToTransactionType(?string $input): ?TransactionType
     {
-        $normalizedInput = mb_strtolower($input);
+        if (empty($input)) {
+            return null;
+        }
+
+        $normalizedInput = static::normalizeInput($input);
     
         // Mappningstabell för att hantera olika termer från olika banker.
         $mapping = [
@@ -140,11 +162,24 @@ class Importer
             'sälj' => 'sell',
             'övrigt' => 'other'
         ];
-    
+
         if (array_key_exists($normalizedInput, $mapping)) {
             return TransactionType::tryFrom($mapping[$normalizedInput]);
         }
-    
+
+        // echo bin2hex($normalizedInput) . PHP_EOL;
+        // echo '-----------' . PHP_EOL;
+        // print 'Unknown transaction type: ' . $normalizedInput . PHP_EOL;
+
         return null;
+    }
+
+    private static function normalizeInput(string $input): string
+    {
+        $input = trim($input);
+        $input = static::convertToUTF8($input);
+        $input = mb_strtolower($input);
+    
+        return $input;
     }
 }
