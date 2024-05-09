@@ -20,7 +20,9 @@ try {
 
     // Konverterat till SEK.
     $currentSharePrices = [
-        'SE0020050417' => 356.50, // Boliden
+        'SE0020050417' => 356.50, // Boliden,
+        'SE0017832488' => 70.34, // Balder,
+        'US1104481072' => 328.1408, // BTI,
     ];
 
     if ($generateCsv) {

@@ -5,4 +5,4 @@ services:
       - ./exports:/exports
       - ./imports:/imports
     environment:
-      - GENERATE_CSV=yes  # Sätt till 'no' för att inte generera CSV
+      - GENERATE_CSV=${GENERATE_CSV}

@@ -32,25 +32,63 @@ class Presenter
             $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
         }
 
-        $totalProfit = ($summary->sellAmountTotal + $summary->dividendAmountTotal + $currentValueOfShares) - ($summary->buyAmountTotal + $summary->feeAmountTotal);
-
         echo "\n------ ". $summary->name ." (".$summary->isin.") ------\n";
-        echo "Köpbelopp: " . number_format($summary->buyAmountTotal, 2) . " SEK\n";
-        echo "Säljbelopp: " . number_format($summary->sellAmountTotal, 2) . " SEK\n";
-        echo "Utdelningar: " . number_format($summary->dividendAmountTotal, 2) . " SEK\n";
-        echo "Avgifter: " . number_format($summary->feeAmountTotal, 2) . " SEK\n";
+        echo "Köpbelopp: \t\t\t\t" . number_format($summary->buyAmountTotal, 2) . " SEK\n";
+        echo "Säljbelopp: \t\t\t" . number_format($summary->sellAmountTotal, 2) . " SEK\n";
+        echo "Utdelningar: \t\t\t" . number_format($summary->dividendAmountTotal, 2) . " SEK\n";
+        echo "\n";
+        echo "Tot. avgifter: \t\t\t" . number_format($summary->feeAmountTotal, 2) . " SEK\n";
+        echo "Köpavgifter: \t\t\t" . number_format($summary->feeBuyAmountTotal, 2) . " SEK\n";
+        echo "Säljavgifter: \t\t\t" . number_format($summary->feeSellAmountTotal, 2) . " SEK\n";
+        echo "\n";
 
         if ($summary->currentNumberOfShares > 0) {
             if ($currentValueOfShares) {
-                echo "Nuvarande antal aktier: " . $summary->currentNumberOfShares . " st\n";
-                echo "Nuvarande pris per aktie: " . number_format($currentPricePerShare, 2) . " SEK\n";
+                echo "Nuvarande antal aktier: \t\t" . $summary->currentNumberOfShares . " st\n";
+                echo "Nuvarande pris per aktie: \t\t" . number_format($currentPricePerShare, 2) . " SEK\n";
                 echo "Nuvarande marknadsvärde för aktier: " . number_format($currentValueOfShares, 2) . " SEK\n";
             } else {
-                echo "* Lägg in aktiens nuvarande pris för att se nuvarande marknadsvärde.\n";
+                echo "** Lägg in aktiens nuvarande pris för att beräkna avkastning etc. **.\n";
             }
+
+            echo "\n";
         }
 
-        echo "Total vinst/förlust: " . number_format($totalProfit, 2) . " SEK\n";
+        $returns = $this->calculateReturns($summary, $currentValueOfShares);
+
+        echo "Tot. avkastning: \t\t\t" . number_format($returns->totalReturnExclFees, 2) . " SEK\n";
+        echo "Tot. avkastning: \t\t\t" . $returns->totalReturnExclFeesPercent . "%\n";
+
+        echo "Tot. avkastning (m. avgifter): \t" . number_format($returns->totalReturnInclFees, 2) . " SEK\n";
+        echo "Tot. avkastning (m. avgifter): \t" . $returns->totalReturnInclFeesPercent . "%\n";
+        echo "\n";
+
         echo "----------------------------------------\n";
+    }
+
+    private function calculateReturns(TransactionSummary $summary, ?float $currentValueOfShares): stdClass
+    {
+        if ($currentValueOfShares === null) {
+            $currentValueOfShares = 0;
+        }
+
+        $adjustedTotalBuyAmount = $summary->buyAmountTotal + $summary->feeBuyAmountTotal;
+        $adjustedTotalSellAmount = $summary->sellAmountTotal + $summary->dividendAmountTotal - $summary->feeSellAmountTotal;
+
+        // Beräkna total avkastning exklusive avgifter
+        $totalReturnExclFees = $summary->sellAmountTotal + $summary->dividendAmountTotal + $currentValueOfShares - $summary->buyAmountTotal;
+        $totalReturnExclFeesPercent = round($totalReturnExclFees / $summary->buyAmountTotal * 100, 2);
+
+        // Beräkna total avkastning inklusive avgifter
+        $totalReturnInclFees = $adjustedTotalSellAmount + $currentValueOfShares - $adjustedTotalBuyAmount;
+        $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
+
+        $result = new stdClass();
+        $result->totalReturnExclFees = $totalReturnExclFees;
+        $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
+        $result->totalReturnInclFees = $totalReturnInclFees;
+        $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
+
+        return $result;
     }
 }

@@ -74,6 +74,9 @@ class TransactionHandler
                     $groupedTransactions[$transaction->isin]['dividend'][] = $transaction;
                     break;
                 case 'other':
+                    if (!isset($transactions[$index + 1])) {
+                        break;
+                    }
                     $nextTransaction = $transactions[$index + 1];
 
                     if ($transaction->bank === 'AVANZA' && $nextTransaction->bank === 'AVANZA') {
@@ -114,16 +117,20 @@ class TransactionHandler
                     // $transactionAmount = $transaction->price * $transaction->quantity; // Det funkar inte om avanza inte skickar med valutan i exporten
                     $transactionAmount = $transaction->amount;
 
+                    // echo $transaction->date . ': ' . $transaction->transactionType . ': avgift: ' . $transaction->fee . ' SEK' . PHP_EOL;
+
                     // TODO: Inkludera andra typer av avgifter och skatter. T.ex. ADR och källskatt(?)
 
                     if ($transactionType === 'buy') {
                         $summary->buyAmountTotal += $transactionAmount;
                         $summary->currentNumberOfShares += $transaction->quantity;
                         $summary->feeAmountTotal += $transaction->fee;
+                        $summary->feeBuyAmountTotal += $transaction->fee;
                     } elseif ($transactionType === 'sell') {
                         $summary->sellAmountTotal += $transactionAmount;
                         $summary->currentNumberOfShares -= $transaction->quantity;
                         $summary->feeAmountTotal += $transaction->fee;
+                        $summary->feeSellAmountTotal += $transaction->fee;
                     } elseif ($transactionType === 'dividend') {
                         // $summary->dividendAmountTotal += $price * $quantity;
 
@@ -132,6 +139,10 @@ class TransactionHandler
                         $summary->currentNumberOfShares += $transaction->quantity;
                     } else {
                         throw new Exception('Unknown transaction type: ' . $transactionType);
+                    }
+
+                    if ($summary->currentNumberOfShares > 0) {
+                        $summary->updatePurchaseValue();
                     }
 
                     // TODO: Förbättra det här fulhacket...
