@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Libs\FileManager;
+namespace src\Libs\FileManager;
 
-use App\Libs\ProfitCalculator;
+use src\Libs\ProfitCalculator;
 
 class Exporter
 {

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 require_once 'AutoLoad.php';
 
-use App\Libs\ProfitCalculator;
+use src\Libs\ProfitCalculator;
 
 define('ROOT_PATH', dirname(__DIR__));
 define('IMPORT_DIR', ROOT_PATH . '/imports');

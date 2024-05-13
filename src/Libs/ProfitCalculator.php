@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Libs;
+namespace src\Libs;
 
-use App\DataStructure\TransactionSummary;
-use App\Libs\FileManager\StockPriceManager;
-use App\Libs\FileManager\Exporter;
-use App\Libs\FileManager\Importer;
+use src\DataStructure\TransactionSummary;
+use src\Libs\FileManager\StockPriceManager;
+use src\Libs\FileManager\Exporter;
+use src\Libs\FileManager\Importer;
 use stdClass;
 
 class ProfitCalculator

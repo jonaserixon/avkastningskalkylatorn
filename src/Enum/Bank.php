@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enum;
+namespace src\Enum;
 
 enum Bank: string
 {

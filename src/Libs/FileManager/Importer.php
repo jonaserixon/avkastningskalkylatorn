@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Libs\FileManager;
+namespace src\Libs\FileManager;
 
-use App\DataStructure\Transaction;
-use App\Enum\Bank;
-use App\Enum\TransactionType;
+use src\DataStructure\Transaction;
+use src\Enum\Bank;
+use src\Enum\TransactionType;
 use Exception;
 
 class Importer

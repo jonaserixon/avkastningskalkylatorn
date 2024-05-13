@@ -1,6 +1,6 @@
 <?php
 
-namespace App\DataStructure;
+namespace src\DataStructure;
 
 class Holding
 {

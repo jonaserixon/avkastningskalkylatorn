@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Libs\FileManager;
+namespace src\Libs\FileManager;
 
-use App\DataStructure\Holding;
+use src\DataStructure\Holding;
 
 class StockPriceManager
 {

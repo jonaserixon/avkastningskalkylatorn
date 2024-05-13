@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Libs;
+namespace src\Libs;
 
-use App\DataStructure\TransactionSummary;
+use src\DataStructure\TransactionSummary;
 use stdClass;
 
 class Presenter
