@@ -42,7 +42,7 @@ class StockPriceManager
 
                 $holding->name = $fields[0];
                 $holding->isin = $fields[1];
-                $holding->price = $fields[3];
+                $holding->price = Importer::convertToFloat($fields[3]);
 
                 $holdings[$holding->isin] = $holding;
             }

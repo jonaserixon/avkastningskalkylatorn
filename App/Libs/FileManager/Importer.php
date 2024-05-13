@@ -203,7 +203,7 @@ class Importer
         return $out;
     }
 
-    private static function convertToFloat(string $value): float
+    public static function convertToFloat(string $value): float
     {
         $value = str_replace(' ', '', $value);
         $value = str_replace(',', '.', str_replace('.', '', $value));
