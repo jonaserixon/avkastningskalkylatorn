@@ -13,16 +13,16 @@ class Importer
     {
         $result = [];
 
-        if (!file_exists(IMPORT_DIR . '/avanza')) {
-            mkdir(IMPORT_DIR . '/avanza', 0777, true);
+        if (!file_exists(IMPORT_DIR . '/banks/avanza')) {
+            mkdir(IMPORT_DIR . '/banks/avanza', 0777, true);
         }
-        if (!file_exists(IMPORT_DIR . '/nordnet')) {
-            mkdir(IMPORT_DIR . '/nordnet', 0777, true);
+        if (!file_exists(IMPORT_DIR . '/banks/nordnet')) {
+            mkdir(IMPORT_DIR . '/banks/nordnet', 0777, true);
         }
 
         $bankImports = [
-            'avanza' => glob(IMPORT_DIR . '/avanza/*.csv'),
-            'nordnet' => glob(IMPORT_DIR . '/nordnet/*.csv')
+            'avanza' => glob(IMPORT_DIR . '/banks/avanza/*.csv'),
+            'nordnet' => glob(IMPORT_DIR . '/banks/nordnet/*.csv')
         ];
 
         foreach($bankImports as $bank => $files) {
@@ -91,6 +91,8 @@ class Importer
             if (!$transactionType) {
                 continue;
             }
+
+            // TODO: Kan rent teoretiskt sett urskilja på om det är en aktie eller fond baserat på om antalet är decimaltal eller inte.
 
             $transaction = new Transaction();
             $transaction->bank = $bank->value;

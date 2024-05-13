@@ -1,3 +1,4 @@
-imports/avanza/*
-imports/nordnet/*
+# imports/banks/avanza/*
+# imports/banks/nordnet/*
+# imports/stock_price/*
 exports/*
