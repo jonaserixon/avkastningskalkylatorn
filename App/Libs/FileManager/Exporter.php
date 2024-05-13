@@ -6,7 +6,7 @@ use App\Libs\ProfitCalculator;
 
 class Exporter
 {
-    public static function generateCsvExport(array $summaries, array $currentSharePrices): void
+    public static function generateCsvExport(array $summaries, StockPriceManager $stockPriceManager): void
     {
         usort($summaries, function($a, $b) {
             return strcmp($a->name, $b->name);
@@ -35,7 +35,7 @@ class Exporter
         fputcsv($f, $csvHeaders, ',');
 
         foreach ($summaries as $summary) {
-            $currentPricePerShare = $currentSharePrices[$summary->isin] ?? null;
+            $currentPricePerShare = $stockPriceManager->getCurrentPriceByIsin($summary->isin);
             $currentValueOfShares = null;
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {

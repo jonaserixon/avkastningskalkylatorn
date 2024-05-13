@@ -3,22 +3,13 @@
 namespace App\Libs;
 
 use App\DataStructure\TransactionSummary;
+use App\Libs\FileManager\StockPriceManager;
 use App\Libs\FileManager\Exporter;
 use App\Libs\FileManager\Importer;
 use stdClass;
 
 class ProfitCalculator
 {
-    private const CURRENT_SHARE_PRICES = [
-        'SE0020050417' => 356.50, // Boliden,
-        'SE0017832488' => 70.34, // Balder,
-        'US1104481072' => 328.1408, // BTI,
-        'SE0012673267' => 1235.00, // Evolution,
-        'NO0012470089' => 139.57427, // Tomra
-        'US25243Q2057' => 1543.4232, // Diageo
-        'US7181721090' => 1072.5336 // PM
-    ];
-
     private bool $generateCsv;
     private Presenter $presenter;
 
@@ -28,9 +19,9 @@ class ProfitCalculator
         $this->presenter = new Presenter();
     }
 
-
     public function init()
     {
+        $stockPriceManager = new StockPriceManager();
         $importer = new Importer();
 
         $bankTransactions = $importer->parseBankTransactions();
@@ -39,22 +30,22 @@ class ProfitCalculator
         $summaries = $transactionHandler->getTransactionsOverview($bankTransactions);
 
         if ($this->generateCsv) {
-            Exporter::generateCsvExport($summaries, static::CURRENT_SHARE_PRICES);
+            Exporter::generateCsvExport($summaries, $stockPriceManager);
         }
 
-        $this->presentResult($summaries, static::CURRENT_SHARE_PRICES);
+        $this->presentResult($summaries, $stockPriceManager);
     }
 
     /**
      * @param TransactionSummary[] $summaries
      */
-    protected function presentResult(array $summaries, array $currentSharePrices): void
+    protected function presentResult(array $summaries, StockPriceManager $stockPriceManager): void
     {
         echo $this->presenter->createSeparator('-') . PHP_EOL;
 
         $currentHoldingsMissingPricePerShare = [];
         foreach ($summaries as $summary) {
-            $currentPricePerShare = $currentSharePrices[$summary->isin] ?? null;
+            $currentPricePerShare = $stockPriceManager->getCurrentPriceByIsin($summary->isin);
 
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
