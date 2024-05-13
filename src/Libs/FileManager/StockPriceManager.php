@@ -41,8 +41,8 @@ class StockPriceManager
                 $holding = new Holding();
 
                 $holding->name = $fields[0];
-                $holding->isin = $fields[1];
-                $holding->price = Importer::convertToFloat($fields[3]);
+                $holding->isin = trim($fields[1]);
+                $holding->price = (float) $fields[3];
 
                 $holdings[$holding->isin] = $holding;
             }

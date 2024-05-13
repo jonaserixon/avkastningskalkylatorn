@@ -167,7 +167,7 @@ class Importer
             'utdelning' => 'dividend',
             'köp' => 'buy',
             'sälj' => 'sell',
-            // 'övrigt' => 'other',
+            'övrigt' => 'other',
             'värdepappersöverföring' => 'share_transfer',
         ];
 

@@ -49,6 +49,7 @@ class ProfitCalculator
 
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
+                // TODO: move calculations to a separate method
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
             }
 
