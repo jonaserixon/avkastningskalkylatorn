@@ -60,7 +60,7 @@ class TransactionHandler
      * @param array $groupedTransactions
      * @return TransactionSummary[]
      */
-    private function summarizeTransactions(array $groupedTransactions): array
+    private function summarizeTransactions(array $groupedTransactions): array // TODO: Refactor this mess.
     {
         $summaries = [];
         foreach ($groupedTransactions as $isin => $companyTransactions) {
