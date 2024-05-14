@@ -2,26 +2,24 @@
 
 namespace src\Libs\FileManager;
 
-use src\Enum\TransactionType;
-
 abstract class CsvParser
 {
+    protected static string $DIR = '';
+
     abstract protected function parseTransactions(string $fileName): array;
 
     abstract protected function validateImportFile(string $filePath): bool;
-
-    abstract protected static function mapToTransactionType(?string $input): ?TransactionType;
 
     public function parseBankTransactions(): array
     {
         $result = [];
 
-        if (!file_exists(static::DIR)) {
-            mkdir(static::DIR, 0777, true);
+        if (!file_exists(static::$DIR)) {
+            mkdir(static::$DIR, 0777, true);
         }
 
         // TODO: plocka alltid ut den senast modiferade filen här
-        $files = glob(static::DIR . '/*.csv');
+        $files = glob(static::$DIR . '/*.csv');
 
         foreach ($files as $filepath) {
             $validatedBank = $this->validateImportFile($filepath);

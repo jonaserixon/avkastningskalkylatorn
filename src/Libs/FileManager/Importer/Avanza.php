@@ -9,7 +9,7 @@ use src\Libs\FileManager\CsvParser;
 
 class Avanza extends CsvParser
 {
-    protected const DIR = IMPORT_DIR . '/banks/avanza';
+    protected static string $DIR = IMPORT_DIR . '/banks/avanza';
 
     protected function validateImportFile(string $filePath): bool
     {

@@ -3,6 +3,7 @@
 namespace src\Libs\FileManager;
 
 use src\DataStructure\TransactionSummary;
+use src\Libs\FileManager\Importer\StockPrice;
 use src\Libs\ProfitCalculator;
 
 class Exporter
@@ -10,7 +11,7 @@ class Exporter
     /**
      * @param TransactionSummary[] $summaries
      */
-    public static function generateCsvExport(array $summaries, StockPriceManager $stockPriceManager): void
+    public static function generateCsvExport(array $summaries, StockPrice $stockPrice): void
     {
         usort($summaries, function($a, $b) {
             return strcmp($a->name, $b->name);
@@ -39,7 +40,7 @@ class Exporter
         fputcsv($f, $csvHeaders, ',');
 
         foreach ($summaries as $summary) {
-            $currentPricePerShare = $stockPriceManager->getCurrentPriceByIsin($summary->isin);
+            $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
 
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {

@@ -6,7 +6,7 @@ use src\DataStructure\TransactionSummary;
 use src\Libs\FileManager\Exporter;
 use src\Libs\FileManager\Importer\Avanza;
 use src\Libs\FileManager\Importer\Nordnet;
-use src\Libs\FileManager\StockPriceManager;
+use src\Libs\FileManager\Importer\StockPrice;
 use stdClass;
 
 class ProfitCalculator
@@ -22,16 +22,16 @@ class ProfitCalculator
 
     public function init()
     {
-        $stockPriceManager = new StockPriceManager();
+        $stockPrice = new StockPrice();
     
         $transactionHandler = new TransactionHandler($this->presenter);
         $summaries = $transactionHandler->getTransactionsOverview($this->getTransactions());
 
         if ($this->generateCsv) {
-            Exporter::generateCsvExport($summaries, $stockPriceManager);
+            Exporter::generateCsvExport($summaries, $stockPrice);
         }
 
-        $this->presentResult($summaries, $stockPriceManager);
+        $this->presentResult($summaries, $stockPrice);
     }
 
     private function getTransactions(): array
@@ -45,13 +45,13 @@ class ProfitCalculator
     /**
      * @param TransactionSummary[] $summaries
      */
-    protected function presentResult(array $summaries, StockPriceManager $stockPriceManager): void
+    protected function presentResult(array $summaries, StockPrice $stockPrice): void
     {
         echo $this->presenter->createSeparator('-') . PHP_EOL;
 
         $currentHoldingsMissingPricePerShare = [];
         foreach ($summaries as $summary) {
-            $currentPricePerShare = $stockPriceManager->getCurrentPriceByIsin($summary->isin);
+            $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
 
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {

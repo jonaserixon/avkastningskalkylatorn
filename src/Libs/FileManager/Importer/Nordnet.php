@@ -9,7 +9,7 @@ use src\Libs\FileManager\CsvParser;
 
 class Nordnet extends CsvParser
 {
-    protected const DIR = IMPORT_DIR . '/banks/nordnet';
+    protected static string $DIR = IMPORT_DIR . '/banks/nordnet';
 
     protected function validateImportFile(string $filePath): bool
     {
