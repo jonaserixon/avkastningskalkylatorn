@@ -7,9 +7,6 @@ use stdClass;
 
 class Presenter
 {
-    public const HYPHEN_LINE_SEPARATOR = '----------------------------------------';
-    public const STAR_LINE_SEPARATOR = '****************************************';
-
     public function displayFormattedSummary(
         TransactionSummary $summary,
         ?float $currentPricePerShare,
@@ -19,45 +16,55 @@ class Presenter
     ): void {
         echo PHP_EOL;
 
-        echo $this->pinkText($this->createSeparator('-', $summary->name ." (".$summary->isin.")")) . PHP_EOL;
+        echo $this->pinkText($this->createSeparator('-', $summary->name .' ('.$summary->isin.')')) . PHP_EOL;
 
-        echo "Köpbelopp: \t\t\t\t\t" . $this->cyanText(number_format($summary->buyAmountTotal, 2, '.', ' ')) . " SEK" . PHP_EOL;
-        echo "Säljbelopp: \t\t\t\t" . $this->blueText(number_format($summary->sellAmountTotal, 2, '.', ' ')) . " SEK" . PHP_EOL;
-        echo "Utdelningar: \t\t\t\t" . $this->colorPicker($summary->dividendAmountTotal) . " SEK" . PHP_EOL;
+        echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($summary->buyAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($summary->sellAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Utdelningar:', 40) . $this->colorPicker($summary->dividendAmountTotal) . ' SEK' . PHP_EOL;
 
         echo PHP_EOL;
 
-        echo "Tot. avgifter: \t\t\t\t" . $this->redText($summary->feeAmountTotal) . " SEK" . PHP_EOL;
-        echo "Köpavgifter: \t\t\t\t" . $this->redText($summary->feeBuyAmountTotal) . " SEK" . PHP_EOL;
-        echo "Säljavgifter: \t\t\t\t" . $this->redText($summary->feeSellAmountTotal) . " SEK" . PHP_EOL;
+        echo $this->addTabs('Tot. avgifter:') . $this->redText($summary->feeAmountTotal) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Köpavgifter:') . $this->redText($summary->feeBuyAmountTotal) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Säljavgifter:') . $this->redText($summary->feeSellAmountTotal) . ' SEK' . PHP_EOL;
 
         echo PHP_EOL;
 
         if ((int) $summary->currentNumberOfShares > 0) {
-            echo "Nuvarande antal aktier: \t\t\t" . number_format($summary->currentNumberOfShares, 2, '.', ' ') . " st" . PHP_EOL;
+            echo $this->addTabs('Nuvarande antal aktier:') . number_format($summary->currentNumberOfShares, 2, '.', ' ') . ' st' . PHP_EOL;
 
             if ($currentValueOfShares) {
-                echo "Nuvarande pris/aktie: \t\t\t" . number_format($currentPricePerShare, 2, '.', ' ') . " SEK" . PHP_EOL;
-                echo "Nuvarande markn.värde av aktier: \t\t" . number_format($currentValueOfShares, 2, '.', ' ') . " SEK " . PHP_EOL;
+                echo $this->addTabs('Nuvarande pris/aktie') . number_format($currentPricePerShare, 2, '.', ' ') . ' SEK' . PHP_EOL;
+                echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($currentValueOfShares, 2, '.', ' ') . ' SEK ' . PHP_EOL;
             } else {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
-                echo $this->yellowText("** Saknar kurspris **") . PHP_EOL;
+                echo $this->yellowText('** Saknar kurspris **') . PHP_EOL;
             }
 
             echo PHP_EOL;
         }
 
         if ($calculatedReturns) {
-            echo "Tot. avkastning: \t\t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFees) . " SEK" . PHP_EOL;
-            echo "Tot. avkastning: \t\t\t\t" . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . " %" . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFees) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
        
-            echo "Tot. avkastning (m. avgifter): \t\t" . $this->colorPicker($calculatedReturns->totalReturnInclFees) . " SEK" . PHP_EOL;
-            echo "Tot. avkastning (m. avgifter): \t\t" . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . " %" . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning (m. avgifter):') . $this->colorPicker($calculatedReturns->totalReturnInclFees) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning (m. avgifter):') . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
         }
 
         echo PHP_EOL;
     }
 
+    public function addTabs($label, $desiredColumnWidth = 45) {
+        $currentLength = strlen($label);
+        $spacesNeeded = $desiredColumnWidth - $currentLength;
+    
+        $tabsCount = ceil($spacesNeeded / 8);
+    
+        $tabsCount = max($tabsCount, 1);
+    
+        return $label . str_repeat("\t", $tabsCount);
+    }
 
     public function createSeparator(string $character = '-', string $name = '', int $totalWidth = 60): string
     {
@@ -68,12 +75,11 @@ class Presenter
             $halfLine = str_repeat($character, (int) floor($lineLength / 2));
             $line = $halfLine . $text . $halfLine;
 
-            // Lägg till ett extra bindestreck om det totala antalet behöver jämnas ut
             if ($lineLength % 2 == 1) {
                 $line .= $character;
             }
         } else {
-            $line = $text;  // Om det inte finns utrymme för bindestreck, visa bara texten
+            $line = $text;
         }
 
         return $line;
