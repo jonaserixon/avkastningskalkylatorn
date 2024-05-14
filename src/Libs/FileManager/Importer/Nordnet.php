@@ -10,21 +10,34 @@ use src\Libs\FileManager\CsvParser;
 class Nordnet extends CsvParser
 {
     protected static string $DIR = IMPORT_DIR . '/banks/nordnet';
+    private const CSV_SEPARATOR = "\t";
+    private const BANK_NAME = 'NORDNET';
 
     protected function validateImportFile(string $filePath): bool
     {
-        if (($handle = fopen($filePath, "r")) !== false) {
-            // tab separerad
-            if (($headers = fgetcsv($handle, 1000, "\t")) !== false) {
-                if (count($headers) === 29) {
-                    return true;
-                }
-            }
+        $result = false;
 
-            fclose($handle);
+        $handle = fopen($filePath, "r");
+        if ($handle === false) {
+            throw new Exception('Failed to open file: ' . basename($filePath));
         }
 
-        throw new Exception('Invalid Nordnet import file: ' . basename($filePath));
+        try {
+            $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
+            if ($headers === false) {
+                throw new Exception('Failed to read headers from file: ' . basename($filePath));
+            }
+
+            if (count($headers) !== 11) {
+                throw new Exception('Invalid Nordnet import file: ' . basename($filePath));
+            }
+
+            $result = true;
+        } finally {
+            fclose($handle);
+
+            return $result;
+        }
     }
 
     /**
@@ -37,14 +50,14 @@ class Nordnet extends CsvParser
         // TODO: sortera på datum
 
         $result = [];
-        while (($fields = fgetcsv($file, 0, "\t")) !== false) {
+        while (($fields = fgetcsv($file, 0, static::CSV_SEPARATOR)) !== false) {
             $transactionType = static::mapToTransactionType($fields[5] ?? null);
             if (!$transactionType) {
                 continue;
             }
 
             $transaction = new Transaction();
-            $transaction->bank = 'NORDNET';
+            $transaction->bank = static::BANK_NAME;
             $transaction->date = $fields[1]; // Affärsdag
             $transaction->account = $fields[4]; // Depå
             $transaction->type = $transactionType->value; // Transaktionstyp

@@ -18,7 +18,7 @@ abstract class CsvParser
             mkdir(static::$DIR, 0777, true);
         }
 
-        // TODO: plocka alltid ut den senast modiferade filen här
+        // TODO: plocka alltid ut den senast modifierade filen här
         $files = glob(static::$DIR . '/*.csv');
 
         foreach ($files as $filepath) {

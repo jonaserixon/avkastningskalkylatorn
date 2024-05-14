@@ -10,21 +10,34 @@ use src\Libs\FileManager\CsvParser;
 class Avanza extends CsvParser
 {
     protected static string $DIR = IMPORT_DIR . '/banks/avanza';
+    private const CSV_SEPARATOR = ";";
+    private const BANK_NAME = 'AVANZA';
 
     protected function validateImportFile(string $filePath): bool
     {
-        if (($handle = fopen($filePath, "r")) !== false) {
-            // semi-colon separerad
-            if (($headers = fgetcsv($handle, 1000, ";")) !== false) {
-                if (count($headers) === 11) {
-                    return true;
-                }
-            }
+        $result = false;
 
-            fclose($handle);
+        $handle = fopen($filePath, "r");
+        if ($handle === false) {
+            throw new Exception('Failed to open file: ' . basename($filePath));
         }
 
-        throw new Exception('Invalid Avanza import file: ' . basename($filePath));
+        try {
+            $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
+            if ($headers === false) {
+                throw new Exception('Failed to read headers from file: ' . basename($filePath));
+            }
+
+            if (count($headers) !== 11) {
+                throw new Exception('Invalid Avanza import file: ' . basename($filePath));
+            }
+
+            $result = true;
+        } finally {
+            fclose($handle);
+
+            return $result;
+        }
     }
 
     /**
@@ -32,7 +45,7 @@ class Avanza extends CsvParser
      */
     protected function parseTransactions(string $fileName): array
     {
-        $csvData = $this->readCsvFile($fileName, ';');
+        $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
 
         // Vi måste sortera på datum här så att vi enkelt kan hitta eventuella aktiesplittar.
         usort($csvData, function($a, $b) {
@@ -50,7 +63,7 @@ class Avanza extends CsvParser
             // TODO: Kan rent teoretiskt sett urskilja på om det är en aktie eller fond baserat på om antalet är decimaltal eller inte.
 
             $transaction = new Transaction();
-            $transaction->bank = 'AVANZA';
+            $transaction->bank = static::BANK_NAME;
             $transaction->date = $row[0]; // Datum
             $transaction->account = $row[1]; // Konto
             $transaction->type = $transactionType->value; // Typ av transaktion

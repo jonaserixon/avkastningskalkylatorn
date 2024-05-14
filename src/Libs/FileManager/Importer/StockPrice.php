@@ -2,12 +2,14 @@
 
 namespace src\Libs\FileManager\Importer;
 
+use Exception;
 use src\DataStructure\Holding;
 use src\Libs\FileManager\CsvParser;
 
 class StockPrice extends CsvParser
 {
     protected static string $DIR = STOCK_PRICE_DIR;
+    private const CSV_SEPARATOR = ",";
 
     /**
      * @var Holding[]
@@ -16,18 +18,29 @@ class StockPrice extends CsvParser
 
     protected function validateImportFile(string $filePath): bool
     {
-        if (($handle = fopen($filePath, "r")) !== false) {
-            // semi-colon separerad
-            if (($headers = fgetcsv($handle, 1000, ",")) !== false) {
-                if (count($headers) >= 5) {
-                    return true;
-                }
-            }
+        $result = false;
 
-            fclose($handle);
+        $handle = fopen($filePath, "r");
+        if ($handle === false) {
+            throw new Exception('Failed to open file: ' . basename($filePath));
         }
 
-        throw new Exception('Invalid stock price import file: ' . basename($filePath));
+        try {
+            $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
+            if ($headers === false) {
+                throw new Exception('Failed to read headers from file: ' . basename($filePath));
+            }
+
+            if (count($headers) >= 5) {
+                throw new Exception('Invalid stock price import file: ' . basename($filePath));
+            }
+
+            $result = true;
+        } finally {
+            fclose($handle);
+
+            return $result;
+        }
     }
 
     /**
@@ -56,7 +69,7 @@ class StockPrice extends CsvParser
         if ($file !== false) {
             fgetcsv($file);
 
-            while (($fields = fgetcsv($file, 0, ",")) !== false) {
+            while (($fields = fgetcsv($file, 0, static::CSV_SEPARATOR)) !== false) {
                 $holding = new Holding();
 
                 $holding->name = trim($fields[0]);
