@@ -40,7 +40,7 @@ class StockPriceManager
             while (($fields = fgetcsv($file, 0, ",")) !== false) {
                 $holding = new Holding();
 
-                $holding->name = $fields[0];
+                $holding->name = trim($fields[0]);
                 $holding->isin = trim($fields[1]);
                 $holding->price = (float) $fields[3];
 

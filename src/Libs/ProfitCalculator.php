@@ -3,9 +3,10 @@
 namespace src\Libs;
 
 use src\DataStructure\TransactionSummary;
-use src\Libs\FileManager\StockPriceManager;
 use src\Libs\FileManager\Exporter;
-use src\Libs\FileManager\Importer;
+use src\Libs\FileManager\Importer\Avanza;
+use src\Libs\FileManager\Importer\Nordnet;
+use src\Libs\FileManager\StockPriceManager;
 use stdClass;
 
 class ProfitCalculator
@@ -22,18 +23,23 @@ class ProfitCalculator
     public function init()
     {
         $stockPriceManager = new StockPriceManager();
-        $importer = new Importer();
-
-        $bankTransactions = $importer->parseBankTransactions();
     
         $transactionHandler = new TransactionHandler($this->presenter);
-        $summaries = $transactionHandler->getTransactionsOverview($bankTransactions);
+        $summaries = $transactionHandler->getTransactionsOverview($this->getTransactions());
 
         if ($this->generateCsv) {
             Exporter::generateCsvExport($summaries, $stockPriceManager);
         }
 
         $this->presentResult($summaries, $stockPriceManager);
+    }
+
+    private function getTransactions(): array
+    {
+        $avanzaTransactions = (new Avanza())->parseBankTransactions();
+        $nordnetTransactions = (new Nordnet())->parseBankTransactions();
+
+        return array_merge($avanzaTransactions, $nordnetTransactions);
     }
 
     /**
