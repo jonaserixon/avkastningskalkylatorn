@@ -53,7 +53,7 @@ class StockPriceManager
 
     public function getCurrentPriceByIsin(string $isin): ?float
     {
-        if (!$this->currentHoldingsData) {
+        if (empty($this->currentHoldingsData)) {
             $this->currentHoldingsData = $this->getStockPricesForCurrentHoldings();
         }
 
