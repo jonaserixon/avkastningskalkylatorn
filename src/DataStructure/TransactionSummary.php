@@ -5,6 +5,7 @@ namespace src\DataStructure;
 class TransactionSummary
 {
     public string $name;
+    public array $transactionNames = [];
     public string $isin;
     public float $buyAmountTotal = 0;
     public float $sellAmountTotal = 0;

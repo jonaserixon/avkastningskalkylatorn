@@ -1,21 +1,53 @@
 <?php
 
-namespace src\Libs\FileManager;
+namespace src\Libs\FileManager\Importer;
 
+use Exception;
 use src\DataStructure\Holding;
+use src\Libs\FileManager\CsvParser;
 
-class StockPriceManager
+class StockPrice extends CsvParser
 {
+    protected static string $DIR = STOCK_PRICE_DIR;
+    private const CSV_SEPARATOR = ",";
+
     /**
      * @var Holding[]
      */
     private array $currentHoldingsData = [];
 
+    protected function validateImportFile(string $filePath): bool
+    {
+        $result = false;
+
+        $handle = fopen($filePath, "r");
+        if ($handle === false) {
+            throw new Exception('Failed to open file: ' . basename($filePath));
+        }
+
+        try {
+            $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
+            if ($headers === false) {
+                throw new Exception('Failed to read headers from file: ' . basename($filePath));
+            }
+
+            if (count($headers) >= 5) {
+                throw new Exception('Invalid stock price import file: ' . basename($filePath));
+            }
+
+            $result = true;
+        } finally {
+            fclose($handle);
+
+            return $result;
+        }
+    }
+
     /**
      * Based off of this template: https://docs.google.com/spreadsheets/d/10dohImvsGkBNfA_qB5EATt3tX01UKdmBozDhD7bMB18/edit?usp=sharing
      * @return Holding[]
      */
-    private function getStockPricesForCurrentHoldings(): array
+    protected function parseTransactions(string $fileName): array
     {
         $files = glob(STOCK_PRICE_DIR . '/*.csv');
 
@@ -37,10 +69,10 @@ class StockPriceManager
         if ($file !== false) {
             fgetcsv($file);
 
-            while (($fields = fgetcsv($file, 0, ",")) !== false) {
+            while (($fields = fgetcsv($file, 0, static::CSV_SEPARATOR)) !== false) {
                 $holding = new Holding();
 
-                $holding->name = $fields[0];
+                $holding->name = trim($fields[0]);
                 $holding->isin = trim($fields[1]);
                 $holding->price = (float) $fields[3];
 
@@ -54,7 +86,7 @@ class StockPriceManager
     public function getCurrentPriceByIsin(string $isin): ?float
     {
         if (empty($this->currentHoldingsData)) {
-            $this->currentHoldingsData = $this->getStockPricesForCurrentHoldings();
+            $this->currentHoldingsData = $this->parseTransactions(''); // TODO: fixa detta.
         }
 
         foreach ($this->currentHoldingsData as $holding) {

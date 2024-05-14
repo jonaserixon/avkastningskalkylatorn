@@ -8,8 +8,8 @@ class Transaction
     public string $bank;
     // public Bank $bank;
     public string $account;
-    public string $transactionType;
-    // public TransactionType $transactionType;
+    public string $type;
+    // public TransactionType $type;
     public string $name;
     public float $quantity; // float to handle fractional shares
     public float $rawQuantity; // float to handle fractional shares
