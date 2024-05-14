@@ -2,10 +2,14 @@
 
 namespace src\Libs\FileManager;
 
+use src\DataStructure\TransactionSummary;
 use src\Libs\ProfitCalculator;
 
 class Exporter
 {
+    /**
+     * @param TransactionSummary[] $summaries
+     */
     public static function generateCsvExport(array $summaries, StockPriceManager $stockPriceManager): void
     {
         usort($summaries, function($a, $b) {
@@ -36,7 +40,7 @@ class Exporter
 
         foreach ($summaries as $summary) {
             $currentPricePerShare = $stockPriceManager->getCurrentPriceByIsin($summary->isin);
-            $currentValueOfShares = null;
+
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
@@ -46,7 +50,7 @@ class Exporter
             $calculatedReturns = $profitCalculator->calculateReturns($summary, $currentValueOfShares);
 
             $row = [
-                'date' => date('Y-m-d'),
+                // 'date' => date('Y-m-d'),
                 'name' => $summary->name,
                 'isin' => $summary->isin,
                 'buyAmountTotal' => $summary->buyAmountTotal,

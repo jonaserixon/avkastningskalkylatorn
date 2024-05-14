@@ -215,7 +215,7 @@ function getDirectoriesWithPhpFiles($rootDir, &$subdirs = [], $baseDir = '')
 }
 
 $directories = [
-    'App' => ['exclude_analysis' => false],
+    'src' => ['exclude_analysis' => false],
 ];
 
 foreach ($directories as $dirPath => $dirConfig) {
