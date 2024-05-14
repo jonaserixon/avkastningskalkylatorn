@@ -64,8 +64,8 @@ class TransactionHandler
             $summary->isin = $isin;
 
             $indexesToSkip = [];
-            foreach ($companyTransactions as $transactions) {
-                $this->processTransactionType($summary, $transactions, $indexesToSkip);
+            foreach ($companyTransactions as $groupTransactionType => $transactions) {
+                $this->processTransactionType($summary, $groupTransactionType, $transactions, $indexesToSkip);
             }
 
             $summary->name = $summary->names[0];
@@ -75,7 +75,7 @@ class TransactionHandler
         return $summaries;
     }
 
-    private function processTransactionType(TransactionSummary &$summary, array $transactions, array &$indexesToSkip): void
+    private function processTransactionType(TransactionSummary &$summary, string $groupTransactionType, array $transactions, array &$indexesToSkip): void
     {
         foreach ($transactions as $index => $transaction) {
             $transaction = $transactions[$index];
@@ -86,10 +86,10 @@ class TransactionHandler
                 continue;
             }
 
-            if ($transaction->transactionType === 'share_transfer') {
+            if ($groupTransactionType === 'share_transfer') {
                 $this->handleShareTransfer($transaction, $nextTransaction, $summary, $indexesToSkip, $index);
             } else {
-                $this->updateSummaryBasedOnTransactionType($summary, $transaction);
+                $this->updateSummaryBasedOnTransactionType($summary, $groupTransactionType, $transaction);
             }
 
             if (!in_array($transaction->name, $summary->names)) {
@@ -142,11 +142,11 @@ class TransactionHandler
         }
     }
 
-    private function updateSummaryBasedOnTransactionType(TransactionSummary &$summary, Transaction $transaction): void
+    private function updateSummaryBasedOnTransactionType(TransactionSummary &$summary, string $groupTransactionType, Transaction $transaction): void
     {
         $transactionAmount = $transaction->amount;
 
-        switch ($transaction->transactionType) {
+        switch ($groupTransactionType) {
             case 'buy':
                 $summary->buyAmountTotal += $transactionAmount;
                 $summary->currentNumberOfShares += round($transaction->quantity, 2);
@@ -164,9 +164,6 @@ class TransactionHandler
                 break;
             case 'share_split':
                 $summary->currentNumberOfShares += round($transaction->quantity, 2);
-                break;
-            case 'other':
-                // TODO: ???
                 break;
             default:
                 echo $this->presenter->redText("Unknown transaction type: '{$transaction->transactionType}' in {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
@@ -199,7 +196,7 @@ class TransactionHandler
                 $groupedTransactions[$transaction->isin] = [
                     'buy' => [],
                     'sell' => [],
-                    'dividend' => [],
+                    'dividends' => [],
                     'share_split' => [],
                     'share_transfer' => []
                 ];
@@ -235,6 +232,7 @@ class TransactionHandler
 
             if ($shareSplitQuantity) {
                 $transaction->quantity = $shareSplitQuantity;
+                $transaction->rawQuantity = $shareSplitQuantity;
                 $groupedTransactions[$transaction->isin]['share_split'][] = $transaction;
 
                 $indexesToSkip[] = $nextIndex;
