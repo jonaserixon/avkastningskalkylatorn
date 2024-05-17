@@ -56,7 +56,7 @@ class TransactionHandler
             throw new Exception('No transaction file in csv format in the imports directory.');
         }
 
-        usort($summaries, function($a, $b) {
+        usort($summaries, function ($a, $b) {
             return strcasecmp($a->name, $b->name);
         });
 
@@ -209,7 +209,7 @@ class TransactionHandler
 
     /**
      * Group "raw" transactions.
-     * 
+     *
      * @param Transaction[] $transactions
      */
     public function groupTransactions(array $transactions): array
@@ -280,7 +280,7 @@ class TransactionHandler
 
         // TODO: hantera aktiesplittar från nordnet.
     }
-    
+
     private function shouldSkipTransaction(Transaction $transaction): bool
     {
         if (in_array(mb_strtolower($transaction->name), static::BLACKLISTED_TRANSACTION_NAMES) || empty($transaction->name)) {

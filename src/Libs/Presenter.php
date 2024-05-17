@@ -47,7 +47,7 @@ class Presenter
         if ($calculatedReturns) {
             echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFees) . ' SEK' . PHP_EOL;
             echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
-       
+
             echo $this->addTabs('Tot. avkastning (m. avgifter):') . $this->colorPicker($calculatedReturns->totalReturnInclFees) . ' SEK' . PHP_EOL;
             echo $this->addTabs('Tot. avkastning (m. avgifter):') . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
         }
@@ -55,14 +55,15 @@ class Presenter
         echo PHP_EOL;
     }
 
-    public function addTabs($label, $desiredColumnWidth = 45) {
+    public function addTabs($label, $desiredColumnWidth = 45)
+    {
         $currentLength = strlen($label);
         $spacesNeeded = $desiredColumnWidth - $currentLength;
-    
+
         $tabsCount = ceil($spacesNeeded / 8);
-    
+
         $tabsCount = max($tabsCount, 1);
-    
+
         return $label . str_repeat("\t", $tabsCount);
     }
 
@@ -102,7 +103,7 @@ class Presenter
     {
         return "\033[32m" . $value . "\033[0m";
     }
-    
+
     public function redText($value): string
     {
         return "\033[31m" . $value . "\033[0m";

@@ -13,7 +13,7 @@ class Exporter
      */
     public static function generateCsvExport(array $summaries, StockPrice $stockPrice): void
     {
-        usort($summaries, function($a, $b) {
+        usort($summaries, function ($a, $b) {
             return strcmp($a->name, $b->name);
         });
 

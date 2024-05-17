@@ -21,7 +21,7 @@ class Nordnet extends CsvParser
         }
 
         $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
-        
+
         if ($headers === false) {
             throw new Exception('Failed to read headers from file: ' . basename($filePath));
         }
@@ -70,6 +70,8 @@ class Nordnet extends CsvParser
 
         fclose($file);
 
+
+
         return $result;
     }
 
@@ -80,7 +82,7 @@ class Nordnet extends CsvParser
         }
 
         $normalizedInput = static::normalizeInput($input);
-    
+
         // Mappningstabell för att hantera olika termer från olika banker.
         $mapping = [
             'köpt' => 'buy',

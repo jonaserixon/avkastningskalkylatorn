@@ -29,18 +29,17 @@ class ProfitCalculator
 
         if ($this->generateCsv) {
             Exporter::generateCsvExport($summaries, $stockPrice);
+            // Exporter::testGenerateCsvExport($this->transactionHandler->overview->transactions);
         }
 
         ob_start();
         $this->presentResult($summaries, $stockPrice);
         ob_end_flush();
 
-        $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
-
-        // Exporter::testGenerateCsvExport($this->transactionHandler->overview->transactions);
-
         // TODO this should be placed elsewhere
+        $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
         $xirr = $this->transactionHandler->overview->calculateXIRR($this->transactionHandler->overview->transactions);
+
         echo "XIRR: " . ($xirr * 100) . '%' . PHP_EOL;
     }
 

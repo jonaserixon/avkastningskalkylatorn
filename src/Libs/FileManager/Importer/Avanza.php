@@ -42,7 +42,7 @@ class Avanza extends CsvParser
         $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
 
         // Vi måste sortera på datum här så att vi enkelt kan hitta eventuella aktiesplittar.
-        usort($csvData, function($a, $b) {
+        usort($csvData, function ($a, $b) {
             return strtotime($a[0]) <=> strtotime($b[0]);
         });
 
@@ -83,7 +83,7 @@ class Avanza extends CsvParser
         }
 
         $normalizedInput = static::normalizeInput($input);
-    
+
         // Mappningstabell för att hantera olika termer från olika banker.
         $mapping = [
             'köpt' => 'buy',

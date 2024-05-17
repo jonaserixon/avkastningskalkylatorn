@@ -49,9 +49,9 @@ class StockPrice extends CsvParser
         $latestTime = 0;
         foreach ($files as $file) {
             $filePath = $file;
-            
+
             $fileTime = filemtime($filePath);
-            
+
             if ($fileTime > $latestTime) {
                 $latestTime = $fileTime;
                 $latestFile = $filePath;
