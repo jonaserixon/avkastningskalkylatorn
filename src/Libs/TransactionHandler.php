@@ -2,7 +2,6 @@
 
 namespace src\Libs;
 
-use DateTime;
 use Exception;
 use src\DataStructure\Overview;
 use src\DataStructure\Transaction;
@@ -46,7 +45,6 @@ class TransactionHandler
      */
     public function getTransactionsOverview(array $transactions)
     {
-        // TODO: sort the merged transactions here (should probably be done somewhere else)
         $this->overview = new Overview();
         $this->overview->firstTransactionDate = $transactions[0]->date;
         // $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->date;

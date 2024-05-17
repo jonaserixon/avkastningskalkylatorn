@@ -2,7 +2,6 @@
 
 namespace src\Libs;
 
-use DateTime;
 use src\DataStructure\TransactionSummary;
 use src\Libs\FileManager\Exporter;
 use src\Libs\FileManager\Importer\Avanza;
@@ -29,23 +28,20 @@ class ProfitCalculator
         $summaries = $this->transactionHandler->getTransactionsOverview($this->getTransactions());
 
         if ($this->generateCsv) {
-            // Exporter::generateCsvExport($summaries, $stockPrice);
+            Exporter::generateCsvExport($summaries, $stockPrice);
         }
 
+        ob_start();
         $this->presentResult($summaries, $stockPrice);
-        
+        ob_end_flush();
+
         $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
 
-        
         // Exporter::testGenerateCsvExport($this->transactionHandler->overview->transactions);
 
-        // Beräkna XIRR
+        // TODO this should be placed elsewhere
         $xirr = $this->transactionHandler->overview->calculateXIRR($this->transactionHandler->overview->transactions);
         echo "XIRR: " . ($xirr * 100) . '%' . PHP_EOL;
-        unset($this->transactionHandler->overview->transactions);
-        unset($this->transactionHandler->overview->companyTransactions);
-        print_r($this->transactionHandler->overview);
-        exit;
     }
 
     private function getTransactions(): array
@@ -54,7 +50,7 @@ class ProfitCalculator
             (new Avanza())->parseBankTransactions(),
             (new Nordnet())->parseBankTransactions()
         );
-     
+
         usort($transactions, function ($a, $b) {
             $dateComparison = strtotime($a->date) <=> strtotime($b->date);
             if ($dateComparison !== 0) {
@@ -81,15 +77,14 @@ class ProfitCalculator
         foreach ($summaries as $summary) {
             $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
 
+            // TODO: move calculations to a separate method
+
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
-                // TODO: move calculations to a separate method
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
                 $this->transactionHandler->overview->totalCurrentHoldings += $currentValueOfShares;
 
                 $this->transactionHandler->overview->addFinalCompanyTransaction($summary->isin, $currentValueOfShares);
-            } else {
-                
             }
 
             $calculatedReturns = $this->calculateReturns($summary, $currentValueOfShares);

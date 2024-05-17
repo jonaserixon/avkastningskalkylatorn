@@ -20,6 +20,8 @@ class Overview
     public array $transactions = [];
     public array $companyTransactions = [];
 
+    // TODO: think about where to put all of this shit.
+
     public function calculateCAGR()
     {
 
