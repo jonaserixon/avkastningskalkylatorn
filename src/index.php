@@ -12,5 +12,9 @@ define('EXPORT_DIR', ROOT_PATH . '/exports');
 
 $generateCsv = getenv('GENERATE_CSV') === 'yes' ? true : false;
 
-$profitCalculator = new ProfitCalculator($generateCsv);
-$profitCalculator->init();
+try {
+    $profitCalculator = new ProfitCalculator($generateCsv);
+    $profitCalculator->init();
+} catch (Exception $e) {
+    echo $e->getMessage();
+}

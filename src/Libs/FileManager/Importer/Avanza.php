@@ -15,29 +15,23 @@ class Avanza extends CsvParser
 
     protected function validateImportFile(string $filePath): bool
     {
-        $result = false;
-
         $handle = fopen($filePath, "r");
         if ($handle === false) {
             throw new Exception('Failed to open file: ' . basename($filePath));
         }
 
-        try {
-            $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
-            if ($headers === false) {
-                throw new Exception('Failed to read headers from file: ' . basename($filePath));
-            }
-
-            if (count($headers) !== 11) {
-                throw new Exception('Invalid Avanza import file: ' . basename($filePath));
-            }
-
-            $result = true;
-        } finally {
-            fclose($handle);
-
-            return $result;
+        $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
+        if ($headers === false) {
+            throw new Exception('Failed to read headers from file: ' . basename($filePath));
         }
+
+        if (count($headers) !== 11) {
+            throw new Exception('Invalid Avanza import file: ' . basename($filePath));
+        }
+
+        fclose($handle);
+
+        return true;
     }
 
     /**

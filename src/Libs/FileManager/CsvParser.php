@@ -25,7 +25,7 @@ abstract class CsvParser
             $validatedBank = $this->validateImportFile($filepath);
 
             if ($validatedBank) {
-                $result = array_merge($result, static::parseTransactions($filepath));
+                $result = static::parseTransactions($filepath);
                 break;
             }
         }

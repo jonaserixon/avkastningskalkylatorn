@@ -34,7 +34,7 @@ class Presenter
             echo $this->addTabs('Nuvarande antal aktier:') . number_format($summary->currentNumberOfShares, 2, '.', ' ') . ' st' . PHP_EOL;
 
             if ($currentValueOfShares) {
-                echo $this->addTabs('Nuvarande pris/aktie') . number_format($currentPricePerShare, 2, '.', ' ') . ' SEK' . PHP_EOL;
+                echo $this->addTabs('Nuvarande pris/aktie', 40) . number_format($currentPricePerShare, 2, '.', ' ') . ' SEK' . PHP_EOL;
                 echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($currentValueOfShares, 2, '.', ' ') . ' SEK ' . PHP_EOL;
             } else {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';

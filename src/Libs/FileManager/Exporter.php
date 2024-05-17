@@ -50,6 +50,10 @@ class Exporter
             $profitCalculator = new ProfitCalculator();
             $calculatedReturns = $profitCalculator->calculateReturns($summary, $currentValueOfShares);
 
+            if ($calculatedReturns === null) {
+                continue;
+            }
+
             $row = [
                 // 'date' => date('Y-m-d'),
                 'name' => $summary->name,
@@ -67,6 +71,26 @@ class Exporter
                 'totalReturnExclFeesPercent' => $calculatedReturns->totalReturnExclFeesPercent,
                 'totalReturnInclFees' => $calculatedReturns->totalReturnInclFees,
                 'totalReturnInclFeesPercent' => $calculatedReturns->totalReturnInclFeesPercent
+            ];
+
+            fputcsv($f, array_values($row), ',');
+        }
+    }
+
+    public static function testGenerateCsvExport(array $transactions): void
+    {
+        $filePath = "/exports/export_".date('Y-m-d_His').".csv";
+        $csvHeaders = [
+            'date',
+            'amount'
+        ];
+        $f = fopen($filePath, "w");
+        fputcsv($f, $csvHeaders, ',');
+
+        foreach ($transactions as $transaction) {
+            $row = [
+                'date' => $transaction->date,
+                'amount' => $transaction->amount,
             ];
 
             fputcsv($f, array_values($row), ',');
