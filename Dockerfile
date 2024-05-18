@@ -13,4 +13,4 @@ RUN ln -s /usr/src/avkastningskalkylatorn/src/index.php /usr/local/bin/avk
 RUN chmod +x /usr/local/bin/avk
 
 # CMD [ "php", "./src/index.php" ]
-CMD ["tail", "-F", "null"]
+CMD ["tail", "-F", "/dev/null"]

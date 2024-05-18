@@ -4,5 +4,4 @@ services:
     volumes:
       - ./exports:/exports
       - ./imports:/imports
-    tty: true
-    stdin_open: true
+      - .:/usr/src/avkastningskalkylatorn

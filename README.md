@@ -2,8 +2,8 @@
 
 ### Setup the project
 1. Download the repo
-2. Run `docker-compose build`
-3. Run `docker-compose up`
+2. Run `docker-compose up --build`
+3. Enter the docker container and start a bash session to execute commands.
 
 ### How to use
 You need to export your transactions from Avanza/Nordnet and then put them in the `/imports/avanza/` and `/imports/nordnet/` directories.
