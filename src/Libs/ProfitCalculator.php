@@ -11,13 +11,13 @@ use stdClass;
 
 class ProfitCalculator
 {
-    private bool $generateCsv;
+    private bool $exportCsv;
     private Presenter $presenter;
     private TransactionHandler $transactionHandler;
 
-    public function __construct(bool $generateCsv = false)
+    public function __construct(bool $exportCsv = false)
     {
-        $this->generateCsv = $generateCsv;
+        $this->exportCsv = $exportCsv;
         $this->presenter = new Presenter();
         $this->transactionHandler = new TransactionHandler($this->presenter);
     }
@@ -27,7 +27,7 @@ class ProfitCalculator
         $stockPrice = new StockPrice();
         $summaries = $this->transactionHandler->getTransactionsOverview($this->getTransactions());
 
-        if ($this->generateCsv) {
+        if ($this->exportCsv) {
             Exporter::generateCsvExport($summaries, $stockPrice);
             // Exporter::testGenerateCsvExport($this->transactionHandler->overview->transactions);
         }
