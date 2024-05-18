@@ -18,29 +18,23 @@ class StockPrice extends CsvParser
 
     protected function validateImportFile(string $filePath): bool
     {
-        $result = false;
-
         $handle = fopen($filePath, "r");
         if ($handle === false) {
             throw new Exception('Failed to open file: ' . basename($filePath));
         }
 
-        try {
-            $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
-            if ($headers === false) {
-                throw new Exception('Failed to read headers from file: ' . basename($filePath));
-            }
-
-            if (count($headers) >= 5) {
-                throw new Exception('Invalid stock price import file: ' . basename($filePath));
-            }
-
-            $result = true;
-        } finally {
-            fclose($handle);
-
-            return $result;
+        $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
+        if ($headers === false) {
+            throw new Exception('Failed to read headers from file: ' . basename($filePath));
         }
+
+        if (count($headers) >= 5) {
+            throw new Exception('Invalid stock price import file: ' . basename($filePath));
+        }
+
+        fclose($handle);
+
+        return true;
     }
 
     /**
@@ -55,9 +49,9 @@ class StockPrice extends CsvParser
         $latestTime = 0;
         foreach ($files as $file) {
             $filePath = $file;
-            
+
             $fileTime = filemtime($filePath);
-            
+
             if ($fileTime > $latestTime) {
                 $latestTime = $fileTime;
                 $latestFile = $filePath;

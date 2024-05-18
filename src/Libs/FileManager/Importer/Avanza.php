@@ -15,29 +15,23 @@ class Avanza extends CsvParser
 
     protected function validateImportFile(string $filePath): bool
     {
-        $result = false;
-
         $handle = fopen($filePath, "r");
         if ($handle === false) {
             throw new Exception('Failed to open file: ' . basename($filePath));
         }
 
-        try {
-            $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
-            if ($headers === false) {
-                throw new Exception('Failed to read headers from file: ' . basename($filePath));
-            }
-
-            if (count($headers) !== 11) {
-                throw new Exception('Invalid Avanza import file: ' . basename($filePath));
-            }
-
-            $result = true;
-        } finally {
-            fclose($handle);
-
-            return $result;
+        $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
+        if ($headers === false) {
+            throw new Exception('Failed to read headers from file: ' . basename($filePath));
         }
+
+        if (count($headers) !== 11) {
+            throw new Exception('Invalid Avanza import file: ' . basename($filePath));
+        }
+
+        fclose($handle);
+
+        return true;
     }
 
     /**
@@ -48,7 +42,7 @@ class Avanza extends CsvParser
         $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
 
         // Vi måste sortera på datum här så att vi enkelt kan hitta eventuella aktiesplittar.
-        usort($csvData, function($a, $b) {
+        usort($csvData, function ($a, $b) {
             return strtotime($a[0]) <=> strtotime($b[0]);
         });
 
@@ -89,7 +83,7 @@ class Avanza extends CsvParser
         }
 
         $normalizedInput = static::normalizeInput($input);
-    
+
         // Mappningstabell för att hantera olika termer från olika banker.
         $mapping = [
             'köpt' => 'buy',

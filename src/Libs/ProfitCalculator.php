@@ -13,33 +13,56 @@ class ProfitCalculator
 {
     private bool $generateCsv;
     private Presenter $presenter;
+    private TransactionHandler $transactionHandler;
 
     public function __construct(bool $generateCsv = false)
     {
         $this->generateCsv = $generateCsv;
         $this->presenter = new Presenter();
+        $this->transactionHandler = new TransactionHandler($this->presenter);
     }
 
     public function init()
     {
         $stockPrice = new StockPrice();
-    
-        $transactionHandler = new TransactionHandler($this->presenter);
-        $summaries = $transactionHandler->getTransactionsOverview($this->getTransactions());
+        $summaries = $this->transactionHandler->getTransactionsOverview($this->getTransactions());
 
         if ($this->generateCsv) {
             Exporter::generateCsvExport($summaries, $stockPrice);
+            // Exporter::testGenerateCsvExport($this->transactionHandler->overview->transactions);
         }
 
+        ob_start();
         $this->presentResult($summaries, $stockPrice);
+        ob_end_flush();
+
+        // TODO this should be placed elsewhere
+        $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
+        $xirr = $this->transactionHandler->overview->calculateXIRR($this->transactionHandler->overview->transactions);
+
+        echo "XIRR: " . ($xirr * 100) . '%' . PHP_EOL;
     }
 
     private function getTransactions(): array
     {
-        $avanzaTransactions = (new Avanza())->parseBankTransactions();
-        $nordnetTransactions = (new Nordnet())->parseBankTransactions();
+        $transactions = array_merge(
+            (new Avanza())->parseBankTransactions(),
+            (new Nordnet())->parseBankTransactions()
+        );
 
-        return array_merge($avanzaTransactions, $nordnetTransactions);
+        usort($transactions, function ($a, $b) {
+            $dateComparison = strtotime($a->date) <=> strtotime($b->date);
+            if ($dateComparison !== 0) {
+                return $dateComparison;
+            }
+            $bankComparison = strcmp($a->bank, $b->bank);
+            if ($bankComparison !== 0) {
+                return $bankComparison;
+            }
+            return strcmp($a->isin, $b->isin);
+        });
+
+        return $transactions;
     }
 
     /**
@@ -53,10 +76,14 @@ class ProfitCalculator
         foreach ($summaries as $summary) {
             $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
 
+            // TODO: move calculations to a separate method
+
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
-                // TODO: move calculations to a separate method
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
+                $this->transactionHandler->overview->totalCurrentHoldings += $currentValueOfShares;
+
+                $this->transactionHandler->overview->addFinalCompanyTransaction($summary->isin, $currentValueOfShares);
             }
 
             $calculatedReturns = $this->calculateReturns($summary, $currentValueOfShares);
