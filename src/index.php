@@ -14,5 +14,5 @@ define('EXPORT_DIR', ROOT_PATH . '/exports');
 try {
     (new CommandProcessor())->main($_SERVER['argv']);
 } catch (Exception $e) {
-    echo $e->getMessage();
+    echo $e->getMessage() . PHP_EOL;
 }

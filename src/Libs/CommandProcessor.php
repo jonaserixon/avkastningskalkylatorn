@@ -7,27 +7,47 @@ use src\Libs\Presenter;
 
 class CommandProcessor
 {
-    private const COMMANDS = [
+    protected const COMMANDS = [
         'calculate-profit' => [
-            'description' => 'A fitting description for the command',
+            'description' => 'Calculate profits',
             'options' => [
-                'generateCsv' => [
-                    'description' => 'Generate CSV file'
+                'export-csv' => [
+                    'description' => 'Generate and export CSV file',
+                    'default' => false,
+                    'require-value' => false
                 ],
+                'bank' => [
+                    'description' => 'Bank to calculate profit for',
+                    'require-value' => true
+                ],
+                /*
+                // TODO: to be implemented
                 'date-from' => [
                     'description' => 'Date to calculate profit from',
+                    'require-value' => true
                 ],
                 'date-to' => [
                     'description' => 'Date to calculate profit to',
-                ],
-                'bank' => [
-                    'description' => 'Bank to calculate profit for'
-                ],
-                'isin' => [
-                    'description' => 'ISIN to calculate profit for',
+                    'require-value' => true
                 ],
                 'asset' => [
-                    'description' => 'Asset (name) to calculate profit for'
+                    'description' => 'Asset (name) to calculate profit for',
+                    'require-value' => true
+                ],
+                */
+                'isin' => [
+                    'description' => 'ISIN to calculate profit for',
+                    'require-value' => true
+                ],
+                'current-holdings' => [
+                    'description' => 'Only calculate profit for current holdings',
+                    'default' => false,
+                    'require-value' => false
+                ],
+                'verbose' => [
+                    'description' => 'Prints more information',
+                    'default' => false,
+                    'require-value' => false
                 ]
             ]
         ],
@@ -68,17 +88,7 @@ class CommandProcessor
             exit(1);
         }
 
-        if (isset(static::COMMANDS[$command]['options'])) {
-            $availableOptions = static::COMMANDS[$command]['options'];
-
-            foreach ($options as $option => $value) {
-                if (!array_key_exists($option, $availableOptions)) {
-                    echo $this->presenter->redText("Unknown option: $option\n\n");
-                    $this->printAvailableCommands($command);
-                    exit(1);
-                }
-            }
-        }
+        $this->validateOptions($command, $options);
 
         switch ($command) {
             case 'calculate-profit':
@@ -91,6 +101,29 @@ class CommandProcessor
                 $this->unknownCommand($command);
                 $this->printAvailableCommands();
                 break;
+        }
+    }
+
+    protected function validateOptions(string $command, array $options): void
+    {
+        if (!isset(static::COMMANDS[$command]['options'])) {
+            return;
+        }
+
+        $availableOptions = static::COMMANDS[$command]['options'];
+        foreach ($options as $option => $value) {
+            if (!array_key_exists($option, $availableOptions)) {
+                echo $this->presenter->redText("Unknown option: $option\n\n");
+                $this->printAvailableCommands($command);
+                exit(1);
+            } else {
+                $requiresValue = $availableOptions[$option]['require-value'];
+                if ($requiresValue && $value === true) {
+                    echo $this->presenter->redText("Option '$option' requires a value\n\n");
+                    $this->printAvailableCommands($command);
+                    exit(1);
+                }
+            }
         }
     }
 
@@ -111,7 +144,7 @@ class CommandProcessor
                 echo $this->presenter->blueText("    Description: " . $details['description'] . "\n");
             }
         } else {
-            echo $this->presenter->cyanText("Available commands:\n\n");
+            echo $this->presenter->pinkText("Available commands:\n\n");
             foreach (self::COMMANDS as $command => $commandDetails) {
                 echo $this->presenter->cyanText("Command: $command\n");
                 echo $this->presenter->cyanText("Description: " . $commandDetails['description'] . "\n");

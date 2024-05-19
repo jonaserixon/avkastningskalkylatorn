@@ -7,7 +7,9 @@ use stdClass;
 
 class Presenter
 {
-    public function displayFormattedSummary(
+    private const TAB_SIZE = 4; // Adjust based on your desired tab size
+
+    public function displayVerboseFormattedSummary(
         TransactionSummary $summary,
         ?float $currentPricePerShare,
         ?float $currentValueOfShares,
@@ -20,21 +22,21 @@ class Presenter
 
         echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($summary->buyAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
         echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($summary->sellAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
-        echo $this->addTabs('Utdelningar:', 40) . $this->colorPicker($summary->dividendAmountTotal) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Utdelningar:') . $this->colorPicker($summary->dividendAmountTotal) . ' SEK' . PHP_EOL;
 
         echo PHP_EOL;
 
-        echo $this->addTabs('Tot. avgifter:') . $this->redText($summary->feeAmountTotal) . ' SEK' . PHP_EOL;
-        echo $this->addTabs('Köpavgifter:') . $this->redText($summary->feeBuyAmountTotal) . ' SEK' . PHP_EOL;
-        echo $this->addTabs('Säljavgifter:') . $this->redText($summary->feeSellAmountTotal) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($summary->feeAmountTotal) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Köpavgifter:', 50) . $this->redText($summary->feeBuyAmountTotal) . ' SEK' . PHP_EOL;
+        echo $this->addTabs('Säljavgifter:', 50) . $this->redText($summary->feeSellAmountTotal) . ' SEK' . PHP_EOL;
 
         echo PHP_EOL;
 
         if ((int) $summary->currentNumberOfShares > 0) {
-            echo $this->addTabs('Nuvarande antal aktier:') . number_format($summary->currentNumberOfShares, 2, '.', ' ') . ' st' . PHP_EOL;
+            echo $this->addTabs('Nuvarande antal aktier:', 50) . number_format($summary->currentNumberOfShares, 2, '.', ' ') . ' st' . PHP_EOL;
 
             if ($currentValueOfShares) {
-                echo $this->addTabs('Nuvarande pris/aktie', 40) . number_format($currentPricePerShare, 2, '.', ' ') . ' SEK' . PHP_EOL;
+                echo $this->addTabs('Nuvarande pris/aktie') . number_format($currentPricePerShare, 2, '.', ' ') . ' SEK' . PHP_EOL;
                 echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($currentValueOfShares, 2, '.', ' ') . ' SEK ' . PHP_EOL;
             } else {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
@@ -48,11 +50,33 @@ class Presenter
             echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFees) . ' SEK' . PHP_EOL;
             echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
 
-            echo $this->addTabs('Tot. avkastning (m. avgifter):') . $this->colorPicker($calculatedReturns->totalReturnInclFees) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Tot. avkastning (m. avgifter):') . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($calculatedReturns->totalReturnInclFees) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
         }
 
         echo PHP_EOL;
+    }
+
+    public function displayCompactFormattedSummary(TransactionSummary $summary, ?stdClass $calculatedReturns): void
+    {
+        if (!$calculatedReturns) {
+            return;
+        }
+
+        $assetName = $summary->name .' ('.$summary->isin.')';
+        $assetNameTextLength = strlen($assetName);
+
+        // Calculate the number of spaces needed to align text
+        $spaces = str_repeat(' ', (70 - $assetNameTextLength + self::TAB_SIZE) < 0 ? 0 : (70 - $assetNameTextLength + self::TAB_SIZE));
+
+        $result = $this->pinkText($assetName);
+        $result .= $spaces;
+        $result .= $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . ' %';
+        $result .= ' | ';
+        $result .= $this->colorPicker($calculatedReturns->totalReturnInclFees) . ' SEK';
+        $result .= PHP_EOL.PHP_EOL;
+
+        echo $result;
     }
 
     public function addTabs($label, $desiredColumnWidth = 45)
