@@ -6,6 +6,8 @@ use src\DataStructure\TransactionSummary;
 use src\Libs\FileManager\Importer\StockPrice;
 use src\Libs\ProfitCalculator;
 
+// TODO: this should be able to export "anything". So the columns should be dynamic.The name of the export should be export_<command>_<date>.csv
+
 class Exporter
 {
     /**
@@ -48,7 +50,7 @@ class Exporter
             }
 
             $profitCalculator = new ProfitCalculator();
-            $calculatedReturns = $profitCalculator->calculateReturns($summary, $currentValueOfShares);
+            $calculatedReturns = $profitCalculator->calculateReturnsOnAsset($summary, $currentValueOfShares);
 
             if ($calculatedReturns === null) {
                 continue;

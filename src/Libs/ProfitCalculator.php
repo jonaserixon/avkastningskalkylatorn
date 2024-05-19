@@ -100,7 +100,10 @@ class ProfitCalculator
         echo 'XIRR: ' . $this->presenter->colorPicker($xirr * 100) . '%' . PHP_EOL;
     }
 
-    private function getTransactions(): array
+    /**
+     * Returns a list of sorted and possibly filtered transactions.
+     */
+    public function getTransactions(): array
     {
         $transactions = array_merge(
             (new Avanza())->parseBankTransactions(),
@@ -177,7 +180,7 @@ class ProfitCalculator
                 $this->transactionParser->overview->addFinalCompanyTransaction($summary->isin, $currentValueOfShares);
             }
 
-            $calculatedReturns = $this->calculateReturns($summary, $currentValueOfShares);
+            $calculatedReturns = $this->calculateReturnsOnAsset($summary, $currentValueOfShares);
 
             if ($this->verbose) {
                 $this->presenter->displayVerboseFormattedSummary($summary, $currentPricePerShare, $currentValueOfShares, $currentHoldingsMissingPricePerShare, $calculatedReturns);
@@ -196,7 +199,7 @@ class ProfitCalculator
         echo PHP_EOL;
     }
 
-    public function calculateReturns(TransactionSummary $summary, ?float $currentValueOfShares): ?stdClass
+    public function calculateReturnsOnAsset(TransactionSummary $summary, ?float $currentValueOfShares): ?stdClass
     {
         if ($currentValueOfShares === null) {
             $currentValueOfShares = 0;
