@@ -2,10 +2,11 @@
 
 namespace src\Libs;
 
+use DateTime;
 use Exception;
 use src\DataStructure\AssetReturn;
+// use src\Libs\FileManager\Exporter;
 use src\DataStructure\TransactionSummary;
-use src\Libs\FileManager\Exporter;
 use src\Libs\FileManager\Importer\Avanza;
 use src\Libs\FileManager\Importer\Nordnet;
 use src\Libs\FileManager\Importer\StockPrice;
@@ -22,7 +23,6 @@ class ProfitCalculator
     private ?string $filterDateTo;
     private bool $filterCurrentHoldings;
 
-    private Presenter $presenter;
     private TransactionParser $transactionParser;
 
     public function __construct(
@@ -44,78 +44,8 @@ class ProfitCalculator
         $this->filterDateTo = $dateTo;
         $this->filterCurrentHoldings = $currentHoldings;
 
-        $this->presenter = new Presenter();
-        $this->transactionParser = new TransactionParser($this->presenter);
+        $this->transactionParser = new TransactionParser();
     }
-
-    public function init()
-    {
-        $stockPrice = new StockPrice();
-        $summaries = $this->transactionParser->getTransactionsOverview($this->getTransactions());
-
-        if ($this->exportCsv) {
-            // Exporter::generateCsvExport($summaries, $stockPrice);
-            // Exporter::testGenerateCsvExport($this->transactionParser->overview->transactions);
-        }
-
-        ob_start();
-        $this->presentResult($summaries, $stockPrice);
-        ob_end_flush();
-
-        // TODO this should be placed elsewhere
-        $this->transactionParser->overview->addFinalTransaction($this->transactionParser->overview->totalCurrentHoldings);
-        $xirr = $this->transactionParser->overview->calculateXIRR($this->transactionParser->overview->transactions);
-
-        echo 'Tot. avgifter: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalFee) . ' SEK' . PHP_EOL;
-        echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalDividend) . ' SEK' . PHP_EOL;
-        echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
-        echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalSellAmount) . ' SEK' . PHP_EOL;
-        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
-        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
-        echo 'XIRR: ' . $this->presenter->colorPicker($xirr * 100) . '%' . PHP_EOL;
-    }
-
-    /*
-    public function _calculate()
-    {
-        $stockPrice = new StockPrice();
-        $summaries = $this->transactionParser->getTransactionsOverview($this->getTransactions());
-
-        if ($this->exportCsv) {
-            // Exporter::generateCsvExport($summaries, $stockPrice);
-            // Exporter::testGenerateCsvExport($this->transactionParser->overview->transactions);
-        }
-
-        $stockPrice = new StockPrice();
-        $currentHoldingsMissingPricePerShare = [];
-        foreach ($summaries as $summary) {
-            $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
-
-            if ($currentPricePerShare) {
-                $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
-
-                $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
-                $this->transactionParser->overview->addFinalAssetTransaction($summary->isin, $currentValueOfShares);
-                $this->transactionParser->overview->addFinalTransaction($currentValueOfShares);
-
-                $summary->currentPricePerShare = $currentPricePerShare;
-                $summary->currentValueOfShares = $currentValueOfShares;
-            } else {
-                $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
-            }
-
-            $summary->assetReturn = $this->calculateReturnsOnAsset($summary, $currentValueOfShares);
-        }
-
-        $result = new stdClass();
-        $result->currentHoldingsMissingPricePerShare = $currentHoldingsMissingPricePerShare;
-        $result->summaries = $summaries;
-        $result->overview = $this->transactionParser->overview;
-        $result->xirr = $this->transactionParser->overview->calculateXIRR($this->transactionParser->overview->transactions);
-
-        return $result;
-    }
-    */
 
     public function calculate(): stdClass
     {
@@ -143,20 +73,24 @@ class ProfitCalculator
 
                 $filteredSummaries[] = $summary;
 
-                $summary->assetReturn = $this->calculateReturnsOnAsset($summary, $currentValueOfShares);
+                $summary->assetReturn = $this->calculateTotalReturn($summary);
 
                 continue;
-            } elseif ((int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare) {
+            }
+
+            if ((int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare) {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
             }
 
-            $summary->assetReturn = $this->calculateReturnsOnAsset($summary, null);
+            $summary->assetReturn = $this->calculateTotalReturn($summary);
         }
 
+        /*
         if ($this->exportCsv) {
-            // Exporter::generateCsvExport($filteredSummaries, $stockPrice);
-            // Exporter::testGenerateCsvExport($this->transactionParser->overview->transactions);
+            Exporter::generateCsvExport($filteredSummaries, $stockPrice);
+            Exporter::testGenerateCsvExport($this->transactionParser->overview->transactions);
         }
+        */
 
         $result = new stdClass();
         $result->currentHoldingsMissingPricePerShare = $currentHoldingsMissingPricePerShare;
@@ -168,15 +102,99 @@ class ProfitCalculator
         }
 
         $result->overview = $this->transactionParser->overview;
-        $result->xirr = $this->transactionParser->overview->calculateXIRR($this->transactionParser->overview->transactions);
+        $result->xirr = $this->calculateXIRR($this->transactionParser->overview->transactions);
 
         return $result;
+    }
+
+    protected function calculateTotalReturn(TransactionSummary $summary): ?AssetReturn
+    {
+        if ($summary->currentValueOfShares === null) {
+            $summary->currentValueOfShares = 0;
+        }
+
+        if ($summary->buyAmountTotal <= 0) {
+            return null;
+        }
+
+        // Beräkna total avkastning exklusive avgifter
+        $totalReturnExclFees = $summary->sellAmountTotal + $summary->dividendAmountTotal + $summary->currentValueOfShares - $summary->buyAmountTotal;
+
+        $totalReturnExclFeesPercent = round($totalReturnExclFees / $summary->buyAmountTotal * 100, 2);
+
+        // Beräkna total avkastning inklusive avgifter
+        $adjustedTotalBuyAmount = $summary->buyAmountTotal + $summary->feeBuyAmountTotal;
+        $adjustedTotalSellAmount = $summary->sellAmountTotal + $summary->dividendAmountTotal - $summary->feeSellAmountTotal;
+
+        $totalReturnInclFees = $adjustedTotalSellAmount + $summary->currentValueOfShares - $adjustedTotalBuyAmount;
+        $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
+
+        $result = new AssetReturn();
+        $result->totalReturnExclFees = $totalReturnExclFees;
+        $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
+        $result->totalReturnInclFees = $totalReturnInclFees;
+        $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
+
+        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
+
+        return $result;
+    }
+
+    protected function calculateXIRR(array $transactions)
+    {
+        $minDate = $transactions[0]->date;
+        $minDate = new DateTime($minDate);
+
+        // NPV (Net Present Value) function
+        $npv = function ($rate) use ($transactions, $minDate) {
+            $sum = 0;
+            foreach ($transactions as $transaction) {
+                $amount = $transaction->amount;
+                $date = new DateTime($transaction->date);
+                $days = $minDate->diff($date)->days;
+                $sum += $amount / pow(1 + $rate, $days / 365);
+            }
+            return $sum;
+        };
+
+        // Newton-Raphson method to find the root
+        $guess = 0.1;
+        $tolerance = 0.0001;
+        $maxIterations = 100;
+        $iteration = 0;
+
+        while ($iteration < $maxIterations) {
+            $npvValue = $npv($guess);
+            $npvDerivative = ($npv($guess + $tolerance) - $npvValue) / $tolerance;
+
+            // Hantera liten derivata
+            if (abs($npvDerivative) < $tolerance) {
+                // Justera gissningen lite för att undvika division med noll
+                $npvDerivative = $tolerance;
+            }
+
+            $newGuess = $guess - $npvValue / $npvDerivative;
+
+            if (abs($newGuess - $guess) < $tolerance) {
+                return $newGuess;
+            }
+
+            $guess = $newGuess;
+            $iteration++;
+        }
+
+        throw new Exception("XIRR did not converge");
+    }
+
+    public function calculateCAGR()
+    {
+        // to be implemented(?)
     }
 
     /**
      * Returns a list of sorted and possibly filtered transactions.
      */
-    public function getTransactions(): array
+    public function getTransactions(): array // TODO: should be moved somewhere not related to profits
     {
         $transactions = array_merge(
             (new Avanza())->parseBankTransactions(),
@@ -216,7 +234,7 @@ class ProfitCalculator
             throw new Exception('No transactions found');
         }
 
-        // Sort transactions by date, bank and ISIN.
+        // Sort transactions by date, bank and ISIN. (important for calculations and handling of transactions)
         usort($transactions, function ($a, $b) {
             $dateComparison = strtotime($a->date) <=> strtotime($b->date);
             if ($dateComparison !== 0) {
@@ -230,79 +248,5 @@ class ProfitCalculator
         });
 
         return $transactions;
-    }
-
-    /**
-     * @param TransactionSummary[] $summaries
-     */
-    protected function presentResult(array $summaries, StockPrice $stockPrice): void
-    {
-        echo $this->presenter->createSeparator('-') . PHP_EOL;
-
-        $currentHoldingsMissingPricePerShare = [];
-        foreach ($summaries as $summary) {
-            $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
-
-            // TODO: move calculations to a separate method
-
-            $currentValueOfShares = null;
-            if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
-                $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
-                $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
-
-                $this->transactionParser->overview->addFinalAssetTransaction($summary->isin, $currentValueOfShares);
-            }
-
-            $calculatedReturns = $this->calculateReturnsOnAsset($summary, $currentValueOfShares);
-
-            // TODO: flytta allt med presenter till kommandot?
-            // if ($this->verbose) {
-            //     $this->presenter->displayVerboseFormattedSummary($summary, $currentPricePerShare, $currentValueOfShares, $currentHoldingsMissingPricePerShare, $calculatedReturns);
-            // } else {
-            //     $this->presenter->displayCompactFormattedSummary($summary, $calculatedReturns);
-            // }
-        }
-
-        echo PHP_EOL . $this->presenter->createSeparator('*') . PHP_EOL;
-        echo PHP_EOL;
-
-        foreach ($currentHoldingsMissingPricePerShare as $companyMissingPrice) {
-            echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
-        }
-
-        echo PHP_EOL;
-    }
-
-    public function calculateReturnsOnAsset(TransactionSummary $summary, ?float $currentValueOfShares): ?AssetReturn
-    {
-        if ($currentValueOfShares === null) {
-            $currentValueOfShares = 0;
-        }
-
-        if ($summary->buyAmountTotal <= 0) {
-            return null;
-        }
-
-        $adjustedTotalBuyAmount = $summary->buyAmountTotal + $summary->feeBuyAmountTotal;
-        $adjustedTotalSellAmount = $summary->sellAmountTotal + $summary->dividendAmountTotal - $summary->feeSellAmountTotal;
-
-        // Beräkna total avkastning exklusive avgifter
-        $totalReturnExclFees = $summary->sellAmountTotal + $summary->dividendAmountTotal + $currentValueOfShares - $summary->buyAmountTotal;
-
-        $totalReturnExclFeesPercent = round($totalReturnExclFees / $summary->buyAmountTotal * 100, 2);
-
-        // Beräkna total avkastning inklusive avgifter
-        $totalReturnInclFees = $adjustedTotalSellAmount + $currentValueOfShares - $adjustedTotalBuyAmount;
-        $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
-
-        $result = new AssetReturn();
-        $result->totalReturnExclFees = $totalReturnExclFees;
-        $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
-        $result->totalReturnInclFees = $totalReturnInclFees;
-        $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
-
-        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
-
-        return $result;
     }
 }

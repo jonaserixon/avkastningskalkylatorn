@@ -2,11 +2,10 @@
 
 namespace Src\Libs\Command;
 
-use Src\Libs\CommandProcessor;
 use src\Libs\ProfitCalculator;
 use stdClass;
 
-class CalculateProfit extends CommandProcessor
+class CalculateProfitCommand extends CommandProcessor
 {
     private array $options;
     private ProfitCalculator $profitCalculator;
@@ -20,7 +19,7 @@ class CalculateProfit extends CommandProcessor
 
     public function getParsedOptions(): stdClass
     {
-        $commandOptions = static::COMMANDS['calculate-profit']['options'];
+        $commandOptions = $this->commands['calculate-profit']['options'];
 
         $options = new stdClass();
         $options->verbose = isset($this->options['verbose']) ?? $commandOptions['verbose']['default'];
@@ -52,6 +51,8 @@ class CalculateProfit extends CommandProcessor
 
         $result = $this->profitCalculator->calculate();
 
+        ob_start();
+
         foreach ($result->summaries as $summary) {
             if ($options->verbose) {
                 $this->presenter->displayVerboseFormattedSummary($summary, $summary->currentPricePerShare, $summary->currentValueOfShares);
@@ -60,17 +61,21 @@ class CalculateProfit extends CommandProcessor
             }
         }
 
-        // TODO: Move this somewhere suitable.
+        // TODO: Move this somewhere suitable (Presenter?)
         echo 'Tot. avgifter: ' . $this->presenter->colorPicker($result->overview->totalFee) . ' SEK' . PHP_EOL;
         echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($result->overview->totalDividend) . ' SEK' . PHP_EOL;
         echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($result->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
         echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($result->overview->totalSellAmount) . ' SEK' . PHP_EOL;
         echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($result->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
         echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
+        echo PHP_EOL;
         echo 'XIRR: ' . $this->presenter->colorPicker($result->xirr * 100) . '%' . PHP_EOL;
+        echo PHP_EOL;
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
+
+        ob_end_flush();
     }
 }

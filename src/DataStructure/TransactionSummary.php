@@ -16,5 +16,7 @@ class TransactionSummary
     public float $currentNumberOfShares = 0; // float to handle fractional shares
     public ?float $currentPricePerShare = 0;
     public ?float $currentValueOfShares = 0;
+    public string $firstTransactionDate; // TODO
+    public string $lastTransactionDate; // TODO
     public ?AssetReturn $assetReturn;
 }

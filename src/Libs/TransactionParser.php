@@ -7,6 +7,7 @@ use src\DataStructure\Overview;
 use src\DataStructure\Transaction;
 use src\DataStructure\TransactionSummary;
 use src\Enum\TransactionType;
+use src\Libs\Presenter;
 
 class TransactionParser
 {
@@ -35,9 +36,9 @@ class TransactionParser
 
     public Overview $overview;
 
-    public function __construct(Presenter $presenter)
+    public function __construct()
     {
-        $this->presenter = $presenter;
+        $this->presenter = new Presenter();
     }
 
     /**

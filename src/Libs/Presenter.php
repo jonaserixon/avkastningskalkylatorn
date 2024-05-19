@@ -3,7 +3,6 @@
 namespace src\Libs;
 
 use src\DataStructure\TransactionSummary;
-use stdClass;
 
 class Presenter
 {
