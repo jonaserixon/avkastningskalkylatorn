@@ -3,6 +3,7 @@
 namespace Src\Libs;
 
 use src\Libs\Command\CalculateProfit;
+use src\Libs\Presenter;
 
 class CommandProcessor
 {
@@ -11,8 +12,7 @@ class CommandProcessor
             'description' => 'A fitting description for the command',
             'options' => [
                 'generateCsv' => [
-                    'description' => 'Generate CSV file',
-                    'default' => 'no'
+                    'description' => 'Generate CSV file'
                 ],
                 'date-from' => [
                     'description' => 'Date to calculate profit from',
@@ -30,14 +30,23 @@ class CommandProcessor
                     'description' => 'Asset (name) to calculate profit for'
                 ]
             ]
-        ]
+        ],
+        'help' => [
+            'description' => 'Prints available commands and their options'
+        ],
     ];
+
+    private Presenter $presenter;
+
+    public function __construct()
+    {
+        $this->presenter = new Presenter();
+    }
 
     public function main(array $argv): void
     {
         if (empty($argv)) {
-            echo "Usage: avk <command> [options]\n";
-            echo "Available commands: x, y and z\n";
+            $this->printAvailableCommands();
             exit(1);
         }
 
@@ -54,8 +63,8 @@ class CommandProcessor
         }
 
         if (!array_key_exists($command, static::COMMANDS)) {
-            echo "Unknown command: $command\n";
-            echo "Available commands: x, y and z\n";
+            $this->unknownCommand($command);
+            $this->printAvailableCommands();
             exit(1);
         }
 
@@ -64,8 +73,8 @@ class CommandProcessor
 
             foreach ($options as $option => $value) {
                 if (!array_key_exists($option, $availableOptions)) {
-                    echo "Unknown option: $option\n";
-                    echo "Available options: x, y and z\n";
+                    echo $this->presenter->redText("Unknown option: $option\n\n");
+                    $this->printAvailableCommands($command);
                     exit(1);
                 }
             }
@@ -75,17 +84,49 @@ class CommandProcessor
             case 'calculate-profit':
                 (new CalculateProfit($options))->execute();
                 break;
-            case 'hello':
-                if (isset($options['name'])) {
-                    echo $options['name']."\n";
-                } else {
-                    echo "Usage: avk hello [name]\n";
-                }
+            case 'help':
+                $this->printAvailableCommands();
                 break;
             default:
-                echo "Unknown command: $command\n";
-                echo "Available commands: x, y and z\n";
+                $this->unknownCommand($command);
+                $this->printAvailableCommands();
                 break;
+        }
+    }
+
+    protected function unknownCommand(string $command): void
+    {
+        echo $this->presenter->redText("Unknown command: $command\n\n");
+    }
+
+    protected function printAvailableCommands(?string $command = null): void
+    {
+        if ($command && array_key_exists($command, self::COMMANDS)) {
+            echo $this->presenter->cyanText("Command: $command\n");
+            echo $this->presenter->cyanText("Description: " . self::COMMANDS[$command]['description'] . "\n");
+            echo $this->presenter->cyanText("Options:\n");
+
+            foreach (self::COMMANDS[$command]['options'] as $option => $details) {
+                echo $this->presenter->blueText("  --$option\n");
+                echo $this->presenter->blueText("    Description: " . $details['description'] . "\n");
+            }
+        } else {
+            echo $this->presenter->cyanText("Available commands:\n\n");
+            foreach (self::COMMANDS as $command => $commandDetails) {
+                echo $this->presenter->cyanText("Command: $command\n");
+                echo $this->presenter->cyanText("Description: " . $commandDetails['description'] . "\n");
+
+                if (isset($commandDetails['options'])) {
+                    echo $this->presenter->cyanText("Options:\n");
+
+                    foreach ($commandDetails['options'] as $option => $details) {
+                        echo $this->presenter->blueText("  --$option\n");
+                        echo $this->presenter->blueText("    Description: " . $details['description'] . "\n");
+                    }
+                }
+    
+                echo "\n";
+            }
         }
     }
 }
