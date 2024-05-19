@@ -3,7 +3,13 @@
 ### Setup the project
 1. Download the repo
 2. Run `docker-compose up --build`
-3. Enter the docker container and start a bash session to execute commands.
+
+### Usage
+1. Enter the docker container and start a bash session to execute commands.
+```
+docker exec -it avkastningskalkylatorn /bin/bash
+```
+2. Run `avk help` to see all of the available commands.
 
 ### How to use
 You need to export your transactions from Avanza/Nordnet and then put them in the `/imports/avanza/` and `/imports/nordnet/` directories.
