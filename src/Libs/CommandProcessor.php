@@ -191,7 +191,7 @@ class CommandProcessor
                         echo "    Description: " . $details['description'] . "\n";
                     }
                 }
-    
+
                 echo "\n";
             }
         }

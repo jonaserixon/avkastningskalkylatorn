@@ -21,7 +21,7 @@ class ProfitCalculator
     private ?string $dateTo;
 
     private Presenter $presenter;
-    private TransactionHandler $transactionHandler;
+    private TransactionParser $transactionParser;
 
     public function __construct(
         bool $exportCsv = false,
@@ -41,17 +41,17 @@ class ProfitCalculator
         $this->dateTo = $dateTo;
 
         $this->presenter = new Presenter();
-        $this->transactionHandler = new TransactionHandler($this->presenter);
+        $this->transactionParser = new TransactionParser($this->presenter);
     }
 
     public function init()
     {
         $stockPrice = new StockPrice();
-        $summaries = $this->transactionHandler->getTransactionsOverview($this->getTransactions());
+        $summaries = $this->transactionParser->getTransactionsOverview($this->getTransactions());
 
         if ($this->exportCsv) {
             Exporter::generateCsvExport($summaries, $stockPrice);
-            // Exporter::testGenerateCsvExport($this->transactionHandler->overview->transactions);
+            // Exporter::testGenerateCsvExport($this->transactionParser->overview->transactions);
         }
 
         ob_start();
@@ -59,22 +59,22 @@ class ProfitCalculator
         ob_end_flush();
 
         // TODO this should be placed elsewhere
-        $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
-        $xirr = $this->transactionHandler->overview->calculateXIRR($this->transactionHandler->overview->transactions);
+        $this->transactionParser->overview->addFinalTransaction($this->transactionParser->overview->totalCurrentHoldings);
+        $xirr = $this->transactionParser->overview->calculateXIRR($this->transactionParser->overview->transactions);
 
-        echo 'Tot. avgifter: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalFee) . ' SEK' . PHP_EOL;
-        echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalDividend) . ' SEK' . PHP_EOL;
-        echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
-        echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalSellAmount) . ' SEK' . PHP_EOL;
-        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
-        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
+        echo 'Tot. avgifter: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalFee) . ' SEK' . PHP_EOL;
+        echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalDividend) . ' SEK' . PHP_EOL;
+        echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalSellAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
         echo 'XIRR: ' . $this->presenter->colorPicker($xirr * 100) . '%' . PHP_EOL;
     }
 
     public function calculateCurrentHoldings()
     {
         $stockPrice = new StockPrice();
-        $summaries = $this->transactionHandler->getTransactionsOverview($this->getTransactions());
+        $summaries = $this->transactionParser->getTransactionsOverview($this->getTransactions());
 
         $result = [];
         foreach ($summaries as $summary) {
@@ -88,15 +88,15 @@ class ProfitCalculator
         $this->presentResult($result, $stockPrice);
 
         // TODO this should be placed elsewhere
-        $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
-        $xirr = $this->transactionHandler->overview->calculateXIRR($this->transactionHandler->overview->transactions);
+        $this->transactionParser->overview->addFinalTransaction($this->transactionParser->overview->totalCurrentHoldings);
+        $xirr = $this->transactionParser->overview->calculateXIRR($this->transactionParser->overview->transactions);
 
-        // echo 'Tot. avgifter: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalFee) . ' SEK' . PHP_EOL;
-        // echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalDividend) . ' SEK' . PHP_EOL;
-        // echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
-        // echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalSellAmount) . ' SEK' . PHP_EOL;
-        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
-        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
+        // echo 'Tot. avgifter: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalFee) . ' SEK' . PHP_EOL;
+        // echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalDividend) . ' SEK' . PHP_EOL;
+        // echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
+        // echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalSellAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($this->transactionParser->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
         echo 'XIRR: ' . $this->presenter->colorPicker($xirr * 100) . '%' . PHP_EOL;
     }
 
@@ -172,9 +172,9 @@ class ProfitCalculator
             $currentValueOfShares = null;
             if ($currentPricePerShare && $summary->currentNumberOfShares > 0) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
-                $this->transactionHandler->overview->totalCurrentHoldings += $currentValueOfShares;
+                $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
 
-                $this->transactionHandler->overview->addFinalCompanyTransaction($summary->isin, $currentValueOfShares);
+                $this->transactionParser->overview->addFinalCompanyTransaction($summary->isin, $currentValueOfShares);
             }
 
             $calculatedReturns = $this->calculateReturns($summary, $currentValueOfShares);
@@ -224,7 +224,7 @@ class ProfitCalculator
         $result->totalReturnInclFees = $totalReturnInclFees;
         $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
 
-        $this->transactionHandler->overview->totalProfitInclFees += $totalReturnInclFees;
+        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
 
         return $result;
     }

@@ -8,7 +8,7 @@ use src\DataStructure\Transaction;
 use src\DataStructure\TransactionSummary;
 use src\Enum\TransactionType;
 
-class TransactionHandler
+class TransactionParser
 {
     // TODO: förbättra hanteringen av transaktioner som inte ska räknas med här.
     /**
