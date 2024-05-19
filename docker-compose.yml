@@ -4,5 +4,4 @@ services:
     volumes:
       - ./exports:/exports
       - ./imports:/imports
-    environment:
-      - GENERATE_CSV=${GENERATE_CSV}
+      - .:/usr/src/avkastningskalkylatorn

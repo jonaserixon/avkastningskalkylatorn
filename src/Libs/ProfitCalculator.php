@@ -2,6 +2,7 @@
 
 namespace src\Libs;
 
+use Exception;
 use src\DataStructure\TransactionSummary;
 use src\Libs\FileManager\Exporter;
 use src\Libs\FileManager\Importer\Avanza;
@@ -11,13 +12,21 @@ use stdClass;
 
 class ProfitCalculator
 {
-    private bool $generateCsv;
+    private bool $exportCsv;
+    private bool $verbose;
+    private ?string $bank;
+    private ?string $isin;
+
     private Presenter $presenter;
     private TransactionHandler $transactionHandler;
 
-    public function __construct(bool $generateCsv = false)
+    public function __construct(bool $exportCsv = false, bool $verbose = false, ?string $bank = null, ?string $isin = null)
     {
-        $this->generateCsv = $generateCsv;
+        $this->exportCsv = $exportCsv;
+        $this->verbose = $verbose;
+        $this->bank = $bank;
+        $this->isin = $isin;
+
         $this->presenter = new Presenter();
         $this->transactionHandler = new TransactionHandler($this->presenter);
     }
@@ -27,7 +36,7 @@ class ProfitCalculator
         $stockPrice = new StockPrice();
         $summaries = $this->transactionHandler->getTransactionsOverview($this->getTransactions());
 
-        if ($this->generateCsv) {
+        if ($this->exportCsv) {
             Exporter::generateCsvExport($summaries, $stockPrice);
             // Exporter::testGenerateCsvExport($this->transactionHandler->overview->transactions);
         }
@@ -43,12 +52,46 @@ class ProfitCalculator
         echo "XIRR: " . ($xirr * 100) . '%' . PHP_EOL;
     }
 
+    public function calculateCurrentHoldings()
+    {
+        $stockPrice = new StockPrice();
+        $summaries = $this->transactionHandler->getTransactionsOverview($this->getTransactions());
+
+        $result = [];
+        foreach ($summaries as $summary) {
+            $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
+
+            if ($currentPricePerShare) {
+                $result[] = $summary;
+            }
+        }
+
+        $this->presentResult($result, $stockPrice);
+    }
+
     private function getTransactions(): array
     {
         $transactions = array_merge(
             (new Avanza())->parseBankTransactions(),
             (new Nordnet())->parseBankTransactions()
         );
+
+        if ($this->bank) {
+            $bank = $this->bank;
+            $transactions = array_filter($transactions, function ($transaction) use ($bank) {
+                return $transaction->bank === mb_strtoupper($bank);
+            });
+        }
+        if ($this->isin) {
+            $isin = $this->isin;
+            $transactions = array_filter($transactions, function ($transaction) use ($isin) {
+                return $transaction->isin === mb_strtoupper($isin);
+            });
+        }
+
+        if (empty($transactions)) {
+            throw new Exception('No transactions found');
+        }
 
         usort($transactions, function ($a, $b) {
             $dateComparison = strtotime($a->date) <=> strtotime($b->date);
@@ -87,7 +130,12 @@ class ProfitCalculator
             }
 
             $calculatedReturns = $this->calculateReturns($summary, $currentValueOfShares);
-            $this->presenter->displayFormattedSummary($summary, $currentPricePerShare, $currentValueOfShares, $currentHoldingsMissingPricePerShare, $calculatedReturns);
+
+            if ($this->verbose) {
+                $this->presenter->displayVerboseFormattedSummary($summary, $currentPricePerShare, $currentValueOfShares, $currentHoldingsMissingPricePerShare, $calculatedReturns);
+            } else {
+                $this->presenter->displayCompactFormattedSummary($summary, $calculatedReturns);
+            }
         }
 
         echo PHP_EOL . $this->presenter->createSeparator('*') . PHP_EOL;
