@@ -3,11 +3,15 @@
 namespace Src\Libs;
 
 use src\Libs\Command\CalculateProfit;
+use Src\Libs\Command\Transaction;
 use src\Libs\Presenter;
 
 class CommandProcessor
 {
     protected const COMMANDS = [
+        'help' => [
+            'description' => 'Prints available commands and their options'
+        ],
         'calculate-profit' => [
             'description' => 'Calculate profits',
             'options' => [
@@ -20,8 +24,6 @@ class CommandProcessor
                     'description' => 'Bank to calculate profit for',
                     'require-value' => true
                 ],
-                /*
-                // TODO: to be implemented
                 'date-from' => [
                     'description' => 'Date to calculate profit from',
                     'require-value' => true
@@ -34,7 +36,6 @@ class CommandProcessor
                     'description' => 'Asset (name) to calculate profit for',
                     'require-value' => true
                 ],
-                */
                 'isin' => [
                     'description' => 'ISIN to calculate profit for',
                     'require-value' => true
@@ -45,15 +46,45 @@ class CommandProcessor
                     'require-value' => false
                 ],
                 'verbose' => [
-                    'description' => 'Prints more information',
+                    'description' => 'More detailed output',
                     'default' => false,
                     'require-value' => false
                 ]
             ]
         ],
-        'help' => [
-            'description' => 'Prints available commands and their options'
-        ],
+        'transaction' => [
+            'description' => 'View transaction(s)',
+            'options' => [
+                'bank' => [
+                    'description' => 'Bank to add transaction to',
+                    'require-value' => true
+                ],
+                'date-from' => [
+                    'description' => 'Date to calculate profit from',
+                    'require-value' => true
+                ],
+                'date-to' => [
+                    'description' => 'Date to calculate profit to',
+                    'require-value' => true
+                ],
+                'type' => [
+                    'description' => 'Type of transaction',
+                    'require-value' => true
+                ],
+                'isin' => [
+                    'description' => 'ISIN of asset',
+                    'require-value' => true
+                ],
+                'asset' => [
+                    'description' => 'Name of asset',
+                    'require-value' => true
+                ],
+                'fee' => [
+                    'description' => 'Fee of transaction',
+                    'require-value' => false
+                ]
+            ]
+        ]
     ];
 
     private Presenter $presenter;
@@ -65,7 +96,7 @@ class CommandProcessor
 
     public function main(array $argv): void
     {
-        if (empty($argv)) {
+        if (!isset($argv[0]) || !isset($argv[1])) {
             $this->printAvailableCommands();
             exit(1);
         }
@@ -91,11 +122,14 @@ class CommandProcessor
         $this->validateOptions($command, $options);
 
         switch ($command) {
+            case 'help':
+                $this->printAvailableCommands();
+                break;
             case 'calculate-profit':
                 (new CalculateProfit($options))->execute();
                 break;
-            case 'help':
-                $this->printAvailableCommands();
+            case 'transaction':
+                (new Transaction($options))->execute();
                 break;
             default:
                 $this->unknownCommand($command);
@@ -135,26 +169,26 @@ class CommandProcessor
     protected function printAvailableCommands(?string $command = null): void
     {
         if ($command && array_key_exists($command, self::COMMANDS)) {
-            echo $this->presenter->cyanText("Command: $command\n");
-            echo $this->presenter->cyanText("Description: " . self::COMMANDS[$command]['description'] . "\n");
+            echo $this->presenter->cyanText("Command: ") .  $command . "\n";
+            echo $this->presenter->cyanText("Description: ") . self::COMMANDS[$command]['description'] . "\n";
             echo $this->presenter->cyanText("Options:\n");
 
             foreach (self::COMMANDS[$command]['options'] as $option => $details) {
                 echo $this->presenter->blueText("  --$option\n");
-                echo $this->presenter->blueText("    Description: " . $details['description'] . "\n");
+                echo "    Description: " . $details['description'] . "\n";
             }
         } else {
             echo $this->presenter->pinkText("Available commands:\n\n");
             foreach (self::COMMANDS as $command => $commandDetails) {
-                echo $this->presenter->cyanText("Command: $command\n");
-                echo $this->presenter->cyanText("Description: " . $commandDetails['description'] . "\n");
+                echo $this->presenter->cyanText("Command: ") .  $command . "\n";
+                echo $this->presenter->cyanText("Description: ") . $commandDetails['description'] . "\n";
 
                 if (isset($commandDetails['options'])) {
                     echo $this->presenter->cyanText("Options:\n");
 
                     foreach ($commandDetails['options'] as $option => $details) {
                         echo $this->presenter->blueText("  --$option\n");
-                        echo $this->presenter->blueText("    Description: " . $details['description'] . "\n");
+                        echo "    Description: " . $details['description'] . "\n";
                     }
                 }
     

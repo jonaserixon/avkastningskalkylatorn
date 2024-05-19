@@ -18,8 +18,11 @@ class CalculateProfit extends CommandProcessor
         $exportCsv = isset($this->options['export-csv']) ?? static::COMMANDS['calculate-profit']['options']['export-csv']['default'];
         $bank = $this->options['bank'] ?? null;
         $isin = $this->options['isin'] ?? null;
+        $asset = $this->options['asset'] ?? null;
+        $dateFrom = $this->options['date-from'] ?? null;
+        $dateTo = $this->options['date-to'] ?? null;
 
-        $this->profitCalculator = new ProfitCalculator($exportCsv, $verbose, $bank, $isin);
+        $this->profitCalculator = new ProfitCalculator($exportCsv, $verbose, $bank, $isin, $asset, $dateFrom, $dateTo);
     }
 
     public function execute(): void
@@ -29,7 +32,6 @@ class CalculateProfit extends CommandProcessor
             return;
         }
 
-        echo "Executing CalculateProfit command\n";
         $this->profitCalculator->init();
     }
 }

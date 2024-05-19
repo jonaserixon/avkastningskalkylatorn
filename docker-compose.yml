@@ -1,5 +1,6 @@
 services:
   avkastningskalkylatorn:
+    container_name: avkastningskalkylatorn
     build: .
     volumes:
       - ./exports:/exports

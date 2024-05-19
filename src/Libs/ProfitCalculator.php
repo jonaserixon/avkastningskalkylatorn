@@ -16,16 +16,29 @@ class ProfitCalculator
     private bool $verbose;
     private ?string $bank;
     private ?string $isin;
+    private ?string $asset;
+    private ?string $dateFrom;
+    private ?string $dateTo;
 
     private Presenter $presenter;
     private TransactionHandler $transactionHandler;
 
-    public function __construct(bool $exportCsv = false, bool $verbose = false, ?string $bank = null, ?string $isin = null)
-    {
+    public function __construct(
+        bool $exportCsv = false,
+        bool $verbose = false,
+        ?string $bank = null,
+        ?string $isin = null,
+        ?string $asset = null,
+        ?string $dateFrom = null,
+        ?string $dateTo = null
+    ) {
         $this->exportCsv = $exportCsv;
         $this->verbose = $verbose;
         $this->bank = $bank;
         $this->isin = $isin;
+        $this->asset = $asset;
+        $this->dateFrom = $dateFrom;
+        $this->dateTo = $dateTo;
 
         $this->presenter = new Presenter();
         $this->transactionHandler = new TransactionHandler($this->presenter);
@@ -49,7 +62,13 @@ class ProfitCalculator
         $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
         $xirr = $this->transactionHandler->overview->calculateXIRR($this->transactionHandler->overview->transactions);
 
-        echo "XIRR: " . ($xirr * 100) . '%' . PHP_EOL;
+        echo 'Tot. avgifter: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalFee) . ' SEK' . PHP_EOL;
+        echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalDividend) . ' SEK' . PHP_EOL;
+        echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalSellAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
+        echo 'XIRR: ' . $this->presenter->colorPicker($xirr * 100) . '%' . PHP_EOL;
     }
 
     public function calculateCurrentHoldings()
@@ -67,6 +86,18 @@ class ProfitCalculator
         }
 
         $this->presentResult($result, $stockPrice);
+
+        // TODO this should be placed elsewhere
+        $this->transactionHandler->overview->addFinalTransaction($this->transactionHandler->overview->totalCurrentHoldings);
+        $xirr = $this->transactionHandler->overview->calculateXIRR($this->transactionHandler->overview->transactions);
+
+        // echo 'Tot. avgifter: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalFee) . ' SEK' . PHP_EOL;
+        // echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalDividend) . ' SEK' . PHP_EOL;
+        // echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
+        // echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalSellAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($this->transactionHandler->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
+        echo 'XIRR: ' . $this->presenter->colorPicker($xirr * 100) . '%' . PHP_EOL;
     }
 
     private function getTransactions(): array
@@ -76,23 +107,40 @@ class ProfitCalculator
             (new Nordnet())->parseBankTransactions()
         );
 
-        if ($this->bank) {
-            $bank = $this->bank;
-            $transactions = array_filter($transactions, function ($transaction) use ($bank) {
-                return $transaction->bank === mb_strtoupper($bank);
-            });
-        }
-        if ($this->isin) {
-            $isin = $this->isin;
-            $transactions = array_filter($transactions, function ($transaction) use ($isin) {
-                return $transaction->isin === mb_strtoupper($isin);
-            });
+        $filters = [
+            'bank' => $this->bank,
+            'isin' => $this->isin,
+            'asset' => $this->asset,
+            'dateFrom' => $this->dateFrom,
+            'dateTo' => $this->dateTo
+        ];
+
+        foreach ($filters as $key => $value) {
+            if ($value) {
+                $value = mb_strtoupper($value);
+                $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
+                    if ($key === 'asset') {
+                        return str_contains(mb_strtoupper($transaction->name), $value);
+                    }
+
+                    if ($key === 'dateFrom') {
+                        return strtotime($transaction->date) >= strtotime($value);
+                    }
+
+                    if ($key === 'dateTo') {
+                        return strtotime($transaction->date) <= strtotime($value);
+                    }
+
+                    return mb_strtoupper($transaction->{$key}) === $value;
+                });
+            }
         }
 
         if (empty($transactions)) {
             throw new Exception('No transactions found');
         }
 
+        // Sort transactions by date, bank and ISIN.
         usort($transactions, function ($a, $b) {
             $dateComparison = strtotime($a->date) <=> strtotime($b->date);
             if ($dateComparison !== 0) {
@@ -175,6 +223,8 @@ class ProfitCalculator
         $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
         $result->totalReturnInclFees = $totalReturnInclFees;
         $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
+
+        $this->transactionHandler->overview->totalProfitInclFees += $totalReturnInclFees;
 
         return $result;
     }
