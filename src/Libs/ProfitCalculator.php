@@ -125,7 +125,7 @@ class ProfitCalculator
         $currentHoldingsMissingPricePerShare = [];
         $filteredSummaries = [];
         foreach ($summaries as $summary) {
-            if ($this->filterCurrentHoldings && $summary->currentNumberOfShares <= 0) {
+            if ($this->filterCurrentHoldings && (int) $summary->currentNumberOfShares <= 0) {
                 continue;
             }
 
@@ -133,9 +133,6 @@ class ProfitCalculator
 
             if ($currentPricePerShare) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
-
-                
-                
 
                 $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
                 $this->transactionParser->overview->addFinalAssetTransaction($summary->isin, $currentValueOfShares);
@@ -145,11 +142,15 @@ class ProfitCalculator
                 $summary->currentValueOfShares = $currentValueOfShares;
 
                 $filteredSummaries[] = $summary;
-            } elseif ($summary->currentNumberOfShares > 0 && !$currentPricePerShare) {
+
+                $summary->assetReturn = $this->calculateReturnsOnAsset($summary, $currentValueOfShares);
+
+                continue;
+            } elseif ((int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare) {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
             }
 
-            $summary->assetReturn = $this->calculateReturnsOnAsset($summary, $currentValueOfShares);
+            $summary->assetReturn = $this->calculateReturnsOnAsset($summary, null);
         }
 
         if ($this->exportCsv) {

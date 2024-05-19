@@ -13,6 +13,8 @@ class Exporter
     /**
      * @param TransactionSummary[] $summaries
      */
+    /*
+
     public static function generateCsvExport(array $summaries, StockPrice $stockPrice): void
     {
         usort($summaries, function ($a, $b) {
@@ -78,6 +80,7 @@ class Exporter
             fputcsv($f, array_values($row), ',');
         }
     }
+    */
 
     public static function testGenerateCsvExport(array $transactions): void
     {
