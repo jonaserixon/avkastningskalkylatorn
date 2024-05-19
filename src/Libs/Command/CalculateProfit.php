@@ -2,9 +2,10 @@
 
 namespace Src\Libs\Command;
 
+use Src\Libs\CommandProcessor;
 use src\Libs\ProfitCalculator;
 
-class CalculateProfit
+class CalculateProfit extends CommandProcessor
 {
     private array $options;
     private ProfitCalculator $profitCalculator;
