@@ -18,8 +18,15 @@ class Overview
     public string $firstTransactionDate;
     public string $lastTransactionDate;
 
+    /**
+     * List of all transactions
+     */
     public array $transactions = [];
-    public array $companyTransactions = [];
+
+    /**
+     * List of asset-specific transactions (grouped by ISIN)
+     */
+    public array $assetTransactions = [];
 
     // TODO: think about where to put all of this shit.
 
@@ -32,9 +39,9 @@ class Overview
     {
         $minDate = $transactions[0]->date;
         $minDate = new DateTime($minDate);
-    
+
         // NPV (Net Present Value) function
-        $npv = function($rate) use ($transactions, $minDate) {
+        $npv = function ($rate) use ($transactions, $minDate) {
             $sum = 0;
             foreach ($transactions as $transaction) {
                 $amount = $transaction->amount;
@@ -44,13 +51,13 @@ class Overview
             }
             return $sum;
         };
-    
+
         // Newton-Raphson method to find the root
         $guess = 0.1;
         $tolerance = 0.0001;
         $maxIterations = 100;
         $iteration = 0;
-    
+
         while ($iteration < $maxIterations) {
             $npvValue = $npv($guess);
             $npvDerivative = ($npv($guess + $tolerance) - $npvValue) / $tolerance;
@@ -62,15 +69,15 @@ class Overview
             }
 
             $newGuess = $guess - $npvValue / $npvDerivative;
-    
+
             if (abs($newGuess - $guess) < $tolerance) {
                 return $newGuess;
             }
-    
+
             $guess = $newGuess;
             $iteration++;
         }
-    
+
         throw new Exception("XIRR did not converge");
     }
 
@@ -83,24 +90,26 @@ class Overview
         $this->transactions[] = $transaction;
     }
 
-
     public function addFinalTransaction(float $currentMarketValue)
     {
         $this->lastTransactionDate = date('Y-m-d');
         $this->addTransaction($this->lastTransactionDate, $currentMarketValue);
     }
 
-    public function addCompanyTransaction(string $isin, string $date, float $amount)
+    public function addAssetTransaction(string $isin, string $date, float $amount)
     {
         $transaction = new Transaction();
         $transaction->date = $date;
         $transaction->amount = $amount;
 
-        $this->companyTransactions[$isin][] = $transaction;
+        $this->assetTransactions[$isin][] = $transaction;
     }
 
-    public function addFinalCompanyTransaction(string $isin, float $currentMarketValue)
+    /**
+     * Run this method to add the current balance of an asset to the overview.
+     */
+    public function addFinalAssetTransaction(string $isin, float $currentMarketValue)
     {
-        $this->addCompanyTransaction($isin, date('Y-m-d'), $currentMarketValue);
+        $this->addAssetTransaction($isin, date('Y-m-d'), $currentMarketValue);
     }
 }

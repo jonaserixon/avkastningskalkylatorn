@@ -43,7 +43,7 @@ class TransactionParser
     /**
      * @param Transaction[] $transactions
      */
-    public function getTransactionsOverview(array $transactions)
+    public function getTransactionsOverview(array $transactions): array
     {
         $this->overview = new Overview();
         $this->overview->firstTransactionDate = $transactions[0]->date;
@@ -124,7 +124,7 @@ class TransactionParser
 
             $this->overview->totalSellAmount += $transactionAmount;
             $this->overview->addTransaction($transaction->date, $transactionAmount);
-            $this->overview->addCompanyTransaction($transaction->isin, $transaction->date, $transactionAmount);
+            $this->overview->addAssetTransaction($transaction->isin, $transaction->date, $transactionAmount);
         } elseif ($transaction->type === 'share_transfer' && $nextTransaction->type === 'share_transfer') {
             if ($transaction->isin === $nextTransaction->isin) {
                 if ($transaction->bank === 'AVANZA' && $nextTransaction->bank === 'AVANZA') {
@@ -140,7 +140,7 @@ class TransactionParser
 
                         $this->overview->totalSellAmount += $transactionAmount;
                         $this->overview->addTransaction($transaction->date, $transactionAmount);
-                        $this->overview->addCompanyTransaction($transaction->isin, $transaction->date, $transactionAmount);
+                        $this->overview->addAssetTransaction($transaction->isin, $transaction->date, $transactionAmount);
                     }
                 }
             }
@@ -174,7 +174,7 @@ class TransactionParser
                 $this->overview->totalFee += $transaction->fee;
                 $this->overview->addTransaction($transaction->date, -$transactionAmount);
                 $this->overview->addTransaction($transaction->date, -$transaction->fee);
-                $this->overview->addCompanyTransaction($transaction->isin, $transaction->date, -$transactionAmount);
+                $this->overview->addAssetTransaction($transaction->isin, $transaction->date, -$transactionAmount);
 
                 break;
             case 'sell':
@@ -187,7 +187,7 @@ class TransactionParser
                 $this->overview->totalFee += $transaction->fee;
                 $this->overview->addTransaction($transaction->date, $transactionAmount);
                 $this->overview->addTransaction($transaction->date, -$transaction->fee);
-                $this->overview->addCompanyTransaction($transaction->isin, $transaction->date, $transactionAmount);
+                $this->overview->addAssetTransaction($transaction->isin, $transaction->date, $transactionAmount);
 
                 break;
             case 'dividend':
@@ -195,7 +195,7 @@ class TransactionParser
 
                 $this->overview->totalDividend += $transactionAmount;
                 $this->overview->addTransaction($transaction->date, $transactionAmount);
-                $this->overview->addCompanyTransaction($transaction->isin, $transaction->date, $transactionAmount);
+                $this->overview->addAssetTransaction($transaction->isin, $transaction->date, $transactionAmount);
 
                 break;
             case 'share_split':

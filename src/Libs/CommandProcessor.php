@@ -87,7 +87,7 @@ class CommandProcessor
         ]
     ];
 
-    private Presenter $presenter;
+    protected Presenter $presenter;
 
     public function __construct()
     {
@@ -170,25 +170,25 @@ class CommandProcessor
     {
         if ($command && array_key_exists($command, self::COMMANDS)) {
             echo $this->presenter->cyanText("Command: ") .  $command . "\n";
-            echo $this->presenter->cyanText("Description: ") . self::COMMANDS[$command]['description'] . "\n";
+            echo self::COMMANDS[$command]['description'] . "\n";
             echo $this->presenter->cyanText("Options:\n");
 
             foreach (self::COMMANDS[$command]['options'] as $option => $details) {
                 echo $this->presenter->blueText("  --$option\n");
-                echo "    Description: " . $details['description'] . "\n";
+                echo "    " . $details['description'] . "\n";
             }
         } else {
             echo $this->presenter->pinkText("Available commands:\n\n");
             foreach (self::COMMANDS as $command => $commandDetails) {
                 echo $this->presenter->cyanText("Command: ") .  $command . "\n";
-                echo $this->presenter->cyanText("Description: ") . $commandDetails['description'] . "\n";
+                echo $commandDetails['description'] . "\n";
 
                 if (isset($commandDetails['options'])) {
                     echo $this->presenter->cyanText("Options:\n");
 
                     foreach ($commandDetails['options'] as $option => $details) {
                         echo $this->presenter->blueText("  --$option\n");
-                        echo "    Description: " . $details['description'] . "\n";
+                        echo "    " . $details['description'] . "\n";
                     }
                 }
 
