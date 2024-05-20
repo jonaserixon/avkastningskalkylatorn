@@ -1,5 +1,0 @@
-Att (eventuellt) göra lista:
-
-1. Hantera fler typer av avgifter (t.ex. ADR)
-2. Hantera valutaväxlingsavgift (kan bli svår om vi saknar valutan (avanza), en lösning är att göra en ungefärlig beräkning baserat på värdepapprets ISIN-kod alternativt så får man lösa detta i en extern csv fil som man läser in)
-3. Kunna importera "custom" transaktionsexporter.
