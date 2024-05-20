@@ -22,7 +22,7 @@ class ProfitCalculator
     private ?string $filterAsset;
     private ?string $filterDateFrom;
     private ?string $filterDateTo;
-    private ?string $filterCurrentHoldings;
+    private bool $filterCurrentHoldings;
 
     private TransactionParser $transactionParser;
     private StockPrice $stockPrice;
