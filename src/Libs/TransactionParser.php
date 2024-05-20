@@ -43,6 +43,7 @@ class TransactionParser
 
     /**
      * @param Transaction[] $transactions
+     * @return TransactionSummary[]
      */
     public function getTransactionsOverview(array $transactions): array
     {
