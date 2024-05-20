@@ -6,7 +6,7 @@ use src\DataStructure\TransactionSummary;
 
 class Presenter
 {
-    private const TAB_SIZE = 4; // Adjust based on your desired tab size
+    private const TAB_SIZE = 4;
 
     public function displayDetailedSummaries(array $summaries): void
     {

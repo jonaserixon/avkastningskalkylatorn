@@ -18,5 +18,7 @@ class TransactionSummary
     public ?float $currentValueOfShares = 0;
     public string $firstTransactionDate; // TODO
     public string $lastTransactionDate; // TODO
-    public ?AssetReturn $assetReturn;
+    public float $depositAmountTotal = 0;
+    public float $withdrawalAmountTotal = 0;
+    public ?AssetReturn $assetReturn = null;
 }

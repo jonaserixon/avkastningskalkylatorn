@@ -17,5 +17,5 @@ class Transaction
     public float $amount;
     public float $fee;
     public string $currency;
-    public string $isin;
+    public ?string $isin;
 }

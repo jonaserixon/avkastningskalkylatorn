@@ -69,6 +69,7 @@ class Avanza extends CsvParser
             $transaction->fee = static::convertToFloat($row[7]); // Courtage
             $transaction->currency = $row[8]; // Valuta
             $transaction->isin = $row[9]; // ISIN
+            // $transaction->isin = empty($row[9]) ? null : $row[9]; // ISIN
 
             $result[] = $transaction;
         }
@@ -93,6 +94,8 @@ class Avanza extends CsvParser
             'sälj' => 'sell',
             'övrigt' => 'other',
             'värdepappersöverföring' => 'share_transfer',
+            'insättning' => 'deposit',
+            'uttag' => 'withdrawal',
         ];
 
         if (array_key_exists($normalizedInput, $mapping)) {

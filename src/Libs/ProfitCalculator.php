@@ -63,12 +63,11 @@ class ProfitCalculator
 
             $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($summary->isin);
 
-            if ($currentPricePerShare) {
+            if ($currentPricePerShare && (int) $summary->currentNumberOfShares > 0) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
 
                 $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
-                $this->transactionParser->overview->addFinalAssetTransaction($summary->isin, $currentValueOfShares);
-                $this->transactionParser->overview->addFinalTransaction($currentValueOfShares);
+                $this->transactionParser->overview->addFinalCashFlow($currentValueOfShares, $summary->name); // TODO: can we move this outside of this loop?
 
                 $summary->currentPricePerShare = $currentPricePerShare;
                 $summary->currentValueOfShares = $currentValueOfShares;
@@ -79,12 +78,23 @@ class ProfitCalculator
             }
 
             $isMissingPricePerShare = (int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare;
+
             if ($isMissingPricePerShare) {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
             }
 
-            $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
+            if (!empty($summary->isin)) {
+                $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
+            } else {
+                // print_r($summary);
+                // exit;
+            }
         }
+
+        // Important for calculations etc.
+        usort($this->transactionParser->overview->cashFlows, function ($a, $b) {
+            return strtotime($a->date) <=> strtotime($b->date);
+        });
 
         /*
         if ($this->exportCsv) {
@@ -105,7 +115,8 @@ class ProfitCalculator
         $result->overview = $this->transactionParser->overview;
         $result->overview->returns = $this->calculateTotalReturnForOverview($result->overview);
         $this->calculateCurrentHoldingsWeighting($result->overview, $result->summaries);
-        $result->xirr = $this->calculateXIRR($this->transactionParser->overview->transactions);
+        $result->xirr = $this->calculateXIRR($this->transactionParser->overview->cashFlows);
+        $result->twr = $this->calculateTWR($this->transactionParser->overview->cashFlows, $result->overview->totalCurrentHoldings);
 
         return $result;
     }
@@ -177,8 +188,77 @@ class ProfitCalculator
         return $result;
     }
 
+    protected function calculateTWR(array $cashFlows, float $totalCurrentHoldings)
+    {
+        $previous_value = 0;
+        $returns = [];
+        $net_investment = 0;
+    
+        // Sortera kassaflöden efter datum
+        usort($cashFlows, function ($a, $b) {
+            return strtotime($a->date) - strtotime($b->date);
+        });
+    
+        foreach ($cashFlows as $index => $transaction) {
+            if ($index == 0) {
+                $previous_value = $transaction->amount;
+                $net_investment += $transaction->amount;
+                continue;
+            }
+    
+            $net_flow = $transaction->amount;
+    
+            // För den sista transaktionen, använd nuvarande marknadsvärde
+            if ($index == count($cashFlows) - 1) {
+                $current_value = $totalCurrentHoldings;
+            } else {
+                $current_value = $previous_value + $net_flow;
+            }
+    
+            $period_return = ($current_value - $previous_value - $net_flow) / ($previous_value + $net_flow);
+            $returns[] = $period_return;
+            $previous_value = $current_value;
+    
+            // Uppdatera nettokassaflöde för att hålla koll på total investering
+            $net_investment += $net_flow;
+        }
+
+        // Kombinera periodavkastningar för att få total avkastning i procent
+        $cumulative_return = 1;
+        foreach ($returns as $r) {
+            $cumulative_return *= (1 + $r);
+        }
+
+        $total_return_percentage = ($cumulative_return - 1) * 100;
+
+        return $total_return_percentage;
+    }
+
     protected function calculateXIRR(array $transactions)
     {
+        return 0;
+        usort($transactions, function ($a, $b) {
+            return strtotime($a->date) <=> strtotime($b->date);
+        });
+
+        // $filePath = "/exports/test_".date('Y-m-d_His').".csv";
+        // $csvHeaders = [
+        //     'date',
+        //     'amount'
+        // ];
+        // $f = fopen($filePath, "w");
+        // fputcsv($f, $csvHeaders, ',');
+
+        // foreach ($transactions as $transaction) {
+        //     $row = [
+        //         'date' => $transaction->date,
+        //         'amount' => $transaction->amount,
+        //         'name' => $transaction->name
+        //     ];
+
+        //     fputcsv($f, array_values($row), ',');
+        // }
+        exit;
         $minDate = $transactions[0]->date;
         $minDate = new DateTime($minDate);
 
@@ -294,6 +374,11 @@ class ProfitCalculator
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }
+
+            // if ($a->isin === $b->isin) {
+            //     return 0;
+            // }
+
             return strcmp($a->isin, $b->isin);
         });
 

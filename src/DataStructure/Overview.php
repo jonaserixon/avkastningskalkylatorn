@@ -15,6 +15,8 @@ class Overview
     public float $totalCurrentHoldings = 0;
     public float $totalProfitInclFees = 0;
     public array $currentHoldingsWeighting = [];
+    public float $depositAmountTotal = 0;
+    public float $withdrawalAmountTotal = 0;
 
     public string $firstTransactionDate;
     public string $lastTransactionDate;
@@ -22,46 +24,53 @@ class Overview
     public AssetReturn $returns;
 
     /**
-     * List of all transactions
+     * List of all cash flows
      */
-    public array $transactions = [];
+    public array $cashFlows = [];
 
     /**
-     * List of asset-specific transactions (grouped by ISIN)
+     * List of asset-specific cash flows (grouped by ISIN)
      */
-    public array $assetTransactions = [];
+    /*
+    public array $assetCashFlows = [];
+    */
 
     // TODO: think about where to put all of this shit.
 
-    public function addTransaction(string $date, float $amount)
+    public function addCashFlow(string $date, float $amount, string $name)
     {
         $transaction = new Transaction();
         $transaction->date = $date;
         $transaction->amount = $amount;
+        $transaction->name = $name;
 
-        $this->transactions[] = $transaction;
+        $this->cashFlows[] = $transaction;
     }
 
-    public function addFinalTransaction(float $currentMarketValue)
+    public function addFinalCashFlow(float $currentMarketValue, string $name)
     {
         $this->lastTransactionDate = date('Y-m-d');
-        $this->addTransaction($this->lastTransactionDate, $currentMarketValue);
+        $this->addCashFlow($this->lastTransactionDate, $currentMarketValue, 'Current total holdings: ' . $name);
     }
 
-    public function addAssetTransaction(string $isin, string $date, float $amount)
+    /*
+    public function addAssetCashFlow(string $isin, string $date, float $amount)
     {
         $transaction = new Transaction();
         $transaction->date = $date;
         $transaction->amount = $amount;
 
-        $this->assetTransactions[$isin][] = $transaction;
+        $this->assetCashFlows[$isin][] = $transaction;
     }
+    *()
 
     /**
      * Run this method to add the current balance of an asset to the overview.
      */
-    public function addFinalAssetTransaction(string $isin, float $currentMarketValue)
+    /*
+    public function addFinalAssetCashFlow(string $isin, float $currentMarketValue)
     {
-        $this->addAssetTransaction($isin, date('Y-m-d'), $currentMarketValue);
+        $this->addAssetCashFlow($isin, date('Y-m-d'), $currentMarketValue);
     }
+    */
 }

@@ -67,12 +67,15 @@ class CalculateProfitCommand extends CommandProcessor
         echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($result->overview->totalDividend) . ' SEK' . PHP_EOL;
         echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($result->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
         echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($result->overview->totalSellAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. insättningar: ' . $this->presenter->colorPicker($result->overview->depositAmountTotal) . ' SEK' . PHP_EOL;
+        echo 'Tot. uttag: ' . $this->presenter->colorPicker($result->overview->withdrawalAmountTotal) . ' SEK' . PHP_EOL;
         echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($result->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
         echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
         echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->returns->totalReturnInclFeesPercent) . '%' . PHP_EOL;
 
         echo PHP_EOL;
         echo 'XIRR: ' . $this->presenter->colorPicker($result->xirr * 100) . '%' . PHP_EOL;
+        echo 'TWR: ' . $this->presenter->colorPicker($result->twr) . '%' . PHP_EOL;
         echo PHP_EOL;
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
