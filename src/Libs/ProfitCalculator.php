@@ -78,7 +78,8 @@ class ProfitCalculator
                 continue;
             }
 
-            if ((int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare) {
+            $isMissingPricePerShare = (int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare;
+            if ($isMissingPricePerShare) {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
             }
 
@@ -103,9 +104,21 @@ class ProfitCalculator
 
         $result->overview = $this->transactionParser->overview;
         $result->overview->returns = $this->calculateTotalReturnForOverview($result->overview);
+        $this->calculateCurrentHoldingsWeighting($result->overview, $result->summaries);
         $result->xirr = $this->calculateXIRR($this->transactionParser->overview->transactions);
 
         return $result;
+    }
+
+    protected function calculateCurrentHoldingsWeighting(Overview $overview, array $summaries): void
+    {
+        foreach ($summaries as $summary) {
+            if ($summary->currentValueOfShares > 0) {
+                $weighting = $summary->currentValueOfShares / $overview->totalCurrentHoldings * 100;
+                // $overview->currentHoldingsWeighting[$summary->name] = round($weighting, 2);
+                $overview->currentHoldingsWeighting[$summary->isin] = round($weighting, 2);
+            }
+        }
     }
 
     protected function calculateTotalReturnForSummary(TransactionSummary $summary): ?AssetReturn

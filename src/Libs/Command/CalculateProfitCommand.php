@@ -52,15 +52,13 @@ class CalculateProfitCommand extends CommandProcessor
 
         ob_start();
 
-        foreach ($result->summaries as $summary) {
-            if ($options->verbose) {
-                $this->presenter->displayVerboseFormattedSummary($summary, $summary->currentPricePerShare, $summary->currentValueOfShares);
-            } else {
-                $this->presenter->displayCompactFormattedSummary($summary);
-            }
+        if ($options->verbose) {
+            $this->presenter->displayDetailedSummaries($result->summaries);
+        } else {
+            $this->presenter->generateSummaryTable($result->summaries);
         }
 
-        print_r($result->overview->returns);
+        print_r($result->overview->currentHoldingsWeighting);
 
         // TODO: Move this somewhere suitable (Presenter?)
         echo 'Tot. avgifter: ' . $this->presenter->colorPicker($result->overview->totalFee) . ' SEK' . PHP_EOL;
