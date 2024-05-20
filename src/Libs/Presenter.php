@@ -52,16 +52,18 @@ class Presenter
         }
     }
 
-    public function truncate_name($name, $max_length) {
-        if (strlen($name) > $max_length) {
-            return substr($name, 0, $max_length - 3) . '...';
+    public function truncateName(string $name, int $maxLength): string
+    {
+        if (strlen($name) > $maxLength) {
+            return substr($name, 0, $maxLength - 3) . '...';
         }
+
         return $name;
     }
 
-    public function generateSummaryTable($summaries)
+    public function generateSummaryTable(array $summaries): void
     {
-        $headers = ['Värdepapper', 'ISIN', 'Avkastning %', 'Avkastning SEK', 'Totalt courtage'];
+        $headers = ['Värdepapper', 'ISIN', 'Avkastning %', 'Avkastning SEK', 'Total utdelning', 'Totalt courtage'];
 
         $colWidths = array_fill(0, count($headers), 0);
 
@@ -76,16 +78,18 @@ class Presenter
 
             $name = $summary->name;
             if (mb_strlen($name) > 40) {
-                $name = $this->truncate_name($name, 40);
+                $name = $this->truncateName($name, 40);
             }
 
             $colWidths[0] = max($colWidths[0], mb_strlen($name));
             $colWidths[1] = max($colWidths[1], mb_strlen($summary->isin));
             $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %'));
             $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK'));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->feeAmountTotal) . ' SEK'));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->dividendAmountTotal) . ' SEK'));
+            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->feeAmountTotal) . ' SEK'));
         }
 
+        $this->printHorizontalLine($colWidths);
         $this->printRow($headers, $colWidths);
         $this->printHorizontalLine($colWidths);
 
@@ -95,13 +99,14 @@ class Presenter
             }
             $name = $summary->name;
             if (mb_strlen($name) > 40) {
-                $name = $this->truncate_name($name, 40);
+                $name = $this->truncateName($name, 40);
             }
             $this->printRow([
                 $name,
                 $summary->isin,
                 $this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %',
                 $this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK',
+                $this->formatNumber($summary->dividendAmountTotal) . ' SEK',
                 $this->formatNumber($summary->feeAmountTotal) . ' SEK'
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
