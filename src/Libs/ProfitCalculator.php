@@ -22,7 +22,7 @@ class ProfitCalculator
     private ?string $filterAsset;
     private ?string $filterDateFrom;
     private ?string $filterDateTo;
-    private bool $filterCurrentHoldings;
+    private ?string $filterCurrentHoldings;
 
     private TransactionParser $transactionParser;
     private StockPrice $stockPrice;
@@ -72,11 +72,9 @@ class ProfitCalculator
 
                 $summary->currentPricePerShare = $currentPricePerShare;
                 $summary->currentValueOfShares = $currentValueOfShares;
-
-                $filteredSummaries[] = $summary;
-
                 $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
 
+                $filteredSummaries[] = $summary;
                 continue;
             }
 
@@ -241,7 +239,14 @@ class ProfitCalculator
                 $value = mb_strtoupper($value);
                 $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
                     if ($key === 'asset') {
-                        return str_contains(mb_strtoupper($transaction->name), $value);
+                        $assets = explode(',', $value);
+                        foreach ($assets as $asset) {
+                            if (str_contains(mb_strtoupper($transaction->name), trim($asset))) {
+                                return true;
+                            }
+                        }
+
+                        return false;
                     }
 
                     if ($key === 'dateFrom') {
