@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  phan-analysis:
     runs-on: ubuntu-latest
 
     steps:
