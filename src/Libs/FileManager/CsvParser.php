@@ -2,14 +2,22 @@
 
 namespace src\Libs\FileManager;
 
+use src\DataStructure\Transaction;
+
 abstract class CsvParser
 {
     protected static string $DIR = '';
 
+    /**
+     * @return Transaction[]
+     */
     abstract protected function parseTransactions(string $fileName): array;
 
     abstract protected function validateImportFile(string $filePath): bool;
 
+    /**
+     * @return Transaction[]
+     */
     public function parseBankTransactions(): array
     {
         $result = [];
