@@ -60,7 +60,7 @@ class Presenter
         }
 
         $assetName = $summary->name .' ('.$summary->isin.')';
-        $assetNameTextLength = strlen($assetName);
+        $assetNameTextLength = mb_strlen($assetName);
 
         // Calculate the number of spaces needed to align text
         $spaces = str_repeat(' ', (70 - $assetNameTextLength + self::TAB_SIZE) < 0 ? 0 : (70 - $assetNameTextLength + self::TAB_SIZE));
@@ -75,14 +75,24 @@ class Presenter
         echo $result;
     }
 
-    public function createTableFromSummaries(array $rows): void
+    /*
+    public function createTableFromSummaries(array $summaries): void
     {
-        // To be implemented
+        $headersMapping = [
+            'name' => 'Namn',
+            'isin' => 'ISIN' ,
+            'totalReturnInclFeesPercent' => 'Avkastning %',
+            'totalReturnInclFees' => 'Avkastning SEK'
+        ];
+
+        $headers = array_keys($headersMapping);
+        $displayHeaders = array_values($headersMapping);
     }
+    */
 
     public function addTabs($label, $desiredColumnWidth = 45)
     {
-        $currentLength = strlen($label);
+        $currentLength = mb_strlen($label);
         $spacesNeeded = $desiredColumnWidth - $currentLength;
 
         $tabsCount = ceil($spacesNeeded / 8);
@@ -95,7 +105,7 @@ class Presenter
     public function createSeparator(string $character = '-', string $name = '', int $totalWidth = 60): string
     {
         $text = $name;
-        $lineLength = $totalWidth - strlen($text);
+        $lineLength = $totalWidth - mb_strlen($text);
 
         if ($lineLength > 0) {
             $halfLine = str_repeat($character, (int) floor($lineLength / 2));

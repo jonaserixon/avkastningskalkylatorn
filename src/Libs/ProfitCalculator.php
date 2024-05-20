@@ -6,6 +6,7 @@ use DateTime;
 use Exception;
 use src\DataStructure\AssetReturn;
 // use src\Libs\FileManager\Exporter;
+use src\DataStructure\Overview;
 use src\DataStructure\TransactionSummary;
 use src\Libs\FileManager\Importer\Avanza;
 use src\Libs\FileManager\Importer\Nordnet;
@@ -24,6 +25,7 @@ class ProfitCalculator
     private bool $filterCurrentHoldings;
 
     private TransactionParser $transactionParser;
+    private StockPrice $stockPrice;
 
     public function __construct(
         bool $exportCsv,
@@ -45,13 +47,13 @@ class ProfitCalculator
         $this->filterCurrentHoldings = $currentHoldings;
 
         $this->transactionParser = new TransactionParser();
+        $this->stockPrice = new StockPrice();
     }
 
     public function calculate(): stdClass
     {
         $summaries = $this->transactionParser->getTransactionsOverview($this->getTransactions());
 
-        $stockPrice = new StockPrice();
         $currentHoldingsMissingPricePerShare = [];
         $filteredSummaries = [];
         foreach ($summaries as $summary) {
@@ -59,7 +61,7 @@ class ProfitCalculator
                 continue;
             }
 
-            $currentPricePerShare = $stockPrice->getCurrentPriceByIsin($summary->isin);
+            $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($summary->isin);
 
             if ($currentPricePerShare) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
@@ -73,7 +75,7 @@ class ProfitCalculator
 
                 $filteredSummaries[] = $summary;
 
-                $summary->assetReturn = $this->calculateTotalReturn($summary);
+                $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
 
                 continue;
             }
@@ -82,7 +84,7 @@ class ProfitCalculator
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
             }
 
-            $summary->assetReturn = $this->calculateTotalReturn($summary);
+            $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
         }
 
         /*
@@ -102,12 +104,13 @@ class ProfitCalculator
         }
 
         $result->overview = $this->transactionParser->overview;
+        $result->overview->returns = $this->calculateTotalReturnForOverview($result->overview);
         $result->xirr = $this->calculateXIRR($this->transactionParser->overview->transactions);
 
         return $result;
     }
 
-    protected function calculateTotalReturn(TransactionSummary $summary): ?AssetReturn
+    protected function calculateTotalReturnForSummary(TransactionSummary $summary): ?AssetReturn
     {
         if ($summary->currentValueOfShares === null) {
             $summary->currentValueOfShares = 0;
@@ -135,7 +138,30 @@ class ProfitCalculator
         $result->totalReturnInclFees = $totalReturnInclFees;
         $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
 
-        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
+        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees; // TODO: move this line
+
+        return $result;
+    }
+
+    protected function calculateTotalReturnForOverview(Overview $overview): AssetReturn
+    {
+        // Beräkna total avkastning exklusive avgifter
+        $totalReturnExclFees = $overview->totalSellAmount + $overview->totalDividend + $overview->totalCurrentHoldings - $overview->totalBuyAmount;
+
+        $totalReturnExclFeesPercent = round($totalReturnExclFees / $overview->totalBuyAmount * 100, 2);
+
+        // Beräkna total avkastning inklusive avgifter
+        $adjustedTotalBuyAmount = $overview->totalBuyAmount + $overview->totalBuyFee;
+        $adjustedTotalSellAmount = $overview->totalSellAmount + $overview->totalDividend - $overview->totalSellFee;
+
+        $totalReturnInclFees = $adjustedTotalSellAmount + $overview->totalCurrentHoldings - $adjustedTotalBuyAmount;
+        $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
+
+        $result = new AssetReturn();
+        $result->totalReturnExclFees = $totalReturnExclFees;
+        $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
+        $result->totalReturnInclFees = $totalReturnInclFees;
+        $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
 
         return $result;
     }
@@ -206,7 +232,8 @@ class ProfitCalculator
             'isin' => $this->filterIsin,
             'asset' => $this->filterAsset,
             'dateFrom' => $this->filterDateFrom,
-            'dateTo' => $this->filterDateTo
+            'dateTo' => $this->filterDateTo,
+            'currentHoldings' => $this->filterCurrentHoldings
         ];
 
         foreach ($filters as $key => $value) {
@@ -223,6 +250,11 @@ class ProfitCalculator
 
                     if ($key === 'dateTo') {
                         return strtotime($transaction->date) <= strtotime($value);
+                    }
+
+                    if ($key === 'currentHoldings') {
+                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->isin);
+                        return $currentPricePerShare !== null;
                     }
 
                     return mb_strtoupper($transaction->{$key}) === $value;

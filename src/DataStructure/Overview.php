@@ -2,8 +2,6 @@
 
 namespace src\DataStructure;
 
-use DateTime;
-use Exception;
 use src\DataStructure\Transaction;
 
 class Overview
@@ -11,12 +9,16 @@ class Overview
     public float $totalBuyAmount = 0;
     public float $totalSellAmount = 0;
     public float $totalFee = 0;
+    public float $totalSellFee = 0;
+    public float $totalBuyFee = 0;
     public float $totalDividend = 0;
     public float $totalCurrentHoldings = 0;
     public float $totalProfitInclFees = 0;
 
     public string $firstTransactionDate;
     public string $lastTransactionDate;
+
+    public AssetReturn $returns;
 
     /**
      * List of all transactions

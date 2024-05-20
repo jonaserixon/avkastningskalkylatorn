@@ -8,7 +8,6 @@ use stdClass;
 class CalculateProfitCommand extends CommandProcessor
 {
     private array $options;
-    private ProfitCalculator $profitCalculator;
 
     public function __construct(array $options)
     {
@@ -38,7 +37,7 @@ class CalculateProfitCommand extends CommandProcessor
     {
         $options = $this->getParsedOptions();
 
-        $this->profitCalculator = new ProfitCalculator(
+        $profitCalculator = new ProfitCalculator(
             $options->exportCsv,
             $options->verbose,
             $options->bank,
@@ -49,7 +48,7 @@ class CalculateProfitCommand extends CommandProcessor
             $options->currentHoldings
         );
 
-        $result = $this->profitCalculator->calculate();
+        $result = $profitCalculator->calculate();
 
         ob_start();
 
@@ -61,13 +60,19 @@ class CalculateProfitCommand extends CommandProcessor
             }
         }
 
+        print_r($result->overview->returns);
+
         // TODO: Move this somewhere suitable (Presenter?)
         echo 'Tot. avgifter: ' . $this->presenter->colorPicker($result->overview->totalFee) . ' SEK' . PHP_EOL;
+        echo 'Tot. köpavgifter: ' . $this->presenter->colorPicker($result->overview->totalBuyFee) . ' SEK' . PHP_EOL;
+        echo 'Tot. säljavgifter: ' . $this->presenter->colorPicker($result->overview->totalSellFee) . ' SEK' . PHP_EOL;
         echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($result->overview->totalDividend) . ' SEK' . PHP_EOL;
         echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($result->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
         echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($result->overview->totalSellAmount) . ' SEK' . PHP_EOL;
         echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($result->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
         echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->returns->totalReturnInclFeesPercent) . '%' . PHP_EOL;
+
         echo PHP_EOL;
         echo 'XIRR: ' . $this->presenter->colorPicker($result->xirr * 100) . '%' . PHP_EOL;
         echo PHP_EOL;

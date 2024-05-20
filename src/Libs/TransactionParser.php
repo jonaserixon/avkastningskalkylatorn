@@ -173,6 +173,7 @@ class TransactionParser
 
                 $this->overview->totalBuyAmount += $transactionAmount;
                 $this->overview->totalFee += $transaction->fee;
+                $this->overview->totalBuyFee += $transaction->fee;
                 $this->overview->addTransaction($transaction->date, -$transactionAmount);
                 $this->overview->addTransaction($transaction->date, -$transaction->fee);
                 $this->overview->addAssetTransaction($transaction->isin, $transaction->date, -$transactionAmount);
@@ -186,6 +187,7 @@ class TransactionParser
 
                 $this->overview->totalSellAmount += $transactionAmount;
                 $this->overview->totalFee += $transaction->fee;
+                $this->overview->totalSellFee += $transaction->fee;
                 $this->overview->addTransaction($transaction->date, $transactionAmount);
                 $this->overview->addTransaction($transaction->date, -$transaction->fee);
                 $this->overview->addAssetTransaction($transaction->isin, $transaction->date, $transactionAmount);
