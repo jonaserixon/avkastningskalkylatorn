@@ -3,7 +3,6 @@
 namespace src\Libs;
 
 use src\DataStructure\TransactionSummary;
-use stdClass;
 
 class Presenter
 {
@@ -12,9 +11,7 @@ class Presenter
     public function displayVerboseFormattedSummary(
         TransactionSummary $summary,
         ?float $currentPricePerShare,
-        ?float $currentValueOfShares,
-        array &$currentHoldingsMissingPricePerShare,
-        ?stdClass $calculatedReturns
+        ?float $currentValueOfShares
     ): void {
         echo PHP_EOL;
 
@@ -39,49 +36,63 @@ class Presenter
                 echo $this->addTabs('Nuvarande pris/aktie') . number_format($currentPricePerShare, 2, '.', ' ') . ' SEK' . PHP_EOL;
                 echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($currentValueOfShares, 2, '.', ' ') . ' SEK ' . PHP_EOL;
             } else {
-                $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
                 echo $this->yellowText('** Saknar kurspris **') . PHP_EOL;
             }
 
             echo PHP_EOL;
         }
 
-        if ($calculatedReturns) {
-            echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFees) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($calculatedReturns->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
+        if ($summary->assetReturn) {
+            echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($summary->assetReturn->totalReturnExclFees) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($summary->assetReturn->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
 
-            echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($calculatedReturns->totalReturnInclFees) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($summary->assetReturn->totalReturnInclFees) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($summary->assetReturn->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
         }
 
         echo PHP_EOL;
     }
 
-    public function displayCompactFormattedSummary(TransactionSummary $summary, ?stdClass $calculatedReturns): void
+    public function displayCompactFormattedSummary(TransactionSummary $summary): void
     {
-        if (!$calculatedReturns) {
+        if (!$summary->assetReturn) {
             return;
         }
 
         $assetName = $summary->name .' ('.$summary->isin.')';
-        $assetNameTextLength = strlen($assetName);
+        $assetNameTextLength = mb_strlen($assetName);
 
         // Calculate the number of spaces needed to align text
         $spaces = str_repeat(' ', (70 - $assetNameTextLength + self::TAB_SIZE) < 0 ? 0 : (70 - $assetNameTextLength + self::TAB_SIZE));
 
         $result = $this->pinkText($assetName);
         $result .= $spaces;
-        $result .= $this->colorPicker($calculatedReturns->totalReturnInclFeesPercent) . ' %';
+        $result .= $this->colorPicker($summary->assetReturn->totalReturnInclFeesPercent) . ' %';
         $result .= ' | ';
-        $result .= $this->colorPicker($calculatedReturns->totalReturnInclFees) . ' SEK';
+        $result .= $this->colorPicker($summary->assetReturn->totalReturnInclFees) . ' SEK';
         $result .= PHP_EOL.PHP_EOL;
 
         echo $result;
     }
 
+    /*
+    public function createTableFromSummaries(array $summaries): void
+    {
+        $headersMapping = [
+            'name' => 'Namn',
+            'isin' => 'ISIN' ,
+            'totalReturnInclFeesPercent' => 'Avkastning %',
+            'totalReturnInclFees' => 'Avkastning SEK'
+        ];
+
+        $headers = array_keys($headersMapping);
+        $displayHeaders = array_values($headersMapping);
+    }
+    */
+
     public function addTabs($label, $desiredColumnWidth = 45)
     {
-        $currentLength = strlen($label);
+        $currentLength = mb_strlen($label);
         $spacesNeeded = $desiredColumnWidth - $currentLength;
 
         $tabsCount = ceil($spacesNeeded / 8);
@@ -94,7 +105,7 @@ class Presenter
     public function createSeparator(string $character = '-', string $name = '', int $totalWidth = 60): string
     {
         $text = $name;
-        $lineLength = $totalWidth - strlen($text);
+        $lineLength = $totalWidth - mb_strlen($text);
 
         if ($lineLength > 0) {
             $halfLine = str_repeat($character, (int) floor($lineLength / 2));
