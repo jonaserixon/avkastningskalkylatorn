@@ -14,6 +14,7 @@ class Overview
     public float $totalDividend = 0;
     public float $totalCurrentHoldings = 0;
     public float $totalProfitInclFees = 0;
+    public array $currentHoldingsWeighting = [];
 
     public string $firstTransactionDate;
     public string $lastTransactionDate;

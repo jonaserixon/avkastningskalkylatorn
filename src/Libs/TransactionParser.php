@@ -11,7 +11,6 @@ use src\Libs\Presenter;
 
 class TransactionParser
 {
-    // TODO: förbättra hanteringen av transaktioner som inte ska räknas med här.
     /**
      * @var string[]
      */
@@ -58,6 +57,7 @@ class TransactionParser
             throw new Exception('No transaction file in csv format in the imports directory.');
         }
 
+        // Sort summaries by name for readability.
         usort($summaries, function ($a, $b) {
             return strcasecmp($a->name, $b->name);
         });
@@ -248,6 +248,7 @@ class TransactionParser
 
     private function addTransactionToGroup(array &$groupedTransactions, array $transactions, Transaction $transaction, int $index, array &$indexesToSkip): void
     {
+        // Om transaktionen är klassad som övrig så vill vi kolla om det finns en transaktion efter den som vi kan använda för att avgöra om det är en aktiesplitt osv.
         if ($transaction->type === 'other') {
             $nextIndex = $index + 1;
             if (!isset($transactions[$nextIndex])) {
@@ -274,8 +275,8 @@ class TransactionParser
             if ($shareSplitQuantity) {
                 $transaction->quantity = $shareSplitQuantity;
                 $transaction->rawQuantity = $shareSplitQuantity;
-                $groupedTransactions[$transaction->isin]['share_split'][] = $transaction;
 
+                $groupedTransactions[$transaction->isin]['share_split'][] = $transaction;
                 $indexesToSkip[] = $nextIndex;
 
                 echo $this->presenter->yellowText('!!OBS!! ' . $transaction->name . ' (ISIN: '. $transaction->isin .') innehåller ev. aktiesplittar. Dubbelkolla alltid.') . PHP_EOL;
@@ -301,6 +302,9 @@ class TransactionParser
         return false;
     }
 
+    /**
+     * Returns the new quantity of shares after a share split.
+     */
     private function lookForShareSplitsAvanza(Transaction $currentTransaction, Transaction $nextTransaction): ?float
     {
         if ($currentTransaction->isin !== $nextTransaction->isin) {
