@@ -4,12 +4,14 @@ namespace src\DataStructure;
 
 use src\DataStructure\Transaction;
 
+// TODO: more consistent naming.
+
 class Overview
 {
     public float $totalBuyAmount = 0;
     public float $totalSellAmount = 0;
-    public float $totalSellCommission = 0;
     public float $totalBuyCommission = 0;
+    public float $totalSellCommission = 0;
     public float $totalDividend = 0;
     public float $totalInterest = 0;
     public float $totalFee = 0;
@@ -67,7 +69,6 @@ class Overview
 
         $this->assetCashFlows[$isin][] = $transaction;
     }
-    *()
 
     /**
      * Run this method to add the current balance of an asset to the overview.

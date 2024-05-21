@@ -4,26 +4,18 @@ namespace src\DataStructure;
 
 class TransactionSummary
 {
-    // TODO: remove "Amount" naming.
     public string $name;
     public array $transactionNames = [];
     public string $isin;
-    public float $buyTotal = 0;
-    public float $sellTotal = 0;
-    public float $dividendTotal = 0;
-    // public float $feeTotal = 0;
-    // public float $taxTotal = 0;
-    // public float $foreignWithholdingTaxTotal = 0; // This should probably not be here
-    // public float $returnedForeignWithholdingTaxTotal = 0; // This should probably not be here
-    // public float $interestTotal = 0; // Why does this exist?
-    public float $commissionSellAmountTotal = 0;
-    public float $commissionBuyAmountTotal = 0;
+    public float $buy = 0;
+    public float $sell = 0;
+    public float $dividend = 0;
+    public float $commissionBuy = 0;
+    public float $commissionSell = 0;
     public float $currentNumberOfShares = 0; // float to handle fractional shares
     public ?float $currentPricePerShare = 0;
     public ?float $currentValueOfShares = 0;
     public string $firstTransactionDate; // TODO
     public string $lastTransactionDate; // TODO
-    public float $depositAmountTotal = 0;
-    public float $withdrawalAmountTotal = 0;
     public ?AssetReturn $assetReturn = null;
 }

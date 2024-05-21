@@ -113,11 +113,11 @@ class CalculateProfitCommand extends CommandProcessor
         echo PHP_EOL;
         echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
         echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->returns->totalReturnInclFeesPercent) . '%' . PHP_EOL;
+        echo PHP_EOL;
 
-        echo PHP_EOL;
-        echo 'XIRR: ' . $this->presenter->colorPicker($result->xirr * 100) . '%' . PHP_EOL;
-        echo 'TWR: ' . $this->presenter->colorPicker($result->twr) . '%' . PHP_EOL;
-        echo PHP_EOL;
+        // echo 'XIRR: ' . $this->presenter->colorPicker($result->xirr * 100) . '%' . PHP_EOL;
+        // echo 'TWR: ' . $this->presenter->colorPicker($result->twr) . '%' . PHP_EOL;
+        // echo PHP_EOL;
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;

@@ -113,7 +113,7 @@ class TransactionParser
             echo $this->presenter->blueText("Värdepappersflytt behandlas som såld för det finns inte några fler sådana transaktioner. {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
 
             // Transfers that is missing a transfer after the initial transfers can be seen as sold since this most likely indicated a transfer to another bank.
-            $summary->sellTotal += $transactionAmount;
+            $summary->sell += $transactionAmount;
             $summary->currentNumberOfShares -= round($transaction->quantity, 2);
 
             $this->overview->totalSellAmount += $transactionAmount;
@@ -128,7 +128,7 @@ class TransactionParser
                         $indexesToSkip[$index + 1] = 'share_transfer';
                     } else {
                         // Behandlar den som såld här
-                        $summary->sellTotal += $transactionAmount;
+                        $summary->sell += $transactionAmount;
                         $summary->currentNumberOfShares -= round($transaction->quantity, 2);
 
                         $this->overview->totalSellAmount += $transactionAmount;
@@ -158,9 +158,9 @@ class TransactionParser
 
         switch ($groupTransactionType) {
             case 'buy':
-                $summary->buyTotal += $transactionAmount;
+                $summary->buy += $transactionAmount;
                 $summary->currentNumberOfShares += round($transaction->quantity, 2);
-                $summary->commissionBuyAmountTotal += $transaction->commission;
+                $summary->commissionBuy += $transaction->commission;
 
                 $this->overview->totalBuyAmount += $transactionAmount;
                 $this->overview->totalBuyCommission += $transaction->commission;
@@ -169,9 +169,9 @@ class TransactionParser
 
                 break;
             case 'sell':
-                $summary->sellTotal += $transactionAmount;
+                $summary->sell += $transactionAmount;
                 $summary->currentNumberOfShares -= round($transaction->quantity, 2);
-                $summary->commissionSellAmountTotal += $transaction->commission;
+                $summary->commissionSell += $transaction->commission;
 
                 $this->overview->totalSellAmount += $transactionAmount;
                 $this->overview->totalSellCommission += $transaction->commission;
@@ -180,7 +180,7 @@ class TransactionParser
 
                 break;
             case 'dividend':
-                $summary->dividendTotal += $transactionAmount;
+                $summary->dividend += $transactionAmount;
 
                 $this->overview->totalDividend += $transactionAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
@@ -190,13 +190,11 @@ class TransactionParser
                 $summary->currentNumberOfShares += round($transaction->quantity, 2);
                 break;
             case 'deposit':
-                $summary->depositAmountTotal += $transactionAmount;
                 $this->overview->depositAmountTotal += $transactionAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'withdrawal':
-                $summary->withdrawalAmountTotal += $transactionAmount;
                 $this->overview->withdrawalAmountTotal += $transactionAmount;
                 $this->overview->addCashFlow($transaction->date, -$transactionAmount, $transaction->name, $transaction->type);
 
