@@ -138,18 +138,18 @@ class ProfitCalculator
             $summary->currentValueOfShares = 0;
         }
 
-        if ($summary->buyAmountTotal <= 0) {
+        if ($summary->buyTotal <= 0) {
             return null;
         }
 
         // Beräkna total avkastning exklusive avgifter
-        $totalReturnExclFees = $summary->sellAmountTotal + $summary->dividendAmountTotal + $summary->currentValueOfShares - $summary->buyAmountTotal;
+        $totalReturnExclFees = $summary->sellTotal + $summary->dividendTotal + $summary->currentValueOfShares - $summary->buyTotal;
 
-        $totalReturnExclFeesPercent = round($totalReturnExclFees / $summary->buyAmountTotal * 100, 2);
+        $totalReturnExclFeesPercent = round($totalReturnExclFees / $summary->buyTotal * 100, 2);
 
         // Beräkna total avkastning inklusive avgifter
-        $adjustedTotalBuyAmount = $summary->buyAmountTotal + $summary->feeBuyAmountTotal;
-        $adjustedTotalSellAmount = $summary->sellAmountTotal + $summary->dividendAmountTotal - $summary->feeSellAmountTotal;
+        $adjustedTotalBuyAmount = $summary->buyTotal + $summary->commissionBuyAmountTotal;
+        $adjustedTotalSellAmount = $summary->sellTotal + $summary->dividendTotal - $summary->commissionSellAmountTotal;
 
         $totalReturnInclFees = $adjustedTotalSellAmount + $summary->currentValueOfShares - $adjustedTotalBuyAmount;
         $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
@@ -173,8 +173,8 @@ class ProfitCalculator
         $totalReturnExclFeesPercent = round($totalReturnExclFees / $overview->totalBuyAmount * 100, 2);
 
         // Beräkna total avkastning inklusive avgifter
-        $adjustedTotalBuyAmount = $overview->totalBuyAmount + $overview->totalBuyFee;
-        $adjustedTotalSellAmount = $overview->totalSellAmount + $overview->totalDividend - $overview->totalSellFee;
+        $adjustedTotalBuyAmount = $overview->totalBuyAmount + $overview->totalBuyCommission;
+        $adjustedTotalSellAmount = $overview->totalSellAmount + $overview->totalDividend - $overview->totalSellCommission;
 
         $totalReturnInclFees = $adjustedTotalSellAmount + $overview->totalCurrentHoldings - $adjustedTotalBuyAmount;
         $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);

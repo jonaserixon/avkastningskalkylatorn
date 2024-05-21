@@ -61,7 +61,7 @@ class Nordnet extends CsvParser
             $transaction->rawQuantity = (int) $fields[9]; // Antal
             $transaction->price = abs(static::convertToFloat($fields[10])); // Kurs
             $transaction->amount = abs(static::convertToFloat($fields[14])); // Belopp
-            $transaction->fee = static::convertToFloat($fields[12]); // Total Avgift
+            $transaction->commission = static::convertToFloat($fields[12]); // Total Avgift
             $transaction->currency = $fields[17]; // Valuta
             $transaction->isin = $fields[8]; // ISIN
 

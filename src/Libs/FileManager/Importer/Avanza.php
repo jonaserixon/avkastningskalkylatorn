@@ -54,22 +54,28 @@ class Avanza extends CsvParser
                 continue;
             }
 
-            // TODO: Kan rent teoretiskt sett urskilja på om det är en aktie eller fond baserat på om antalet är decimaltal eller inte.
+            // TODO: Kan rent teoretiskt sett urskilja på om det är en aktie eller fond baserat på om antalet är decimaltal eller inte. OBS: vanskligt
 
             $transaction = new Transaction();
             $transaction->bank = static::BANK_NAME;
             $transaction->date = $row[0]; // Datum
             $transaction->account = $row[1]; // Konto
-            $transaction->type = $transactionType->value; // Typ av transaktion
             $transaction->name = trim($row[3]); // Värdepapper/beskrivning
             $transaction->quantity = abs(static::convertToFloat($row[4])); // Antal
             $transaction->rawQuantity = static::convertToFloat($row[4]); // Antal
             $transaction->price = abs(static::convertToFloat($row[5])); // Kurs
             $transaction->amount = abs(static::convertToFloat($row[6])); // Belopp
-            $transaction->fee = static::convertToFloat($row[7]); // Courtage
+            $transaction->rawAmount = static::convertToFloat($row[6]); // Belopp
+            $transaction->commission = static::convertToFloat($row[7]); // Courtage
             $transaction->currency = $row[8]; // Valuta
             $transaction->isin = $row[9]; // ISIN
             // $transaction->isin = empty($row[9]) ? null : $row[9]; // ISIN
+
+            if ($transactionType->value === 'other') {
+                $transaction->type = $this->mapOtherTransactionType($transaction);
+            } else {
+                $transaction->type = $transactionType->value; // Typ av transaktion
+            }
 
             $result[] = $transaction;
         }
@@ -96,6 +102,10 @@ class Avanza extends CsvParser
             'värdepappersöverföring' => 'share_transfer',
             'insättning' => 'deposit',
             'uttag' => 'withdrawal',
+            'ränta' => 'interest',
+
+            'preliminärskatt' => 'tax',
+            'utländsk källskatt' => 'tax',
         ];
 
         if (array_key_exists($normalizedInput, $mapping)) {
@@ -107,5 +117,27 @@ class Avanza extends CsvParser
         // print 'Unknown transaction type: ' . $normalizedInput . PHP_EOL;
 
         return null;
+    }
+
+    public function mapOtherTransactionType(Transaction &$transaction)
+    {
+        $fees = ['avgift', 'riskpremie', 'adr'];
+
+        foreach ($fees as $fee) {
+            if (str_contains(mb_strtolower($transaction->name), $fee)) {
+                return 'fee';
+            }
+        }
+
+        $taxes = ['skatt']; // 'avkastningsskatt', 'källskatt',
+        foreach ($taxes as $tax) {
+            if (str_contains(mb_strtolower($transaction->name), $tax)) {
+                return 'tax';
+            }
+        }
+
+        return 'other';
+
+        // TODO: hantera aktiesplittar redan här?
     }
 }

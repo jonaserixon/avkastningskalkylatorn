@@ -15,10 +15,11 @@ class TransactionParser
      * @var string[]
      */
     private const BLACKLISTED_TRANSACTION_NAMES = [
-        'utdelning', // TODO: pga. kopplat till källskatt på utdelningen
+        // 'utdelning', // TODO: pga. kopplat till källskatt på utdelningen
         'kreditdepån', // TODO: hur ska detta hanteras?
-        'återbetalning', // återbetalning av källskatt
-        'ränta', // TODO: hantera detta
+        // 'återbetalning', // återbetalning av källskatt
+        // 'ränta', // TODO: hantera detta
+        // 'preliminär skatt',
 
         'källskatt',
         'avkastningsskatt',
@@ -27,8 +28,9 @@ class TransactionParser
 
         'avgift',
         'fraktionslikvid',
-        'preliminär skatt',
         'kreditkonto',
+
+        'kapitalmedelskonto',
 
         // 'uttag',
         // 'överföring',
@@ -127,11 +129,11 @@ class TransactionParser
             echo $this->presenter->blueText("Värdepappersflytt behandlas som såld för det finns inte några fler sådana transaktioner. {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
 
             // Transfers that is missing a transfer after the initial transfers can be seen as sold since this most likely indicated a transfer to another bank.
-            $summary->sellAmountTotal += $transactionAmount;
+            $summary->sellTotal += $transactionAmount;
             $summary->currentNumberOfShares -= round($transaction->quantity, 2);
 
             $this->overview->totalSellAmount += $transactionAmount;
-            $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name);
+            $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
         } elseif ($transaction->type === 'share_transfer' && $nextTransaction->type === 'share_transfer') {
             if ($transaction->isin === $nextTransaction->isin) {
                 if ($transaction->bank === 'AVANZA' && $nextTransaction->bank === 'AVANZA') {
@@ -142,11 +144,11 @@ class TransactionParser
                         $indexesToSkip[$index + 1] = 'share_transfer';
                     } else {
                         // Behandlar den som såld här
-                        $summary->sellAmountTotal += $transactionAmount;
+                        $summary->sellTotal += $transactionAmount;
                         $summary->currentNumberOfShares -= round($transaction->quantity, 2);
 
                         $this->overview->totalSellAmount += $transactionAmount;
-                        $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name);
+                        $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
                     }
                 }
             }
@@ -168,42 +170,50 @@ class TransactionParser
     private function updateSummaryBasedOnTransactionType(TransactionSummary &$summary, string $groupTransactionType, Transaction $transaction): void
     {
         $transactionAmount = $transaction->amount;
+        $transactionRawAmount = $transaction->rawAmount;
 
         switch ($groupTransactionType) {
             case 'buy':
-                $summary->buyAmountTotal += $transactionAmount;
+                $summary->buyTotal += $transactionAmount;
                 $summary->currentNumberOfShares += round($transaction->quantity, 2);
-                $summary->feeAmountTotal += $transaction->fee;
-                $summary->feeBuyAmountTotal += $transaction->fee;
+                $summary->commissionAmountTotal += $transaction->commission;
+                $summary->commissionBuyAmountTotal += $transaction->commission;
 
                 $this->overview->totalBuyAmount += $transactionAmount;
-                $this->overview->totalFee += $transaction->fee;
-                $this->overview->totalBuyFee += $transaction->fee;
-                if ($transaction->fee > 0) {
-                    $this->overview->addCashFlow($transaction->date, -$transaction->fee, $transaction->name);
+                $this->overview->totalCommission += $transaction->commission;
+                $this->overview->totalBuyCommission += $transaction->commission;
+
+                // We don't need to add the fee as a cash flow if there is none.
+                if ($transaction->commission > 0) {
+                    $this->overview->addCashFlow($transaction->date, -$transaction->commission, $transaction->name, 'fee');
                 }
+
+                $this->overview->addCashFlow($transaction->date, -$transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'sell':
-                $summary->sellAmountTotal += $transactionAmount;
+                $summary->sellTotal += $transactionAmount;
                 $summary->currentNumberOfShares -= round($transaction->quantity, 2);
-                $summary->feeAmountTotal += $transaction->fee;
-                $summary->feeSellAmountTotal += $transaction->fee;
+                $summary->commissionAmountTotal += $transaction->commission;
+                $summary->commissionSellAmountTotal += $transaction->commission;
 
                 $this->overview->totalSellAmount += $transactionAmount;
-                $this->overview->totalFee += $transaction->fee;
-                $this->overview->totalSellFee += $transaction->fee;
+                $this->overview->totalCommission += $transaction->commission;
+                $this->overview->totalSellCommission += $transaction->commission;
 
-                if ($transaction->fee > 0) {
-                    $this->overview->addCashFlow($transaction->date, -$transaction->fee, $transaction->name);
+                // We don't need to add the fee as a cash flow if there is none.
+                if ($transaction->commission > 0) {
+                    $this->overview->addCashFlow($transaction->date, -$transaction->commission, $transaction->name, 'fee');
                 }
+
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'dividend':
-                $summary->dividendAmountTotal += $transactionAmount;
+                $summary->dividendTotal += $transactionAmount;
 
                 $this->overview->totalDividend += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'share_split':
@@ -212,13 +222,34 @@ class TransactionParser
             case 'deposit':
                 $summary->depositAmountTotal += $transactionAmount;
                 $this->overview->depositAmountTotal += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'withdrawal':
                 $summary->withdrawalAmountTotal += $transactionAmount;
                 $this->overview->withdrawalAmountTotal += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, -$transactionAmount, $transaction->name);
+                $this->overview->addCashFlow($transaction->date, -$transactionAmount, $transaction->name, $transaction->type);
+
+                break;
+            case 'interest':
+                $summary->interestTotal += $transactionRawAmount;
+
+                $this->overview->totalInterest += $transactionRawAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+
+                break;
+            case 'tax':
+                $summary->taxTotal += $transactionRawAmount;
+
+                $this->overview->totalTax += $transactionRawAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+
+                break;
+            case 'fee':
+                $summary->feeTotal += $transactionRawAmount;
+
+                $this->overview->totalFee += $transactionRawAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
 
                 break;
             default:
@@ -242,20 +273,24 @@ class TransactionParser
                 continue;
             }
 
+            /*
             if ($this->shouldSkipTransaction($transaction)) {
                 continue;
             }
+            */
 
             if (!array_key_exists($transaction->isin, $groupedTransactions)) {
                 $groupedTransactions[$transaction->isin] = [
                     'buy' => [],
                     'sell' => [],
                     'dividends' => [],
+                    'interest' => [],
                     'share_split' => [],
                     'share_transfer' => [],
                     'deposit' => [],
                     'withdrawal' => [],
-                    // 'other' => [] // TODO
+                    'tax' => [],
+                    'other' => [],
                 ];
             }
 
@@ -270,7 +305,7 @@ class TransactionParser
         // TODO: other innehåller avgifter etc. som vi vill kunna hantera på något sätt.
 
         // Om transaktionen är klassad som övrig så vill vi kolla om det finns en transaktion efter den som vi kan använda för att avgöra om det är en aktiesplitt osv.
-        if ($transaction->type === 'other') {
+        if ($transaction->type === 'other' && $transaction->quantity != 0 && $transaction->commission == 0) { // Check if this can be considered a share split.
             $nextIndex = $index + 1;
             if (!isset($transactions[$nextIndex])) {
                 return;
@@ -279,6 +314,13 @@ class TransactionParser
             $nextTransaction = $transactions[$nextIndex];
             $this->handleSpecialTransactions($transaction, $nextTransaction, $groupedTransactions, $nextIndex, $indexesToSkip);
             return;
+        }
+
+        // TODO
+        if ($transaction->type === 'other') {
+            if ($this->shouldSkipTransaction($transaction)) {
+                return;
+            }
         }
 
         $groupedTransactions[$transaction->isin][$transaction->type][] = $transaction;
@@ -344,5 +386,10 @@ class TransactionParser
         }
 
         return null;
+    }
+
+    protected function isNonSwedishIsin(string $isin): bool
+    {
+        return !str_starts_with($isin, 'SE');
     }
 }

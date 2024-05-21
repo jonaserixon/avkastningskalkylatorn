@@ -8,10 +8,13 @@ class Overview
 {
     public float $totalBuyAmount = 0;
     public float $totalSellAmount = 0;
-    public float $totalFee = 0;
-    public float $totalSellFee = 0;
-    public float $totalBuyFee = 0;
+    public float $totalCommission = 0; // TODO: remove this useless property
+    public float $totalSellCommission = 0;
+    public float $totalBuyCommission = 0;
     public float $totalDividend = 0;
+    public float $totalInterest = 0;
+    public float $totalFee = 0;
+    public float $totalTax = 0;
     public float $totalCurrentHoldings = 0;
     public float $totalProfitInclFees = 0;
     public array $currentHoldingsWeighting = [];
@@ -37,12 +40,13 @@ class Overview
 
     // TODO: think about where to put all of this shit.
 
-    public function addCashFlow(string $date, float $amount, string $name)
+    public function addCashFlow(string $date, float $amount, string $name, string $type): void
     {
         $transaction = new Transaction();
         $transaction->date = $date;
         $transaction->amount = $amount;
         $transaction->name = $name;
+        $transaction->type = $type;
 
         $this->cashFlows[] = $transaction;
     }
@@ -50,7 +54,7 @@ class Overview
     public function addFinalCashFlow(float $currentMarketValue, string $name)
     {
         $this->lastTransactionDate = date('Y-m-d');
-        $this->addCashFlow($this->lastTransactionDate, $currentMarketValue, 'Current total holdings: ' . $name);
+        $this->addCashFlow($this->lastTransactionDate, $currentMarketValue, 'Current total holdings: ' . $name, 'current_holding_value');
     }
 
     /*
@@ -73,4 +77,15 @@ class Overview
         $this->addAssetCashFlow($isin, date('Y-m-d'), $currentMarketValue);
     }
     */
+
+    public function calculateBalance(array $transactions): float
+    {
+        $balance = 0;
+        foreach ($transactions as $transaction) {
+            $amount = round($transaction->amount, 2);
+            $balance += $amount;
+        }
+
+        return $balance;
+    }
 }

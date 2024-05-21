@@ -50,6 +50,33 @@ class CalculateProfitCommand extends CommandProcessor
 
         $result = $profitCalculator->calculate();
 
+        /*
+        $filePath = "/exports/export_".date('Y-m-d_His').".csv";
+        $csvHeaders = [
+            'date',
+            'amount',
+            'name',
+            'type'
+        ];
+        $f = fopen($filePath, "w");
+        fputcsv($f, $csvHeaders, ',');
+
+        foreach ($result->overview->cashFlows as $transaction) {
+            $row = [
+                'date' => $transaction->date,
+                'amount' => $transaction->amount,
+                'name' => $transaction->name,
+                'type' => $transaction->type
+            ];
+
+
+            fputcsv($f, array_values($row), ',');
+        }
+
+        
+        // exit;
+        */
+
         ob_start();
 
         if ($options->verbose) {
@@ -58,13 +85,19 @@ class CalculateProfitCommand extends CommandProcessor
             $this->presenter->generateSummaryTable($result->summaries);
         }
 
+        $totalBalance = $result->overview->totalCurrentHoldings - ($result->overview->calculateBalance($result->overview->cashFlows) - $result->overview->totalCommission);
+        echo 'Balans av samtliga parsade transaktioner: ' . $this->presenter->colorPicker($totalBalance) . ' SEK' . PHP_EOL;
+
         print_r($result->overview->currentHoldingsWeighting);
 
         // TODO: Move this somewhere suitable (Presenter?)
-        echo 'Tot. avgifter: ' . $this->presenter->colorPicker($result->overview->totalFee) . ' SEK' . PHP_EOL;
-        echo 'Tot. köpavgifter: ' . $this->presenter->colorPicker($result->overview->totalBuyFee) . ' SEK' . PHP_EOL;
-        echo 'Tot. säljavgifter: ' . $this->presenter->colorPicker($result->overview->totalSellFee) . ' SEK' . PHP_EOL;
+        echo 'Tot. courtage: ' . $this->presenter->colorPicker($result->overview->totalCommission) . ' SEK' . PHP_EOL;
+        echo 'Tot. köp-courtage: ' . $this->presenter->redText($result->overview->totalBuyCommission) . ' SEK' . PHP_EOL;
+        echo 'Tot. sälj-courtage: ' . $this->presenter->redText($result->overview->totalSellCommission) . ' SEK' . PHP_EOL;
+        echo 'Tot. avgifter: ' . $this->presenter->redText($result->overview->totalFee) . ' SEK' . PHP_EOL;
         echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($result->overview->totalDividend) . ' SEK' . PHP_EOL;
+        echo 'Tot. ränta: ' . $this->presenter->colorPicker($result->overview->totalInterest) . ' SEK' . PHP_EOL;
+        echo 'Tot. skatt: ' . $this->presenter->redText($result->overview->totalTax) . ' SEK' . PHP_EOL;
         echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($result->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
         echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($result->overview->totalSellAmount) . ' SEK' . PHP_EOL;
         echo 'Tot. insättningar: ' . $this->presenter->colorPicker($result->overview->depositAmountTotal) . ' SEK' . PHP_EOL;

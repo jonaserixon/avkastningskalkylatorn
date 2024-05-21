@@ -15,15 +15,15 @@ class Presenter
 
             echo $this->pinkText($this->createSeparator('-', $summary->name .' ('.$summary->isin.')')) . PHP_EOL;
 
-            echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($summary->buyAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($summary->sellAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Utdelningar:') . $this->colorPicker($summary->dividendAmountTotal) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($summary->buyTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($summary->sellTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Utdelningar:') . $this->colorPicker($summary->dividendTotal) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
-            echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($summary->feeAmountTotal) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Köpavgifter:', 50) . $this->redText($summary->feeBuyAmountTotal) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Säljavgifter:', 50) . $this->redText($summary->feeSellAmountTotal) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($summary->commissionAmountTotal) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Köpavgifter:', 50) . $this->redText($summary->commissionBuyAmountTotal) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Säljavgifter:', 50) . $this->redText($summary->commissionSellAmountTotal) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
@@ -85,8 +85,8 @@ class Presenter
             $colWidths[1] = max($colWidths[1], mb_strlen($summary->isin));
             $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %'));
             $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK'));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->dividendAmountTotal) . ' SEK'));
-            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->feeAmountTotal) . ' SEK'));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->dividendTotal) . ' SEK'));
+            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionAmountTotal) . ' SEK'));
         }
 
         $this->printHorizontalLine($colWidths);
@@ -106,8 +106,8 @@ class Presenter
                 $summary->isin,
                 $this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %',
                 $this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK',
-                $this->formatNumber($summary->dividendAmountTotal) . ' SEK',
-                $this->formatNumber($summary->feeAmountTotal) . ' SEK'
+                $this->formatNumber($summary->dividendTotal) . ' SEK',
+                $this->formatNumber($summary->commissionAmountTotal) . ' SEK'
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }

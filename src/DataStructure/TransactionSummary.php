@@ -4,15 +4,19 @@ namespace src\DataStructure;
 
 class TransactionSummary
 {
+    // TODO: remove "Amount" naming.
     public string $name;
     public array $transactionNames = [];
     public string $isin;
-    public float $buyAmountTotal = 0;
-    public float $sellAmountTotal = 0;
-    public float $dividendAmountTotal = 0;
-    public float $feeAmountTotal = 0; // TODO: dela upp i köp/sälj/ADR-avgifter etc.
-    public float $feeSellAmountTotal = 0;
-    public float $feeBuyAmountTotal = 0;
+    public float $buyTotal = 0;
+    public float $sellTotal = 0;
+    public float $dividendTotal = 0;
+    public float $feeTotal = 0;
+    public float $taxTotal = 0;
+    public float $interestTotal = 0; // Why does this exist?
+    public float $commissionAmountTotal = 0; // TODO: remove this useless property
+    public float $commissionSellAmountTotal = 0;
+    public float $commissionBuyAmountTotal = 0;
     public float $currentNumberOfShares = 0; // float to handle fractional shares
     public ?float $currentPricePerShare = 0;
     public ?float $currentValueOfShares = 0;
