@@ -86,7 +86,7 @@ class Presenter
             $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %'));
             $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK'));
             $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->dividendTotal) . ' SEK'));
-            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionAmountTotal) . ' SEK'));
+            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionBuyAmountTotal + $summary->commissionSellAmountTotal) . ' SEK'));
         }
 
         $this->printHorizontalLine($colWidths);
@@ -107,7 +107,7 @@ class Presenter
                 $this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %',
                 $this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK',
                 $this->formatNumber($summary->dividendTotal) . ' SEK',
-                $this->formatNumber($summary->commissionAmountTotal) . ' SEK'
+                $this->formatNumber($summary->commissionBuyAmountTotal + $summary->commissionSellAmountTotal) . ' SEK'
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }

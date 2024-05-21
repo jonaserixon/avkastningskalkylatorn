@@ -8,13 +8,14 @@ class Overview
 {
     public float $totalBuyAmount = 0;
     public float $totalSellAmount = 0;
-    public float $totalCommission = 0; // TODO: remove this useless property
     public float $totalSellCommission = 0;
     public float $totalBuyCommission = 0;
     public float $totalDividend = 0;
     public float $totalInterest = 0;
     public float $totalFee = 0;
     public float $totalTax = 0;
+    public float $totalForeignWithholdingTax = 0;
+    public float $totalReturnedForeignWithholdingTax = 0;
     public float $totalCurrentHoldings = 0;
     public float $totalProfitInclFees = 0;
     public array $currentHoldingsWeighting = [];

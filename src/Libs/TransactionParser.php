@@ -15,26 +15,10 @@ class TransactionParser
      * @var string[]
      */
     private const BLACKLISTED_TRANSACTION_NAMES = [
-        // 'utdelning', // TODO: pga. kopplat till källskatt på utdelningen
-        'kreditdepån', // TODO: hur ska detta hanteras?
-        // 'återbetalning', // återbetalning av källskatt
-        // 'ränta', // TODO: hantera detta
-        // 'preliminär skatt',
-
-        'källskatt',
-        'avkastningsskatt',
-        'riskpremie',
         'nollställning',
-
-        'avgift',
         'fraktionslikvid',
         'kreditkonto',
-
-        'kapitalmedelskonto',
-
-        // 'uttag',
-        // 'överföring',
-        // 'direktinsättning',
+        'kapitalmedelskonto'
     ];
 
     private Presenter $presenter;
@@ -176,17 +160,10 @@ class TransactionParser
             case 'buy':
                 $summary->buyTotal += $transactionAmount;
                 $summary->currentNumberOfShares += round($transaction->quantity, 2);
-                $summary->commissionAmountTotal += $transaction->commission;
                 $summary->commissionBuyAmountTotal += $transaction->commission;
 
                 $this->overview->totalBuyAmount += $transactionAmount;
-                $this->overview->totalCommission += $transaction->commission;
                 $this->overview->totalBuyCommission += $transaction->commission;
-
-                // We don't need to add the fee as a cash flow if there is none.
-                if ($transaction->commission > 0) {
-                    $this->overview->addCashFlow($transaction->date, -$transaction->commission, $transaction->name, 'fee');
-                }
 
                 $this->overview->addCashFlow($transaction->date, -$transactionAmount, $transaction->name, $transaction->type);
 
@@ -194,17 +171,10 @@ class TransactionParser
             case 'sell':
                 $summary->sellTotal += $transactionAmount;
                 $summary->currentNumberOfShares -= round($transaction->quantity, 2);
-                $summary->commissionAmountTotal += $transaction->commission;
                 $summary->commissionSellAmountTotal += $transaction->commission;
 
                 $this->overview->totalSellAmount += $transactionAmount;
-                $this->overview->totalCommission += $transaction->commission;
                 $this->overview->totalSellCommission += $transaction->commission;
-
-                // We don't need to add the fee as a cash flow if there is none.
-                if ($transaction->commission > 0) {
-                    $this->overview->addCashFlow($transaction->date, -$transaction->commission, $transaction->name, 'fee');
-                }
 
                 $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
@@ -232,22 +202,25 @@ class TransactionParser
 
                 break;
             case 'interest':
-                $summary->interestTotal += $transactionRawAmount;
-
                 $this->overview->totalInterest += $transactionRawAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'tax':
-                $summary->taxTotal += $transactionRawAmount;
-
                 $this->overview->totalTax += $transactionRawAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
 
                 break;
-            case 'fee':
-                $summary->feeTotal += $transactionRawAmount;
+            case 'foreign_withholding_tax':
+                $this->overview->totalForeignWithholdingTax += $transactionRawAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+                break;
+            case 'returned_foreign_withholding_tax':
+                $this->overview->totalReturnedForeignWithholdingTax += $transactionRawAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
 
+                break;
+            case 'fee':
                 $this->overview->totalFee += $transactionRawAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
 

@@ -105,7 +105,7 @@ class Avanza extends CsvParser
             'ränta' => 'interest',
 
             'preliminärskatt' => 'tax',
-            'utländsk källskatt' => 'tax',
+            'utländsk källskatt' => 'foreign_withholding_tax',
         ];
 
         if (array_key_exists($normalizedInput, $mapping)) {
@@ -129,6 +129,11 @@ class Avanza extends CsvParser
             }
         }
 
+        // Återbetald utländsk källskatt
+        if (str_contains(mb_strtolower($transaction->name), 'återbetalning') && str_contains(mb_strtolower($transaction->name), 'källskatt')) {
+            return 'returned_foreign_withholding_tax';
+        }
+
         $taxes = ['skatt']; // 'avkastningsskatt', 'källskatt',
         foreach ($taxes as $tax) {
             if (str_contains(mb_strtolower($transaction->name), $tax)) {
@@ -136,8 +141,7 @@ class Avanza extends CsvParser
             }
         }
 
-        return 'other';
-
         // TODO: hantera aktiesplittar redan här?
+        return 'other';
     }
 }

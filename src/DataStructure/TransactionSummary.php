@@ -11,10 +11,11 @@ class TransactionSummary
     public float $buyTotal = 0;
     public float $sellTotal = 0;
     public float $dividendTotal = 0;
-    public float $feeTotal = 0;
-    public float $taxTotal = 0;
-    public float $interestTotal = 0; // Why does this exist?
-    public float $commissionAmountTotal = 0; // TODO: remove this useless property
+    // public float $feeTotal = 0;
+    // public float $taxTotal = 0;
+    // public float $foreignWithholdingTaxTotal = 0; // This should probably not be here
+    // public float $returnedForeignWithholdingTaxTotal = 0; // This should probably not be here
+    // public float $interestTotal = 0; // Why does this exist?
     public float $commissionSellAmountTotal = 0;
     public float $commissionBuyAmountTotal = 0;
     public float $currentNumberOfShares = 0; // float to handle fractional shares
