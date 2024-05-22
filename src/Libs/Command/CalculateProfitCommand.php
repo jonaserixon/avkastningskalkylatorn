@@ -86,8 +86,8 @@ class CalculateProfitCommand extends CommandProcessor
         }
 
         $currentBalance = $result->overview->calculateBalance($result->overview->cashFlows) - $result->overview->totalCurrentHoldings;
-        echo 'Saldo: ' . $this->presenter->colorPicker($currentBalance) . ' SEK' . PHP_EOL;
-        echo 'Saldo 2: ' . $this->presenter->colorPicker($result->overview->calculateBalance($result->overview->cashFlows)) . ' SEK' . PHP_EOL;
+        echo 'Saldo (likvider): ' . $this->presenter->colorPicker($currentBalance) . ' SEK' . PHP_EOL;
+        echo 'Totalt värde: ' . $this->presenter->colorPicker($result->overview->calculateBalance($result->overview->cashFlows)) . ' SEK' . PHP_EOL;
 
         print_r($result->overview->currentHoldingsWeighting);
 
@@ -111,7 +111,7 @@ class CalculateProfitCommand extends CommandProcessor
         echo PHP_EOL;
         echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($result->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
-        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->totalProfitInclFees) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
         echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->returns->totalReturnInclFeesPercent) . '%' . PHP_EOL;
         echo PHP_EOL;
 

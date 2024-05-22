@@ -90,8 +90,6 @@ class TransactionParser
 
             if ($groupTransactionType === 'share_transfer') {
                 $this->handleShareTransfer($transaction, $nextTransaction, $summary, $indexesToSkip, $index);
-            // } elseif ($groupTransactionType === 'deposit' || $groupTransactionType === 'withdrawal') {
-            //     $this->handleDepositAndWithdrawal($transaction, $nextTransaction, $summary, $indexesToSkip, $index);
             } else {
                 $this->updateSummaryBasedOnTransactionType($summary, $groupTransactionType, $transaction);
             }
@@ -107,14 +105,17 @@ class TransactionParser
      */
     private function handleShareTransfer(Transaction $transaction, ?Transaction $nextTransaction, TransactionSummary &$summary, array &$indexesToSkip, int $index): void
     {
-        $transactionAmount = round($transaction->price * $transaction->quantity, 2);
+        // $transactionAmount = round($transaction->price * $transaction->quantity, 2);
+        $transactionAmount = abs(round($transaction->rawPrice * $transaction->rawQuantity, 2)); // För att kunna se transaktionen som såld gör vi om värdet till ett positivt tal.
 
         if (!$nextTransaction) {
             echo $this->presenter->blueText("Värdepappersflytt behandlas som såld för det finns inte några fler sådana transaktioner. {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
 
             // Transfers that is missing a transfer after the initial transfers can be seen as sold since this most likely indicated a transfer to another bank.
             $summary->sell += $transactionAmount;
-            $summary->currentNumberOfShares -= round($transaction->quantity, 2);
+            $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
+
+            // $summary->currentNumberOfShares -= round($transaction->quantity, 2);
 
             $this->overview->totalSellAmount += $transactionAmount;
             $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
@@ -129,7 +130,9 @@ class TransactionParser
                     } else {
                         // Behandlar den som såld här
                         $summary->sell += $transactionAmount;
-                        $summary->currentNumberOfShares -= round($transaction->quantity, 2);
+                        $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
+
+                        // $summary->currentNumberOfShares -= round($transaction->quantity, 2);
 
                         $this->overview->totalSellAmount += $transactionAmount;
                         $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
@@ -153,24 +156,24 @@ class TransactionParser
 
     private function updateSummaryBasedOnTransactionType(TransactionSummary &$summary, string $groupTransactionType, Transaction $transaction): void
     {
-        $transactionAmount = $transaction->amount;
-        $transactionRawAmount = $transaction->rawAmount;
+        // $transactionAmount = $transaction->amount;
+        $transactionAmount = $transaction->rawAmount;
 
         switch ($groupTransactionType) {
             case 'buy':
                 $summary->buy += $transactionAmount;
-                $summary->currentNumberOfShares += round($transaction->quantity, 2);
+                $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
                 $summary->commissionBuy += $transaction->commission;
 
                 $this->overview->totalBuyAmount += $transactionAmount;
                 $this->overview->totalBuyCommission += $transaction->commission;
 
-                $this->overview->addCashFlow($transaction->date, -$transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'sell':
                 $summary->sell += $transactionAmount;
-                $summary->currentNumberOfShares -= round($transaction->quantity, 2);
+                $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
                 $summary->commissionSell += $transaction->commission;
 
                 $this->overview->totalSellAmount += $transactionAmount;
@@ -187,7 +190,7 @@ class TransactionParser
 
                 break;
             case 'share_split':
-                $summary->currentNumberOfShares += round($transaction->quantity, 2);
+                $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
                 break;
             case 'deposit':
                 $this->overview->depositAmountTotal += $transactionAmount;
@@ -196,31 +199,31 @@ class TransactionParser
                 break;
             case 'withdrawal':
                 $this->overview->withdrawalAmountTotal += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, -$transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'interest':
-                $this->overview->totalInterest += $transactionRawAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+                $this->overview->totalInterest += $transactionAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'tax':
-                $this->overview->totalTax += $transactionRawAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+                $this->overview->totalTax += $transactionAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'foreign_withholding_tax':
-                $this->overview->totalForeignWithholdingTax += $transactionRawAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+                $this->overview->totalForeignWithholdingTax += $transactionAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
                 break;
             case 'returned_foreign_withholding_tax':
-                $this->overview->totalReturnedForeignWithholdingTax += $transactionRawAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+                $this->overview->totalReturnedForeignWithholdingTax += $transactionAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             case 'fee':
-                $this->overview->totalFee += $transactionRawAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionRawAmount, $transaction->name, $transaction->type);
+                $this->overview->totalFee += $transactionAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 
                 break;
             default:

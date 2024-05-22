@@ -91,6 +91,7 @@ class ProfitCalculator
             }
         }
 
+
         // Important for calculations etc.
         usort($this->transactionParser->overview->cashFlows, function ($a, $b) {
             return strtotime($a->date) <=> strtotime($b->date);
@@ -138,12 +139,12 @@ class ProfitCalculator
             $summary->currentValueOfShares = 0;
         }
 
-        if ($summary->buy <= 0) {
+        if (abs($summary->buy) <= 0) {
             return null;
         }
 
-        $totalReturnInclFees = $summary->sell + $summary->dividend + $summary->currentValueOfShares - $summary->buy;
-        $totalReturnInclFeesPercent = round($totalReturnInclFees / $summary->buy * 100, 2);
+        $totalReturnInclFees = $summary->sell + $summary->dividend + $summary->currentValueOfShares + $summary->buy;
+        $totalReturnInclFeesPercent = round($totalReturnInclFees / abs($summary->buy) * 100, 2);
 
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
@@ -156,8 +157,11 @@ class ProfitCalculator
 
     protected function calculateTotalReturnForOverview(Overview $overview): AssetReturn
     {
-        $totalReturnInclFees = $overview->totalSellAmount + $overview->totalDividend + $overview->totalCurrentHoldings - $overview->totalBuyAmount;
-        $totalReturnInclFeesPercent = round($totalReturnInclFees / $overview->totalBuyAmount * 100, 2);
+        $totalReturnInclFees = $overview->totalSellAmount + $overview->totalDividend + $overview->totalCurrentHoldings + $overview->totalBuyAmount;
+        $totalReturnInclFeesPercent = round($totalReturnInclFees / abs($overview->totalBuyAmount) * 100, 2);
+
+        // print_r($totalReturnInclFees);
+        // exit;
 
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;

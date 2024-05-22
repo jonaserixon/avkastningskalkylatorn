@@ -12,6 +12,7 @@ class Transaction
     public float $quantity; // float to handle fractional shares
     public float $rawQuantity; // float to handle fractional shares
     public float $price;
+    public float $rawPrice;
     public float $amount;
     public float $rawAmount;
     public float $commission; // brokerage commission

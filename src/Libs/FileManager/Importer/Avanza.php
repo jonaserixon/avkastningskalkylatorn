@@ -64,6 +64,7 @@ class Avanza extends CsvParser
             $transaction->quantity = abs(static::convertToFloat($row[4])); // Antal
             $transaction->rawQuantity = static::convertToFloat($row[4]); // Antal
             $transaction->price = abs(static::convertToFloat($row[5])); // Kurs
+            $transaction->rawPrice = static::convertToFloat($row[5]); // Kurs
             $transaction->amount = abs(static::convertToFloat($row[6])); // Belopp
             $transaction->rawAmount = static::convertToFloat($row[6]); // Belopp
             $transaction->commission = static::convertToFloat($row[7]); // Courtage
