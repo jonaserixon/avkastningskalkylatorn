@@ -6,8 +6,11 @@ use src\DataStructure\TransactionSummary;
 
 class Presenter
 {
-    private const TAB_SIZE = 4; // Adjust based on your desired tab size
+    private const TAB_SIZE = 4;
 
+    /**
+     * @param TransactionSummary[] $summaries
+     */
     public function displayDetailedSummaries(array $summaries): void
     {
         foreach ($summaries as $summary) {
@@ -15,15 +18,15 @@ class Presenter
 
             echo $this->pinkText($this->createSeparator('-', $summary->name .' ('.$summary->isin.')')) . PHP_EOL;
 
-            echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($summary->buyAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($summary->sellAmountTotal, 2, '.', ' ')) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Utdelningar:') . $this->colorPicker($summary->dividendAmountTotal) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($summary->buy, 2, '.', ' ')) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($summary->sell, 2, '.', ' ')) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Utdelningar:') . $this->colorPicker($summary->dividend) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
-            echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($summary->feeAmountTotal) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Köpavgifter:', 50) . $this->redText($summary->feeBuyAmountTotal) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Säljavgifter:', 50) . $this->redText($summary->feeSellAmountTotal) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. courtage:', 50) . $this->redText($summary->commissionBuy + $summary->commissionSell) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage köp:', 50) . $this->redText($summary->commissionBuy) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage sälj:', 50) . $this->redText($summary->commissionSell) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
@@ -41,8 +44,8 @@ class Presenter
             }
 
             if ($summary->assetReturn) {
-                echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($summary->assetReturn->totalReturnExclFees) . ' SEK' . PHP_EOL;
-                echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($summary->assetReturn->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
+                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($summary->assetReturn->totalReturnExclFees) . ' SEK' . PHP_EOL;
+                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($summary->assetReturn->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
 
                 echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($summary->assetReturn->totalReturnInclFees) . ' SEK' . PHP_EOL;
                 echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($summary->assetReturn->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
@@ -61,6 +64,9 @@ class Presenter
         return $name;
     }
 
+    /**
+     * @param TransactionSummary[] $summaries
+     */
     public function generateSummaryTable(array $summaries): void
     {
         $headers = ['Värdepapper', 'ISIN', 'Avkastning %', 'Avkastning SEK', 'Total utdelning', 'Totalt courtage'];
@@ -85,8 +91,8 @@ class Presenter
             $colWidths[1] = max($colWidths[1], mb_strlen($summary->isin));
             $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %'));
             $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK'));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->dividendAmountTotal) . ' SEK'));
-            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->feeAmountTotal) . ' SEK'));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->dividend) . ' SEK'));
+            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK'));
         }
 
         $this->printHorizontalLine($colWidths);
@@ -106,8 +112,8 @@ class Presenter
                 $summary->isin,
                 $this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %',
                 $this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK',
-                $this->formatNumber($summary->dividendAmountTotal) . ' SEK',
-                $this->formatNumber($summary->feeAmountTotal) . ' SEK'
+                $this->formatNumber($summary->dividend) . ' SEK',
+                $this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK'
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }

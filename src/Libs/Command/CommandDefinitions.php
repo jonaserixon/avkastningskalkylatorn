@@ -78,7 +78,13 @@ class CommandDefinitions
                 'fee' => [
                     'description' => 'Fee of transaction',
                     'require-value' => false
-                ]
+                ],
+                /*
+                'cash-flow' => [
+                    'description' => 'Cash flow of transactions',
+                    'require-value' => false
+                ],
+                */
             ]
         ]
     ];

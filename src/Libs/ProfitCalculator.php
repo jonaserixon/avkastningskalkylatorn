@@ -2,7 +2,7 @@
 
 namespace src\Libs;
 
-use DateTime;
+// use DateTime;
 use Exception;
 use src\DataStructure\AssetReturn;
 // use src\Libs\FileManager\Exporter;
@@ -63,12 +63,11 @@ class ProfitCalculator
 
             $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($summary->isin);
 
-            if ($currentPricePerShare) {
+            if ($currentPricePerShare && (int) $summary->currentNumberOfShares > 0) {
                 $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
 
                 $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
-                $this->transactionParser->overview->addFinalAssetTransaction($summary->isin, $currentValueOfShares);
-                $this->transactionParser->overview->addFinalTransaction($currentValueOfShares);
+                $this->transactionParser->overview->addFinalCashFlow($currentValueOfShares, $summary->name); // TODO: can we move this outside of this loop?
 
                 $summary->currentPricePerShare = $currentPricePerShare;
                 $summary->currentValueOfShares = $currentValueOfShares;
@@ -79,12 +78,24 @@ class ProfitCalculator
             }
 
             $isMissingPricePerShare = (int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare;
+
             if ($isMissingPricePerShare) {
                 $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
             }
 
-            $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
+            if (!empty($summary->isin)) {
+                $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
+            } else {
+                // print_r($summary);
+                // exit;
+            }
         }
+
+
+        // Important for calculations etc.
+        usort($this->transactionParser->overview->cashFlows, function ($a, $b) {
+            return strtotime($a->date) <=> strtotime($b->date);
+        });
 
         /*
         if ($this->exportCsv) {
@@ -105,7 +116,8 @@ class ProfitCalculator
         $result->overview = $this->transactionParser->overview;
         $result->overview->returns = $this->calculateTotalReturnForOverview($result->overview);
         $this->calculateCurrentHoldingsWeighting($result->overview, $result->summaries);
-        $result->xirr = $this->calculateXIRR($this->transactionParser->overview->transactions);
+        // $result->xirr = $this->calculateXIRR($this->transactionParser->overview->cashFlows);
+        // $result->twr = $this->calculateTWR($this->transactionParser->overview->cashFlows, $result->overview->totalCurrentHoldings);
 
         return $result;
     }
@@ -127,25 +139,14 @@ class ProfitCalculator
             $summary->currentValueOfShares = 0;
         }
 
-        if ($summary->buyAmountTotal <= 0) {
+        if (abs($summary->buy) <= 0) {
             return null;
         }
 
-        // Beräkna total avkastning exklusive avgifter
-        $totalReturnExclFees = $summary->sellAmountTotal + $summary->dividendAmountTotal + $summary->currentValueOfShares - $summary->buyAmountTotal;
-
-        $totalReturnExclFeesPercent = round($totalReturnExclFees / $summary->buyAmountTotal * 100, 2);
-
-        // Beräkna total avkastning inklusive avgifter
-        $adjustedTotalBuyAmount = $summary->buyAmountTotal + $summary->feeBuyAmountTotal;
-        $adjustedTotalSellAmount = $summary->sellAmountTotal + $summary->dividendAmountTotal - $summary->feeSellAmountTotal;
-
-        $totalReturnInclFees = $adjustedTotalSellAmount + $summary->currentValueOfShares - $adjustedTotalBuyAmount;
-        $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
+        $totalReturnInclFees = $summary->sell + $summary->dividend + $summary->currentValueOfShares + $summary->buy;
+        $totalReturnInclFeesPercent = round($totalReturnInclFees / abs($summary->buy) * 100, 2);
 
         $result = new AssetReturn();
-        $result->totalReturnExclFees = $totalReturnExclFees;
-        $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
         $result->totalReturnInclFees = $totalReturnInclFees;
         $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
 
@@ -156,71 +157,131 @@ class ProfitCalculator
 
     protected function calculateTotalReturnForOverview(Overview $overview): AssetReturn
     {
-        // Beräkna total avkastning exklusive avgifter
-        $totalReturnExclFees = $overview->totalSellAmount + $overview->totalDividend + $overview->totalCurrentHoldings - $overview->totalBuyAmount;
+        $totalReturnInclFees = $overview->totalSellAmount + $overview->totalDividend + $overview->totalCurrentHoldings + $overview->totalBuyAmount;
+        $totalReturnInclFeesPercent = round($totalReturnInclFees / abs($overview->totalBuyAmount) * 100, 2);
 
-        $totalReturnExclFeesPercent = round($totalReturnExclFees / $overview->totalBuyAmount * 100, 2);
-
-        // Beräkna total avkastning inklusive avgifter
-        $adjustedTotalBuyAmount = $overview->totalBuyAmount + $overview->totalBuyFee;
-        $adjustedTotalSellAmount = $overview->totalSellAmount + $overview->totalDividend - $overview->totalSellFee;
-
-        $totalReturnInclFees = $adjustedTotalSellAmount + $overview->totalCurrentHoldings - $adjustedTotalBuyAmount;
-        $totalReturnInclFeesPercent = round($totalReturnInclFees / $adjustedTotalBuyAmount * 100, 2);
+        // print_r($totalReturnInclFees);
+        // exit;
 
         $result = new AssetReturn();
-        $result->totalReturnExclFees = $totalReturnExclFees;
-        $result->totalReturnExclFeesPercent = $totalReturnExclFeesPercent;
         $result->totalReturnInclFees = $totalReturnInclFees;
         $result->totalReturnInclFeesPercent = $totalReturnInclFeesPercent;
 
         return $result;
     }
 
-    protected function calculateXIRR(array $transactions)
+    protected function calculateTWR(array $cashFlows, float $totalCurrentHoldings)
     {
-        $minDate = $transactions[0]->date;
-        $minDate = new DateTime($minDate);
+        $previous_value = 0;
+        $returns = [];
+        $net_investment = 0;
 
-        // NPV (Net Present Value) function
-        $npv = function ($rate) use ($transactions, $minDate) {
-            $sum = 0;
-            foreach ($transactions as $transaction) {
-                $amount = $transaction->amount;
-                $date = new DateTime($transaction->date);
-                $days = $minDate->diff($date)->days;
-                $sum += $amount / pow(1 + $rate, $days / 365);
-            }
-            return $sum;
-        };
+        // Sortera kassaflöden efter datum
+        usort($cashFlows, function ($a, $b) {
+            return strtotime($a->date) - strtotime($b->date);
+        });
 
-        // Newton-Raphson method to find the root
-        $guess = 0.1;
-        $tolerance = 0.0001;
-        $maxIterations = 100;
-        $iteration = 0;
-
-        while ($iteration < $maxIterations) {
-            $npvValue = $npv($guess);
-            $npvDerivative = ($npv($guess + $tolerance) - $npvValue) / $tolerance;
-
-            // Hantera liten derivata
-            if (abs($npvDerivative) < $tolerance) {
-                // Justera gissningen lite för att undvika division med noll
-                $npvDerivative = $tolerance;
+        foreach ($cashFlows as $index => $transaction) {
+            if ($index == 0) {
+                $previous_value = $transaction->amount;
+                $net_investment += $transaction->amount;
+                continue;
             }
 
-            $newGuess = $guess - $npvValue / $npvDerivative;
+            $net_flow = $transaction->amount;
 
-            if (abs($newGuess - $guess) < $tolerance) {
-                return $newGuess;
+            // För den sista transaktionen, använd nuvarande marknadsvärde
+            if ($index == count($cashFlows) - 1) {
+                $current_value = $totalCurrentHoldings;
+            } else {
+                $current_value = $previous_value + $net_flow;
             }
 
-            $guess = $newGuess;
-            $iteration++;
+            $period_return = ($current_value - $previous_value - $net_flow) / ($previous_value + $net_flow);
+            $returns[] = $period_return;
+            $previous_value = $current_value;
+
+            // Uppdatera nettokassaflöde för att hålla koll på total investering
+            $net_investment += $net_flow;
         }
 
-        throw new Exception("XIRR did not converge");
+        // Kombinera periodavkastningar för att få total avkastning i procent
+        $cumulative_return = 1;
+        foreach ($returns as $r) {
+            $cumulative_return *= (1 + $r);
+        }
+
+        $total_return_percentage = ($cumulative_return - 1) * 100;
+
+        return $total_return_percentage;
+    }
+
+    protected function calculateXIRR(array $transactions)
+    {
+        // usort($transactions, function ($a, $b) {
+        //     return strtotime($a->date) <=> strtotime($b->date);
+        // });
+
+        // $filePath = "/exports/test_".date('Y-m-d_His').".csv";
+        // $csvHeaders = [
+        //     'date',
+        //     'amount'
+        // ];
+        // $f = fopen($filePath, "w");
+        // fputcsv($f, $csvHeaders, ',');
+
+        // foreach ($transactions as $transaction) {
+        //     $row = [
+        //         'date' => $transaction->date,
+        //         'amount' => $transaction->amount,
+        //         'name' => $transaction->name
+        //     ];
+
+        //     fputcsv($f, array_values($row), ',');
+        // }
+
+        // $minDate = $transactions[0]->date;
+        // $minDate = new DateTime($minDate);
+
+        // // NPV (Net Present Value) function
+        // $npv = function ($rate) use ($transactions, $minDate) {
+        //     $sum = 0;
+        //     foreach ($transactions as $transaction) {
+        //         $amount = $transaction->amount;
+        //         $date = new DateTime($transaction->date);
+        //         $days = $minDate->diff($date)->days;
+        //         $sum += $amount / pow(1 + $rate, $days / 365);
+        //     }
+        //     return $sum;
+        // };
+
+        // // Newton-Raphson method to find the root
+        // $guess = 0.1;
+        // $tolerance = 0.0001;
+        // $maxIterations = 100;
+        // $iteration = 0;
+
+        // while ($iteration < $maxIterations) {
+        //     $npvValue = $npv($guess);
+        //     $npvDerivative = ($npv($guess + $tolerance) - $npvValue) / $tolerance;
+
+        //     // Hantera liten derivata
+        //     if (abs($npvDerivative) < $tolerance) {
+        //         // Justera gissningen lite för att undvika division med noll
+        //         $npvDerivative = $tolerance;
+        //     }
+
+        //     $newGuess = $guess - $npvValue / $npvDerivative;
+
+        //     if (abs($newGuess - $guess) < $tolerance) {
+        //         return $newGuess;
+        //     }
+
+        //     $guess = $newGuess;
+        //     $iteration++;
+        // }
+
+        // throw new Exception("XIRR did not converge");
     }
 
     public function calculateCAGR()
@@ -294,6 +355,11 @@ class ProfitCalculator
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }
+
+            // if ($a->isin === $b->isin) {
+            //     return 0;
+            // }
+
             return strcmp($a->isin, $b->isin);
         });
 
