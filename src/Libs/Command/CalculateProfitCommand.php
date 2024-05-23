@@ -50,79 +50,16 @@ class CalculateProfitCommand extends CommandProcessor
 
         $result = $profitCalculator->calculate();
 
-        /*
-        $filePath = "/exports/export_".date('Y-m-d_His').".csv";
-        $csvHeaders = [
-            'date',
-            'amount',
-            'name',
-            'type'
-        ];
-        $f = fopen($filePath, "w");
-        fputcsv($f, $csvHeaders, ',');
-
-        foreach ($result->overview->cashFlows as $transaction) {
-            $row = [
-                'date' => $transaction->date,
-                'amount' => $transaction->amount,
-                'name' => $transaction->name,
-                'type' => $transaction->type
-            ];
-
-
-            fputcsv($f, array_values($row), ',');
-        }
-
-        
-        // exit;
-        */
-
-        ob_start();
-
         if ($options->verbose) {
             $this->presenter->displayDetailedSummaries($result->summaries);
         } else {
             $this->presenter->generateSummaryTable($result->summaries);
         }
 
-        $currentBalance = $result->overview->calculateBalance($result->overview->cashFlows) - $result->overview->totalCurrentHoldings;
-        echo 'Saldo (likvider): ' . $this->presenter->colorPicker($currentBalance) . ' SEK' . PHP_EOL;
-        echo 'Totalt värde: ' . $this->presenter->colorPicker($result->overview->calculateBalance($result->overview->cashFlows)) . ' SEK' . PHP_EOL;
-
-        print_r($result->overview->currentHoldingsWeighting);
-
-        // TODO: Move this somewhere suitable (Presenter?)
-        echo 'Tot. courtage: ' . $this->presenter->redText($result->overview->totalBuyCommission + $result->overview->totalSellCommission) . ' SEK' . PHP_EOL;
-        echo 'Tot. köp-courtage: ' . $this->presenter->redText($result->overview->totalBuyCommission) . ' SEK' . PHP_EOL;
-        echo 'Tot. sälj-courtage: ' . $this->presenter->redText($result->overview->totalSellCommission) . ' SEK' . PHP_EOL;
-        echo 'Tot. avgifter: ' . $this->presenter->redText($result->overview->totalFee) . ' SEK' . PHP_EOL;
-        echo 'Tot. skatt: ' . $this->presenter->redText($result->overview->totalTax) . ' SEK' . PHP_EOL;
-        echo 'Tot. utländsk källskatt: ' . $this->presenter->redText($result->overview->totalForeignWithholdingTax) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. återbetald utländsk källskatt: ' . $this->presenter->colorPicker($result->overview->totalReturnedForeignWithholdingTax) . ' SEK' . PHP_EOL;
-        echo 'Tot. utdelningar: ' . $this->presenter->colorPicker($result->overview->totalDividend) . ' SEK' . PHP_EOL;
-        echo 'Tot. ränta: ' . $this->presenter->colorPicker($result->overview->totalInterest) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. köpbelopp: ' . $this->presenter->colorPicker($result->overview->totalBuyAmount) . ' SEK' . PHP_EOL;
-        echo 'Tot. säljbelopp: ' . $this->presenter->colorPicker($result->overview->totalSellAmount) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. insättningar: ' . $this->presenter->colorPicker($result->overview->depositAmountTotal) . ' SEK' . PHP_EOL;
-        echo 'Tot. uttag: ' . $this->presenter->colorPicker($result->overview->withdrawalAmountTotal) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. nuvarande innehav: ' . $this->presenter->colorPicker($result->overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
-        echo 'Tot. avkastning: ' . $this->presenter->colorPicker($result->overview->returns->totalReturnInclFeesPercent) . '%' . PHP_EOL;
-        echo PHP_EOL;
-
-        // echo 'XIRR: ' . $this->presenter->colorPicker($result->xirr * 100) . '%' . PHP_EOL;
-        // echo 'TWR: ' . $this->presenter->colorPicker($result->twr) . '%' . PHP_EOL;
-        // echo PHP_EOL;
+        $this->presenter->displayOverview($result->overview);
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
-
-        ob_end_flush();
     }
 }

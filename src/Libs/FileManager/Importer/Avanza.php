@@ -48,7 +48,7 @@ class Avanza extends CsvParser
 
         $result = [];
         foreach ($csvData as $row) {
-            $transactionType = static::mapToTransactionType($row[2]);
+            $transactionType = static::mapToTransactionTypeByType($row[2]);
 
             if (!$transactionType) {
                 continue;
@@ -61,11 +61,11 @@ class Avanza extends CsvParser
             $transaction->date = $row[0]; // Datum
             $transaction->account = $row[1]; // Konto
             $transaction->name = trim($row[3]); // Värdepapper/beskrivning
-            $transaction->quantity = abs(static::convertToFloat($row[4])); // Antal
+            // $transaction->quantity = abs(static::convertToFloat($row[4])); // Antal
             $transaction->rawQuantity = static::convertToFloat($row[4]); // Antal
-            $transaction->price = abs(static::convertToFloat($row[5])); // Kurs
+            // $transaction->price = abs(static::convertToFloat($row[5])); // Kurs
             $transaction->rawPrice = static::convertToFloat($row[5]); // Kurs
-            $transaction->amount = abs(static::convertToFloat($row[6])); // Belopp
+            // $transaction->amount = abs(static::convertToFloat($row[6])); // Belopp
             $transaction->rawAmount = static::convertToFloat($row[6]); // Belopp
             $transaction->commission = static::convertToFloat($row[7]); // Courtage
             $transaction->currency = $row[8]; // Valuta
@@ -73,7 +73,7 @@ class Avanza extends CsvParser
             // $transaction->isin = empty($row[9]) ? null : $row[9]; // ISIN
 
             if ($transactionType->value === 'other') {
-                $transaction->type = $this->mapOtherTransactionType($transaction);
+                $transaction->type = $this->mapTransactionTypeByName($transaction);
             } else {
                 $transaction->type = $transactionType->value; // Typ av transaktion
             }
@@ -84,7 +84,7 @@ class Avanza extends CsvParser
         return $result;
     }
 
-    protected static function mapToTransactionType(?string $input): ?TransactionType
+    protected static function mapToTransactionTypeByType(?string $input): ?TransactionType
     {
         if (empty($input)) {
             return null;
@@ -120,7 +120,7 @@ class Avanza extends CsvParser
         return null;
     }
 
-    public function mapOtherTransactionType(Transaction &$transaction)
+    public function mapTransactionTypeByName(Transaction &$transaction)
     {
         $fees = ['avgift', 'riskpremie', 'adr'];
 

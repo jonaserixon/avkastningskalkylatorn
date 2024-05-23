@@ -17,7 +17,3 @@ The reason for the ISIN code is so that the transactions can be properly matched
 docker exec -it avkastningskalkylatorn /bin/bash
 ```
 2. Run `avk help` to see all of the available commands.
-
-### Known issues
-- If you have traded the same company but on different listings, this can mess up calculations since it is not possible to differentiate them via the Avanza export.
-- Nordnet exports might have to be encoded to UTF-8-BOM. Use NotePad++ or some other tool for this until I have fixed this.

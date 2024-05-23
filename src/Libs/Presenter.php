@@ -2,6 +2,7 @@
 
 namespace src\Libs;
 
+use src\DataStructure\Overview;
 use src\DataStructure\TransactionSummary;
 
 class Presenter
@@ -48,11 +49,42 @@ class Presenter
                 // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($summary->assetReturn->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
 
                 echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($summary->assetReturn->totalReturnInclFees) . ' SEK' . PHP_EOL;
-                echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($summary->assetReturn->totalReturnInclFeesPercent) . ' %' . PHP_EOL;
             }
 
             echo PHP_EOL;
         }
+    }
+
+    public function displayOverview(Overview $overview): void
+    {
+        $currentBalance = $overview->calculateBalance($overview->cashFlows) - $overview->totalCurrentHoldings;
+        echo 'Saldo (likvider): ' . $this->colorPicker($currentBalance) . ' SEK' . PHP_EOL;
+        echo 'Totalt värde: ' . $this->colorPicker($overview->calculateBalance($overview->cashFlows)) . ' SEK' . PHP_EOL;
+
+        print_r($overview->currentHoldingsWeighting);
+
+        // TODO: Move this somewhere suitable (Presenter?)
+        echo 'Tot. courtage: ' . $this->redText($overview->totalBuyCommission + $overview->totalSellCommission) . ' SEK' . PHP_EOL;
+        echo 'Tot. köp-courtage: ' . $this->redText($overview->totalBuyCommission) . ' SEK' . PHP_EOL;
+        echo 'Tot. sälj-courtage: ' . $this->redText($overview->totalSellCommission) . ' SEK' . PHP_EOL;
+        echo 'Tot. avgifter: ' . $this->redText($overview->totalFee) . ' SEK' . PHP_EOL;
+        echo 'Tot. skatt: ' . $this->redText($overview->totalTax) . ' SEK' . PHP_EOL;
+        echo 'Tot. utländsk källskatt: ' . $this->redText($overview->totalForeignWithholdingTax) . ' SEK' . PHP_EOL;
+        echo PHP_EOL;
+        echo 'Tot. återbetald utländsk källskatt: ' . $this->colorPicker($overview->totalReturnedForeignWithholdingTax) . ' SEK' . PHP_EOL;
+        echo 'Tot. utdelningar: ' . $this->colorPicker($overview->totalDividend) . ' SEK' . PHP_EOL;
+        echo 'Tot. ränta: ' . $this->colorPicker($overview->totalInterest) . ' SEK' . PHP_EOL;
+        echo PHP_EOL;
+        echo 'Tot. köpbelopp: ' . $this->colorPicker($overview->totalBuyAmount) . ' SEK' . PHP_EOL;
+        echo 'Tot. säljbelopp: ' . $this->colorPicker($overview->totalSellAmount) . ' SEK' . PHP_EOL;
+        echo PHP_EOL;
+        echo 'Tot. insättningar: ' . $this->colorPicker($overview->depositAmountTotal) . ' SEK' . PHP_EOL;
+        echo 'Tot. uttag: ' . $this->colorPicker($overview->withdrawalAmountTotal) . ' SEK' . PHP_EOL;
+        echo PHP_EOL;
+        echo 'Tot. nuvarande innehav: ' . $this->colorPicker($overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
+        echo PHP_EOL;
+        echo 'Tot. avkastning: ' . $this->colorPicker($overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
+        echo PHP_EOL;
     }
 
     public function truncateName(string $name, int $maxLength): string
@@ -69,7 +101,9 @@ class Presenter
      */
     public function generateSummaryTable(array $summaries): void
     {
-        $headers = ['Värdepapper', 'ISIN', 'Avkastning %', 'Avkastning SEK', 'Total utdelning', 'Totalt courtage'];
+        $headers = ['Värdepapper', 'ISIN', 'Avk. SEK', 'Tot. utdelning', 'Tot. courtage', 'Nuv. värde'];
+
+        $nameMaxLength = 30;
 
         $colWidths = array_fill(0, count($headers), 0);
 
@@ -83,16 +117,16 @@ class Presenter
             }
 
             $name = $summary->name;
-            if (mb_strlen($name) > 40) {
-                $name = $this->truncateName($name, 40);
+            if (mb_strlen($name) > $nameMaxLength) {
+                $name = $this->truncateName($name, $nameMaxLength);
             }
 
             $colWidths[0] = max($colWidths[0], mb_strlen($name));
             $colWidths[1] = max($colWidths[1], mb_strlen($summary->isin));
-            $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %'));
-            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK'));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->dividend) . ' SEK'));
-            $colWidths[5] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK'));
+            $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK'));
+            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->dividend) . ' SEK'));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK'));
+            $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($summary->currentValueOfShares) . ' SEK'));
         }
 
         $this->printHorizontalLine($colWidths);
@@ -104,16 +138,16 @@ class Presenter
                 continue;
             }
             $name = $summary->name;
-            if (mb_strlen($name) > 40) {
-                $name = $this->truncateName($name, 40);
+            if (mb_strlen($name) > $nameMaxLength) {
+                $name = $this->truncateName($name, $nameMaxLength);
             }
             $this->printRow([
                 $name,
                 $summary->isin,
-                $this->formatNumber($summary->assetReturn->totalReturnInclFeesPercent) . ' %',
                 $this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK',
                 $this->formatNumber($summary->dividend) . ' SEK',
-                $this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK'
+                $this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK',
+                $this->formatNumber($summary->currentValueOfShares) . ' SEK'
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }
@@ -151,7 +185,6 @@ class Presenter
 
         $result = $this->pinkText($assetName);
         $result .= $spaces;
-        $result .= $this->colorPicker($summary->assetReturn->totalReturnInclFeesPercent) . ' %';
         $result .= ' | ';
         $result .= $this->colorPicker($summary->assetReturn->totalReturnInclFees) . ' SEK';
         $result .= PHP_EOL.PHP_EOL;
