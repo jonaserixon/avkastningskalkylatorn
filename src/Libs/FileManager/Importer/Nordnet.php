@@ -57,10 +57,8 @@ class Nordnet extends CsvParser
             $transaction->account = $fields[4]; // Depå
             $transaction->type = $transactionType->value; // Transaktionstyp
             $transaction->name = trim($fields[6]); // Värdepapper
-            $transaction->quantity = abs((int) $fields[9]); // Antal
             $transaction->rawQuantity = (int) $fields[9]; // Antal
-            $transaction->price = abs(static::convertToFloat($fields[10])); // Kurs
-            $transaction->amount = abs(static::convertToFloat($fields[14])); // Belopp
+            $transaction->rawAmount = static::convertToFloat($fields[14]); // Belopp
             $transaction->commission = static::convertToFloat($fields[12]); // Total Avgift
             $transaction->currency = $fields[17]; // Valuta
             $transaction->isin = $fields[8]; // ISIN
@@ -69,8 +67,6 @@ class Nordnet extends CsvParser
         }
 
         fclose($file);
-
-
 
         return $result;
     }
@@ -83,7 +79,6 @@ class Nordnet extends CsvParser
 
         $normalizedInput = static::normalizeInput($input);
 
-        // Mappningstabell för att hantera olika termer från olika banker.
         $mapping = [
             'köpt' => 'buy',
             'sålt' => 'sell',
@@ -97,10 +92,6 @@ class Nordnet extends CsvParser
         if (array_key_exists($normalizedInput, $mapping)) {
             return TransactionType::tryFrom($mapping[$normalizedInput]);
         }
-
-        // echo bin2hex($normalizedInput) . PHP_EOL;
-        // echo '-----------' . PHP_EOL;
-        // print 'Unknown transaction type: ' . $normalizedInput . PHP_EOL;
 
         return null;
     }

@@ -47,7 +47,7 @@ class Overview
     {
         $transaction = new Transaction();
         $transaction->date = $date;
-        $transaction->amount = $amount;
+        $transaction->rawAmount = $amount;
         $transaction->name = $name;
         $transaction->type = $type;
 
@@ -84,7 +84,7 @@ class Overview
     {
         $balance = 0;
         foreach ($transactions as $transaction) {
-            $amount = round($transaction->amount, 2);
+            $amount = round($transaction->rawAmount, 2);
             $balance += $amount;
         }
 

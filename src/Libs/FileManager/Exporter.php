@@ -81,21 +81,21 @@
 
 //     public static function testGenerateCsvExport(array $transactions): void
 //     {
-//         $filePath = "/exports/export_".date('Y-m-d_His').".csv";
-//         $csvHeaders = [
-//             'date',
-//             'amount'
-//         ];
-//         $f = fopen($filePath, "w");
-//         fputcsv($f, $csvHeaders, ',');
+    //     $filePath = "/exports/export_".date('Y-m-d_His').".csv";
+    //     $csvHeaders = [
+    //         'date',
+    //         'amount'
+    //     ];
+    //     $f = fopen($filePath, "w");
+    //     fputcsv($f, $csvHeaders, ',');
 
-//         foreach ($transactions as $transaction) {
-//             $row = [
-//                 'date' => $transaction->date,
-//                 'amount' => $transaction->amount,
-//             ];
+    //     foreach ($transactions as $transaction) {
+    //         $row = [
+    //             'date' => $transaction->date,
+    //             'amount' => $transaction->amount,
+    //         ];
 
-//             fputcsv($f, array_values($row), ',');
-//         }
-//     }
+    //         fputcsv($f, array_values($row), ',');
+    //     }
+    // }
 // }
