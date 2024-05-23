@@ -41,7 +41,6 @@ class Avanza extends CsvParser
     {
         $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
 
-        // Vi måste sortera på datum här så att vi enkelt kan hitta eventuella aktiesplittar.
         usort($csvData, function ($a, $b) {
             return strtotime($a[0]) <=> strtotime($b[0]);
         });
@@ -54,29 +53,25 @@ class Avanza extends CsvParser
                 continue;
             }
 
-            // TODO: Kan rent teoretiskt sett urskilja på om det är en aktie eller fond baserat på om antalet är decimaltal eller inte. OBS: vanskligt
-
             $transaction = new Transaction();
             $transaction->bank = static::BANK_NAME;
             $transaction->date = $row[0]; // Datum
             $transaction->account = $row[1]; // Konto
             $transaction->name = trim($row[3]); // Värdepapper/beskrivning
-            // $transaction->quantity = abs(static::convertToFloat($row[4])); // Antal
             $transaction->rawQuantity = static::convertToFloat($row[4]); // Antal
-            // $transaction->price = abs(static::convertToFloat($row[5])); // Kurs
             $transaction->rawPrice = static::convertToFloat($row[5]); // Kurs
-            // $transaction->amount = abs(static::convertToFloat($row[6])); // Belopp
             $transaction->rawAmount = static::convertToFloat($row[6]); // Belopp
             $transaction->commission = static::convertToFloat($row[7]); // Courtage
             $transaction->currency = $row[8]; // Valuta
             $transaction->isin = $row[9]; // ISIN
-            // $transaction->isin = empty($row[9]) ? null : $row[9]; // ISIN
 
             if ($transactionType->value === 'other') {
                 $transaction->type = $this->mapTransactionTypeByName($transaction);
             } else {
                 $transaction->type = $transactionType->value; // Typ av transaktion
             }
+
+            $this->bankSpecificHandling($transaction);
 
             $result[] = $transaction;
         }
@@ -92,7 +87,6 @@ class Avanza extends CsvParser
 
         $normalizedInput = static::normalizeInput($input);
 
-        // Mappningstabell för att hantera olika termer från olika banker.
         $mapping = [
             'köpt' => 'buy',
             'sålt' => 'sell',
@@ -104,7 +98,6 @@ class Avanza extends CsvParser
             'insättning' => 'deposit',
             'uttag' => 'withdrawal',
             'ränta' => 'interest',
-
             'preliminärskatt' => 'tax',
             'utländsk källskatt' => 'foreign_withholding_tax',
         ];
@@ -113,11 +106,39 @@ class Avanza extends CsvParser
             return TransactionType::tryFrom($mapping[$normalizedInput]);
         }
 
-        // echo bin2hex($normalizedInput) . PHP_EOL;
-        // echo '-----------' . PHP_EOL;
-        // print 'Unknown transaction type: ' . $normalizedInput . PHP_EOL;
-
         return null;
+    }
+
+    protected function bankSpecificHandling(Transaction &$transaction): void
+    {
+        if ($transaction->type === 'other') {
+            // TODO: add a specific type for this so the actual deposits can be kept clean.
+            if (str_contains(mb_strtolower($transaction->name), 'kapitalmedelskonto') || str_contains(mb_strtolower($transaction->name), 'nollställning')) {
+                print_r($transaction);
+                $transaction->type = 'deposit';
+                return;
+            }
+        }
+
+        // Check if this can be considered a share split.
+        if ($transaction->type === 'other' && $transaction->rawQuantity != 0 && $transaction->commission == 0) {
+            $transaction->type = 'share_split';
+            return;
+        }
+
+        // if ($transaction->type === 'deposit') {
+        //     if (str_contains(mb_strtolower($transaction->name), 'kreditdepån')) {
+        //         $transaction->type = 'deposit';
+        //         return;
+        //     }
+        // }
+
+        // if ($transaction->type === 'withdrawal') {
+        //     if (str_contains(mb_strtolower($transaction->name), 'kapitalmedelskonto') || str_contains(mb_strtolower($transaction->name), 'nollställning')) {
+        //         $transaction->type = 'withdrawal';
+        //         return;
+        //     }
+        // }
     }
 
     public function mapTransactionTypeByName(Transaction &$transaction)

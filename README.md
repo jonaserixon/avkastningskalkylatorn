@@ -5,6 +5,7 @@
 2. Run `docker-compose up --build`
 
 ### Usage
+#### Step 1
 You need to export your transactions from Avanza/Nordnet and then put them in the `/imports/avanza/` and `/imports/nordnet/` directories.
 In the docker-compose file you can also specify whether to export your result to an csv file or not.
 
@@ -12,6 +13,8 @@ To be able to calculate your current holdings you need to use this template: htt
 
 The reason for the ISIN code is so that the transactions can be properly matched to the correct holding.
 
+
+#### Step 2
 1. Enter the docker container and start a bash session to execute commands.
 ```
 docker exec -it avkastningskalkylatorn /bin/bash

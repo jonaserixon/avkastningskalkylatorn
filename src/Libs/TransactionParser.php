@@ -6,22 +6,10 @@ use Exception;
 use src\DataStructure\Overview;
 use src\DataStructure\Transaction;
 use src\DataStructure\TransactionSummary;
-use src\Enum\TransactionType;
 use src\Libs\Presenter;
 
 class TransactionParser
 {
-    /**
-     * @var string[]
-     */
-    private const BLACKLISTED_TRANSACTION_NAMES = [
-        // 'nollställning',
-        // // 'fraktionslikvid',
-        // 'kreditkonto',
-        // 'kapitalmedelskonto',
-        // 'kreditdepån'
-    ];
-
     private Presenter $presenter;
 
     public Overview $overview;
@@ -193,61 +181,16 @@ class TransactionParser
                     'withdrawal' => [],
                     'tax' => [],
                     'other' => [],
-                    'foreign_withholding_tax' => [],
+                    'foreign_withholding_tax' => [], // TODO: some of these should types not be here.
                     'fee' => [],
                     'returned_foreign_withholding_tax' => [],
                 ];
             }
 
-            $this->addTransactionToGroup($groupedTransactions, $transaction);
+            $groupedTransactions[$transaction->isin][$transaction->type][] = $transaction;
         }
 
         return $groupedTransactions;
-    }
-
-    private function addTransactionToGroup(array &$groupedTransactions, Transaction $transaction): void
-    {
-        // Om transaktionen är klassad som övrig så vill vi kolla om det finns en transaktion efter den som vi kan använda för att avgöra om det är en aktiesplitt osv.
-        if ($transaction->type === 'other' && $transaction->rawQuantity != 0 && $transaction->commission == 0) { // Check if this can be considered a share split.
-            if ($transaction->bank === 'AVANZA') {
-                $groupedTransactions[$transaction->isin]['share_split'][] = $transaction;
-                return;
-            }
-        }
-
-        // TODO
-        if ($transaction->type === 'other') {
-            if (str_contains(mb_strtolower($transaction->name), 'kapitalmedelskonto')) {
-                $groupedTransactions[$transaction->isin]['deposit'][] = $transaction;
-                return;
-            }
-
-            if (str_contains(mb_strtolower($transaction->name), 'nollställning')) {
-                $groupedTransactions[$transaction->isin]['deposit'][] = $transaction;
-                return;
-            }
-        }
-
-        if ($transaction->type === 'deposit') {
-            if (str_contains(mb_strtolower($transaction->name), 'kreditdepån')) {
-                $groupedTransactions[$transaction->isin]['deposit'][] = $transaction;
-                return;
-            }
-        }
-
-        if ($transaction->type === 'withdrawal') {
-            if (str_contains(mb_strtolower($transaction->name), 'kapitalmedelskonto')) {
-                $groupedTransactions[$transaction->isin]['withdrawal'][] = $transaction;
-                return;
-            }
-
-            if (str_contains(mb_strtolower($transaction->name), 'nollställning')) {
-                $groupedTransactions[$transaction->isin]['withdrawal'][] = $transaction;
-                return;
-            }
-        }
-
-        $groupedTransactions[$transaction->isin][$transaction->type][] = $transaction;
     }
 
     protected function isNonSwedishIsin(string $isin): bool
