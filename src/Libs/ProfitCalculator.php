@@ -75,6 +75,8 @@ class ProfitCalculator
     
                     $filteredSummaries[] = $summary;
                     continue;
+                } else {
+                    $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
                 }
     
                 $isMissingPricePerShare = (int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare;
@@ -83,11 +85,6 @@ class ProfitCalculator
                     $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
                 }
             }
-
-            // TODO: remove this
-            // if (!empty($summary->isin)) {
-            //     $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
-            // }
         }
 
         // Important for calculations etc.

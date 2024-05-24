@@ -89,15 +89,6 @@ class Presenter
         echo PHP_EOL;
     }
 
-    public function truncateName(string $name, int $maxLength): string
-    {
-        if (strlen($name) > $maxLength) {
-            return substr($name, 0, $maxLength - 3) . '...';
-        }
-
-        return $name;
-    }
-
     /**
      * @param TransactionSummary[] $summaries
      */
@@ -164,6 +155,7 @@ class Presenter
         ], $colWidths);
         $this->printHorizontalLine($colWidths);
 
+        /*
         $this->printRow([
             'Saldo:',
             '-',
@@ -173,6 +165,7 @@ class Presenter
             '-'
         ], $colWidths);
         $this->printHorizontalLine($colWidths);
+        */
     }
 
     public function printHorizontalLine(array $colWidths): void
@@ -193,15 +186,17 @@ class Presenter
         echo '|' . PHP_EOL;
     }
 
-    public function printProgressBar(string $label, float $value): void
+    public function printRelativeProgressBar(string $label, float $value, float $maxValue): void
     {
-        $maxWidth = 40;
-        $currentWidth = round(($value / 100) * $maxWidth);
+        $maxWidth = 50;
+        $relativeWidth = ($value / $maxValue) * $maxWidth;
+        $currentWidth = (int) round($relativeWidth);
 
-        $bar = str_pad($this->truncateName($label, 25), 25) . ' |';
-        $bar .= str_repeat('█', floor($currentWidth));
-        $bar .= str_repeat(' ', $maxWidth - floor($currentWidth));
-        $bar .= '| ' . sprintf("%.2f%%", $value);
+        $bar = str_pad($this->truncateName($label, 20), 20) . ' |';
+
+        $bar .= $this->blueText(str_repeat('█', $currentWidth));
+        $bar .= str_repeat(' ', $maxWidth - $currentWidth);
+        $bar .= '| ' . $this->cyanText(sprintf("%.2f%%", $value));
 
         echo $bar . PHP_EOL;
     }
@@ -256,6 +251,15 @@ class Presenter
         }
 
         return $line;
+    }
+
+    public function truncateName(string $name, int $maxLength): string
+    {
+        if (mb_strlen($name) > $maxLength) {
+            return mb_substr($name, 0, $maxLength - 4) . '...';
+        }
+
+        return $name;
     }
 
     public function colorPicker(float $value): string

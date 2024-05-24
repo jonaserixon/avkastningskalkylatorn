@@ -56,16 +56,19 @@ class CalculateProfitCommand extends CommandProcessor
             $this->presenter->generateSummaryTable($result->overview, $result->summaries);
         }
 
-        $this->presenter->displayOverview($result->overview);
+        // $this->presenter->displayOverview($result->overview);
+
+        echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
+        $maxValue = max(array_values($result->overview->currentHoldingsWeighting));
+        foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
+            $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+        }
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
 
-        echo PHP_EOL;
-        foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
-            $this->presenter->printProgressBar($isin, $weight);
-        }
+        
 
         /*
         $filePath = "/exports/export_".date('Y-m-d_His').".csv";
