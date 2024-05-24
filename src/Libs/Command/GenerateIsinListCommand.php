@@ -2,10 +2,11 @@
 
 namespace Src\Libs\Command;
 
+use src\Libs\FileManager\Exporter;
 use src\Libs\ProfitCalculator;
 use stdClass;
 
-class TransactionCommand extends CommandProcessor
+class GenerateIsinListCommand extends CommandProcessor
 {
     private array $options;
 
@@ -18,7 +19,7 @@ class TransactionCommand extends CommandProcessor
 
     public function getParsedOptions(): stdClass
     {
-        $commandOptions = $this->commands['transaction']['options'];
+        $commandOptions = $this->commands['calculate']['options'];
 
         $options = new stdClass();
         $options->verbose = isset($this->options['verbose']) ?? $commandOptions['verbose']['default'];
@@ -29,7 +30,6 @@ class TransactionCommand extends CommandProcessor
         $options->dateFrom = $this->options['date-from'] ?? null;
         $options->dateTo = $this->options['date-to'] ?? null;
         $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
-        $options->cashFlow = $this->options['cash-flow'] ?? null;
 
         return $options;
     }
@@ -48,25 +48,17 @@ class TransactionCommand extends CommandProcessor
             $options->dateTo,
             $options->currentHoldings
         );
-
+        
         $result = $profitCalculator->calculate();
 
-        if ($options->cashFlow) {
-            foreach ($result->overview->cashFlows as $cashFlow) {
-                $res = $cashFlow->date . ' | ';
-                $res .= $this->presenter->cyanText($cashFlow->rawAmount) . ' | ';
-                $res .= $this->presenter->yellowText($cashFlow->type) . ' | ';
-                $res .= $this->presenter->pinkText($cashFlow->name) . ' | ';
-                $res .= $this->presenter->greenText($cashFlow->account) . ' | ';
-                $res .= $this->presenter->greyText($cashFlow->bank);
-
-                echo $res . PHP_EOL;
-            }
-            return;
+        $isinList = [];
+        foreach ($result->assets as $asset) {
+            $isinList[] = [
+                'name' => $asset->name,
+                'isin' => $asset->isin
+            ];
         }
 
-        // foreach ($transactions as $transaction) {
-        //     echo $transaction->date . ' ' . $transaction->amount . ' ' . $transaction->type . ' ' . $transaction->name . PHP_EOL;
-        // }
+        Exporter::exportToCsv(['name', 'isin'], $isinList, 'isin_list');
     }
 }

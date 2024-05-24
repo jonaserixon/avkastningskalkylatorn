@@ -17,7 +17,7 @@ class CommandDefinitions
                     'require-value' => false
                 ],
                 'bank' => [
-                    'description' => 'Bank to calculate profit for',
+                    'description' => 'Bank(s) to calculate profit for',
                     'require-value' => true
                 ],
                 'date-from' => [
@@ -29,7 +29,7 @@ class CommandDefinitions
                     'require-value' => true
                 ],
                 'asset' => [
-                    'description' => 'Asset (name) to calculate profit for',
+                    'description' => 'Asset(s) (name) to calculate profit for',
                     'require-value' => true
                 ],
                 'isin' => [
@@ -44,6 +44,15 @@ class CommandDefinitions
                 'verbose' => [
                     'description' => 'More detailed output',
                     'default' => false,
+                    'require-value' => false
+                ]
+            ]
+        ],
+        'generate-isin-list' => [
+            'description' => 'Generate a list of ISINs in csv format',
+            'options' => [
+                'bank' => [
+                    'description' => 'Bank(s) to generate ISIN list for',
                     'require-value' => false
                 ]
             ]
@@ -75,16 +84,19 @@ class CommandDefinitions
                     'description' => 'Name of asset',
                     'require-value' => true
                 ],
+                'current-holdings' => [
+                    'description' => 'Only calculate profit for current holdings',
+                    'default' => false,
+                    'require-value' => false
+                ],
                 'fee' => [
                     'description' => 'Fee of transaction',
                     'require-value' => false
                 ],
-                /*
                 'cash-flow' => [
                     'description' => 'Cash flow of transactions',
                     'require-value' => false
                 ],
-                */
             ]
         ]
     ];

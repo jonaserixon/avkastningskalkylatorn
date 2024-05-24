@@ -49,6 +49,9 @@ class CommandProcessor
             case 'calculate':
                 (new CalculateProfitCommand($options))->execute();
                 break;
+            case 'generate-isin-list':
+                (new GenerateIsinListCommand($options))->execute();
+                break;
             case 'transaction':
                 (new TransactionCommand($options))->execute();
                 break;

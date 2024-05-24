@@ -3,16 +3,15 @@
 namespace src\Libs;
 
 use Exception;
-use src\DataStructure\Overview;
+use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\DataStructure\TransactionSummary;
+use src\DataStructure\FinancialAsset;
 use src\Libs\Presenter;
 
 class TransactionParser
 {
     private Presenter $presenter;
-
-    public Overview $overview;
+    public FinancialOverview $overview;
 
     public function __construct()
     {
@@ -21,145 +20,162 @@ class TransactionParser
 
     /**
      * @param Transaction[] $transactions
-     * @return TransactionSummary[]
+     * @return FinancialAsset[]
      */
-    public function getTransactionsOverview(array $transactions): array
+    public function getFinancialAssets(array $transactions): array
     {
-        $this->overview = new Overview();
+        $this->overview = new FinancialOverview();
         $this->overview->firstTransactionDate = $transactions[0]->date;
         $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->date;
 
         $groupedTransactions = $this->groupTransactions($transactions);
-        $summaries = $this->summarizeTransactions($groupedTransactions);
+        $assets = $this->summarizeTransactions($groupedTransactions);
 
-        if (empty($summaries)) {
+        if (empty($assets)) {
             throw new Exception('No transaction file in csv format in the imports directory.');
         }
 
-        // Sort summaries by name for readability.
-        usort($summaries, function ($a, $b) {
+        // Sort assets by name for readability.
+        usort($assets, function ($a, $b) {
             return strcasecmp($a->name, $b->name);
         });
 
-        return $summaries;
+        return $assets;
     }
 
     private function summarizeTransactions(array $groupedTransactions): array
     {
-        $summaries = [];
+        $assets = [];
         foreach ($groupedTransactions as $isin => $companyTransactions) {
-            $summary = new TransactionSummary();
-            $summary->isin = $isin;
+            $asset = new FinancialAsset();
+            $asset->isin = $isin;
 
+            $firstTransactionDate = null;
+            $lastTransactionDate = null;
             foreach ($companyTransactions as $groupTransactionType => $transactions) {
-                $this->processTransactionType($summary, $groupTransactionType, $transactions);
+                $this->processTransactionType($asset, $groupTransactionType, $transactions);
+
+                foreach ($transactions as $transaction) {
+                    $date = $transaction->date;
+                    if (!$firstTransactionDate || $date < $firstTransactionDate) {
+                        $firstTransactionDate = $date;
+                    }
+                    if (!$lastTransactionDate || $date > $lastTransactionDate) {
+                        $lastTransactionDate = $date;
+                    }
+                }
             }
 
-            $summary->name = $summary->transactionNames[0];
-            $summaries[] = $summary;
+            $asset->firstTransactionDate = $firstTransactionDate;
+            $asset->lastTransactionDate = $lastTransactionDate;
+            $asset->name = $asset->transactionNames[0];
+
+            if (!empty($asset->isin)) {
+                $assets[] = $asset;
+            }
         }
 
-        return $summaries;
+        return $assets;
     }
 
     /**
-     * Process grouped transactions for the summary.
+     * Process grouped transactions for the asset.
      */
-    private function processTransactionType(TransactionSummary &$summary, string $groupTransactionType, array $transactions): void
+    private function processTransactionType(FinancialAsset &$asset, string $groupTransactionType, array $transactions): void
     {
         foreach ($transactions as $index => $transaction) {
             $transaction = $transactions[$index];
 
-            $this->updateSummaryBasedOnTransactionType($summary, $groupTransactionType, $transaction);
+            $this->updateAssetBasedOnTransactionType($asset, $groupTransactionType, $transaction);
 
-            if (!in_array($transaction->name, $summary->transactionNames)) {
-                $summary->transactionNames[] = $transaction->name;
+            if (!in_array($transaction->name, $asset->transactionNames)) {
+                $asset->transactionNames[] = $transaction->name;
             }
         }
     }
 
-    private function updateSummaryBasedOnTransactionType(TransactionSummary &$summary, string $groupTransactionType, Transaction $transaction): void
+    private function updateAssetBasedOnTransactionType(FinancialAsset &$asset, string $groupTransactionType, Transaction $transaction): void
     {
         $transactionAmount = $transaction->rawAmount;
 
         switch ($groupTransactionType) {
             case 'buy':
-                $summary->buy += $transactionAmount;
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
-                $summary->commissionBuy += $transaction->commission;
+                $asset->buy += $transactionAmount;
+                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
+                $asset->commissionBuy += $transaction->commission;
 
                 $this->overview->totalBuyAmount += $transactionAmount;
                 $this->overview->totalBuyCommission += $transaction->commission;
 
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'sell':
-                $summary->sell += $transactionAmount;
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
-                $summary->commissionSell += $transaction->commission;
+                $asset->sell += $transactionAmount;
+                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
+                $asset->commissionSell += $transaction->commission;
 
                 $this->overview->totalSellAmount += $transactionAmount;
                 $this->overview->totalSellCommission += $transaction->commission;
 
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'dividend':
-                $summary->dividend += $transactionAmount;
+                $asset->dividend += $transactionAmount;
 
                 $this->overview->totalDividend += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'share_split':
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
+                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
 
                 break;
             case 'share_transfer':
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
+                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
 
                 break;
             case 'deposit':
                 $this->overview->depositAmountTotal += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'withdrawal':
                 $this->overview->withdrawalAmountTotal += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'interest':
                 $this->overview->totalInterest += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'tax':
                 $this->overview->totalTax += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'foreign_withholding_tax':
-                if (!empty($summary->isin)) {
-                    $summary->foreignWithholdingTax += $transactionAmount;
+                if (!empty($asset->isin)) {
+                    $asset->foreignWithholdingTax += $transactionAmount;
                 }
 
                 $this->overview->totalForeignWithholdingTax += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
                 break;
             case 'returned_foreign_withholding_tax':
                 $this->overview->totalReturnedForeignWithholdingTax += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'fee':
-                if (!empty($summary->isin)) {
-                    $summary->fee += $transactionAmount;
+                if (!empty($asset->isin)) {
+                    $asset->fee += $transactionAmount;
                 }
 
                 $this->overview->totalFee += $transactionAmount;
-                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             default:
@@ -189,9 +205,8 @@ class TransactionParser
                     'withdrawal' => [],
                     'tax' => [],
                     'other' => [],
-                    'foreign_withholding_tax' => [], // TODO: some of these should types not be here.
-                    'fee' => [],
-                    'returned_foreign_withholding_tax' => [],
+                    'foreign_withholding_tax' => [],
+                    'fee' => []
                 ];
             }
 

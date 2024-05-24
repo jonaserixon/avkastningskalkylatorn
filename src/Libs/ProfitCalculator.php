@@ -4,8 +4,8 @@ namespace src\Libs;
 
 use Exception;
 use src\DataStructure\AssetReturn;
-use src\DataStructure\Overview;
-use src\DataStructure\TransactionSummary;
+use src\DataStructure\FinancialOverview;
+use src\DataStructure\FinancialAsset;
 use src\Libs\FileManager\Importer\Avanza;
 use src\Libs\FileManager\Importer\Nordnet;
 use src\Libs\FileManager\Importer\StockPrice;
@@ -50,39 +50,40 @@ class ProfitCalculator
 
     public function calculate(): stdClass
     {
-        $summaries = $this->transactionParser->getTransactionsOverview($this->getTransactions());
+        $assets = $this->transactionParser->getFinancialAssets($this->getTransactions());
 
         $currentHoldingsMissingPricePerShare = [];
-        $filteredSummaries = [];
-        foreach ($summaries as $summary) {
-            if ($this->filterCurrentHoldings && (int) $summary->currentNumberOfShares <= 0) {
+        $filteredAssets = [];
+        foreach ($assets as $asset) {
+            if ($this->filterCurrentHoldings && (int) $asset->currentNumberOfShares <= 0) {
                 continue;
             }
 
-            if (!empty($summary->isin)) {
-                $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($summary->isin);
+            if (!empty($asset->isin)) {
+                $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($asset->isin);
 
-                if ($currentPricePerShare && (int) $summary->currentNumberOfShares > 0) {
-                    // $summary->name = $this->stockPrice->getNameByIsin($summary->isin);
-                    $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
-    
+                if ($currentPricePerShare && (int) $asset->currentNumberOfShares > 0) {
+                    // $asset->name = $this->stockPrice->getNameByIsin($asset->isin);
+                    $currentValueOfShares = $asset->currentNumberOfShares * $currentPricePerShare;
+
                     $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
-                    $this->transactionParser->overview->addFinalCashFlow($currentValueOfShares, $summary->name);
-    
-                    $summary->currentPricePerShare = $currentPricePerShare;
-                    $summary->currentValueOfShares = $currentValueOfShares;
-                    $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
-    
-                    $filteredSummaries[] = $summary;
+                    $this->transactionParser->overview->addCashFlow(date('Y-m-d'), $currentValueOfShares, $asset->name, 'current_holding_value', '', '');
+
+                    $asset->currentPricePerShare = $currentPricePerShare;
+                    $asset->currentValueOfShares = $currentValueOfShares;
+                    $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
+
+                    $filteredAssets[] = $asset;
+
                     continue;
-                } else {
-                    $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
                 }
-    
-                $isMissingPricePerShare = (int) $summary->currentNumberOfShares > 0 && !$currentPricePerShare;
-    
+
+                $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
+
+                $isMissingPricePerShare = (int) $asset->currentNumberOfShares > 0 && !$currentPricePerShare;
+
                 if ($isMissingPricePerShare) {
-                    $currentHoldingsMissingPricePerShare[] = $summary->name . ' (' . $summary->isin . ')';
+                    $currentHoldingsMissingPricePerShare[] = $asset->name . ' (' . $asset->isin . ')';
                 }
             }
         }
@@ -96,39 +97,35 @@ class ProfitCalculator
         $result->currentHoldingsMissingPricePerShare = $currentHoldingsMissingPricePerShare;
 
         if ($this->filterCurrentHoldings) {
-            $result->summaries = $filteredSummaries;
+            $result->assets = $filteredAssets;
         } else {
-            $result->summaries = $summaries;
+            $result->assets = $assets;
         }
 
         $result->overview = $this->transactionParser->overview;
-        $result->overview->returns = $this->calculateTotalReturnForOverview($result->overview);
-        $this->calculateCurrentHoldingsWeighting($result->overview, $result->summaries);
+        $result->overview->returns = $this->calculateTotalReturnForFinancialOverview($result->overview);
+        $this->calculateCurrentHoldingsWeighting($result->overview, $result->assets);
 
         return $result;
     }
 
-    protected function calculateCurrentHoldingsWeighting(Overview $overview, array $summaries): void
+    protected function calculateCurrentHoldingsWeighting(FinancialOverview $overview, array $assets): void
     {
-        foreach ($summaries as $summary) {
-            if ($summary->currentValueOfShares > 0) {
-                $weighting = $summary->currentValueOfShares / $overview->totalCurrentHoldings * 100;
-                $overview->currentHoldingsWeighting[$summary->name] = round($weighting, 4);
+        foreach ($assets as $asset) {
+            if ($asset->currentValueOfShares > 0) {
+                $weighting = $asset->currentValueOfShares / $overview->totalCurrentHoldings * 100;
+                $overview->currentHoldingsWeighting[$asset->name] = round($weighting, 4);
             }
         }
     }
 
-    protected function calculateTotalReturnForSummary(TransactionSummary $summary): ?AssetReturn
+    protected function calculateTotalReturnForAsset(FinancialAsset $asset): ?AssetReturn
     {
-        if ($summary->currentValueOfShares === null) {
-            $summary->currentValueOfShares = 0;
+        if ($asset->currentValueOfShares === null) {
+            $asset->currentValueOfShares = 0;
         }
 
-        if (abs($summary->buy) <= 0) {
-            return null;
-        }
-
-        $totalReturnInclFees = $summary->buy + $summary->sell + $summary->dividend + $summary->fee + $summary->currentValueOfShares;
+        $totalReturnInclFees = $asset->buy + $asset->sell + $asset->dividend + $asset->fee + $asset->currentValueOfShares;
 
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
@@ -138,7 +135,7 @@ class ProfitCalculator
         return $result;
     }
 
-    protected function calculateTotalReturnForOverview(Overview $overview): AssetReturn
+    protected function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetReturn
     {
         $totalReturnInclFees = 0;
         $totalReturnInclFees += $overview->totalSellAmount;
@@ -179,6 +176,7 @@ class ProfitCalculator
                 $value = mb_strtoupper($value);
                 $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
                     if ($key === 'asset') {
+                        // To support multiple assets
                         $assets = explode(',', $value);
                         foreach ($assets as $asset) {
                             if (str_contains(mb_strtoupper($transaction->name), trim($asset))) {

@@ -51,24 +51,24 @@ class CalculateProfitCommand extends CommandProcessor
         $result = $profitCalculator->calculate();
 
         if ($options->verbose) {
-            $this->presenter->displayDetailedSummaries($result->summaries);
+            $this->presenter->displayDetailedAssets($result->assets);
         } else {
-            $this->presenter->generateSummaryTable($result->overview, $result->summaries);
+            $this->presenter->generateAssetTable($result->overview, $result->assets);
         }
 
-        // $this->presenter->displayOverview($result->overview);
+        $this->presenter->displayFinancialOverview($result->overview);
 
-        echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
-        $maxValue = max(array_values($result->overview->currentHoldingsWeighting));
-        foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
-            $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+        if (!empty($result->overview->currentHoldingsWeighting)) {
+            echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
+            $maxValue = max(array_values($result->overview->currentHoldingsWeighting));
+            foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
+                $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+            }
         }
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
-
-        
 
         /*
         $filePath = "/exports/export_".date('Y-m-d_His').".csv";
