@@ -12,6 +12,8 @@ class TransactionSummary
     public float $dividend = 0;
     public float $commissionBuy = 0;
     public float $commissionSell = 0;
+    public float $fee = 0;
+    public float $foreignWithholdingTax = 0;
     public float $currentNumberOfShares = 0; // float to handle fractional shares
     public ?float $currentPricePerShare = 0;
     public ?float $currentValueOfShares = 0;

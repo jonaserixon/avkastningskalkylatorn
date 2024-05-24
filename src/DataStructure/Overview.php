@@ -19,7 +19,7 @@ class Overview
     public float $totalForeignWithholdingTax = 0;
     public float $totalReturnedForeignWithholdingTax = 0;
     public float $totalCurrentHoldings = 0;
-    public float $totalProfitInclFees = 0;
+    // public float $totalProfitInclFees = 0;
     public array $currentHoldingsWeighting = [];
     public float $depositAmountTotal = 0;
     public float $withdrawalAmountTotal = 0;

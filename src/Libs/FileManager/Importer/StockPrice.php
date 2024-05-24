@@ -91,4 +91,19 @@ class StockPrice extends CsvParser
 
         return null;
     }
+
+    public function getNameByIsin(string $isin): ?string
+    {
+        if (empty($this->currentHoldingsData)) {
+            $this->currentHoldingsData = $this->parseTransactions(''); // TODO: fixa detta.
+        }
+
+        foreach ($this->currentHoldingsData as $holding) {
+            if ($holding->isin === $isin) {
+                return $holding->name;
+            }
+        }
+
+        return null;
+    }
 }

@@ -62,6 +62,11 @@ abstract class CsvParser
     {
         $fileContent = file_get_contents($fileName);
         $currentEncoding = mb_detect_encoding($fileContent, mb_list_encodings(), true);
+
+        if ($currentEncoding === 'UTF-8') {
+            return;
+        }
+
         $utf8Content = mb_convert_encoding($fileContent, 'UTF-8', $currentEncoding);
         $utf8ContentWithBom = "\xEF\xBB\xBF" . $utf8Content;
         file_put_contents($fileName, $utf8ContentWithBom);

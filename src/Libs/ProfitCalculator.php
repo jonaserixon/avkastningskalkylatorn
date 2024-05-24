@@ -63,6 +63,7 @@ class ProfitCalculator
                 $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($summary->isin);
 
                 if ($currentPricePerShare && (int) $summary->currentNumberOfShares > 0) {
+                    // $summary->name = $this->stockPrice->getNameByIsin($summary->isin);
                     $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
     
                     $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
@@ -84,9 +85,9 @@ class ProfitCalculator
             }
 
             // TODO: remove this
-            if (!empty($summary->isin)) {
-                $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
-            }
+            // if (!empty($summary->isin)) {
+            //     $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
+            // }
         }
 
         // Important for calculations etc.
@@ -115,7 +116,7 @@ class ProfitCalculator
         foreach ($summaries as $summary) {
             if ($summary->currentValueOfShares > 0) {
                 $weighting = $summary->currentValueOfShares / $overview->totalCurrentHoldings * 100;
-                $overview->currentHoldingsWeighting[$summary->isin] = round($weighting, 4);
+                $overview->currentHoldingsWeighting[$summary->name] = round($weighting, 4);
             }
         }
     }
@@ -130,19 +131,26 @@ class ProfitCalculator
             return null;
         }
 
-        $totalReturnInclFees = $summary->sell + $summary->dividend + $summary->currentValueOfShares + $summary->buy;
+        $totalReturnInclFees = $summary->buy + $summary->sell + $summary->dividend + $summary->fee + $summary->currentValueOfShares;
 
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
 
-        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
+        // $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
 
         return $result;
     }
 
     protected function calculateTotalReturnForOverview(Overview $overview): AssetReturn
     {
-        $totalReturnInclFees = $overview->totalSellAmount + $overview->totalDividend + $overview->totalCurrentHoldings + $overview->totalBuyAmount;
+        $totalReturnInclFees = 0;
+        $totalReturnInclFees += $overview->totalSellAmount;
+        $totalReturnInclFees += $overview->totalDividend;
+        $totalReturnInclFees += $overview->totalCurrentHoldings;
+        $totalReturnInclFees += $overview->totalBuyAmount;
+        $totalReturnInclFees += $overview->totalFee;
+        $totalReturnInclFees += $overview->totalForeignWithholdingTax;
+        $totalReturnInclFees += $overview->totalReturnedForeignWithholdingTax;
 
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
@@ -212,14 +220,11 @@ class ProfitCalculator
             if ($dateComparison !== 0) {
                 return $dateComparison;
             }
+
             $bankComparison = strcmp($a->bank, $b->bank);
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }
-
-            // if ($a->isin === $b->isin) {
-            //     return 0;
-            // }
 
             return strcmp($a->isin, $b->isin);
         });

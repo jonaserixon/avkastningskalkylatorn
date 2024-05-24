@@ -1,0 +1,17 @@
+includes:
+	- phar://phpstan.phar/conf/bleedingEdge.neon # https://phpstan.org/blog/what-is-bleeding-edge
+
+parameters:
+    # https://phpstan.org/user-guide/output-format
+    errorFormat: table
+
+    # https://phpstan.org/user-guide/ignoring-errors
+    ignoreErrors:
+
+    # https://phpstan.org/config-reference#stricter-analysis
+    # https://phpstan.org/config-reference#analysed-files
+    excludePaths:
+        analyse:
+
+    paths:
+        - /src

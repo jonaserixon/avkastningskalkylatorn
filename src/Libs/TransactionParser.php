@@ -141,6 +141,10 @@ class TransactionParser
 
                 break;
             case 'foreign_withholding_tax':
+                if (!empty($summary->isin)) {
+                    $summary->foreignWithholdingTax += $transactionAmount;
+                }
+
                 $this->overview->totalForeignWithholdingTax += $transactionAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
                 break;
@@ -150,6 +154,10 @@ class TransactionParser
 
                 break;
             case 'fee':
+                if (!empty($summary->isin)) {
+                    $summary->fee += $transactionAmount;
+                }
+
                 $this->overview->totalFee += $transactionAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type);
 

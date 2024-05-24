@@ -53,13 +53,18 @@ class CalculateProfitCommand extends CommandProcessor
         if ($options->verbose) {
             $this->presenter->displayDetailedSummaries($result->summaries);
         } else {
-            $this->presenter->generateSummaryTable($result->summaries);
+            $this->presenter->generateSummaryTable($result->overview, $result->summaries);
         }
 
         $this->presenter->displayOverview($result->overview);
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
+        }
+
+        echo PHP_EOL;
+        foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
+            $this->presenter->printProgressBar($isin, $weight);
         }
 
         /*

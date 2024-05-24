@@ -28,6 +28,8 @@ class Presenter
             echo $this->addTabs('Tot. courtage:', 50) . $this->redText($summary->commissionBuy + $summary->commissionSell) . ' SEK' . PHP_EOL;
             echo $this->addTabs('Courtage köp:', 50) . $this->redText($summary->commissionBuy) . ' SEK' . PHP_EOL;
             echo $this->addTabs('Courtage sälj:', 50) . $this->redText($summary->commissionSell) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($summary->fee) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Utländsk källskatt:') . $this->colorPicker($summary->foreignWithholdingTax) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
@@ -83,7 +85,7 @@ class Presenter
         echo PHP_EOL;
         echo 'Tot. nuvarande innehav: ' . $this->colorPicker($overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
-        echo 'Tot. avkastning (exkl. avgifter, källskatt, skatt): ' . $this->colorPicker($overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning (inkl. avgifter, källskatt, skatt): ' . $this->colorPicker($overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
     }
 
@@ -99,9 +101,9 @@ class Presenter
     /**
      * @param TransactionSummary[] $summaries
      */
-    public function generateSummaryTable(array $summaries): void
+    public function generateSummaryTable(Overview $overview, array $summaries): void
     {
-        $headers = ['Värdepapper', 'ISIN', 'Avk. SEK', 'Tot. utdelning', 'Tot. courtage', 'Nuv. värde'];
+        $headers = ['Värdepapper', 'ISIN', 'Avkastning (kr)', 'Tot. utdelning (kr)', 'Tot. courtage (kr)', 'Nuvarande värde (kr)'];
 
         $nameMaxLength = 30;
 
@@ -123,10 +125,10 @@ class Presenter
 
             $colWidths[0] = max($colWidths[0], mb_strlen($name));
             $colWidths[1] = max($colWidths[1], mb_strlen($summary->isin));
-            $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK'));
-            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->dividend) . ' SEK'));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK'));
-            $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($summary->currentValueOfShares) . ' SEK'));
+            $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($summary->assetReturn->totalReturnInclFees)));
+            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($summary->dividend)));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($summary->commissionBuy + $summary->commissionSell)));
+            $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($summary->currentValueOfShares)));
         }
 
         $this->printHorizontalLine($colWidths);
@@ -144,16 +146,26 @@ class Presenter
             $this->printRow([
                 $name,
                 $summary->isin,
-                $this->formatNumber($summary->assetReturn->totalReturnInclFees) . ' SEK',
-                $this->formatNumber($summary->dividend) . ' SEK',
-                $this->formatNumber($summary->commissionBuy + $summary->commissionSell) . ' SEK',
-                $this->formatNumber($summary->currentValueOfShares) . ' SEK'
+                $this->formatNumber($summary->assetReturn->totalReturnInclFees),
+                $this->formatNumber($summary->dividend),
+                $this->formatNumber($summary->commissionBuy + $summary->commissionSell),
+                $this->formatNumber($summary->currentValueOfShares)
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }
+
+        $this->printRow([
+            'Summering:',
+            '-',
+            $this->formatNumber($overview->returns->totalReturnInclFees),
+            $this->formatNumber($overview->totalDividend),
+            $this->formatNumber(($overview->totalBuyCommission + $overview->totalSellCommission)),
+            $this->formatNumber($overview->totalCurrentHoldings)
+        ], $colWidths);
+        $this->printHorizontalLine($colWidths);
     }
 
-    public function printHorizontalLine($colWidths)
+    public function printHorizontalLine(array $colWidths): void
     {
         foreach ($colWidths as $width) {
             echo '+' . str_repeat('-', $width + 2);
@@ -161,7 +173,7 @@ class Presenter
         echo '+' . PHP_EOL;
     }
 
-    public function printRow($row, $colWidths)
+    public function printRow(array $row, array $colWidths): void
     {
         foreach ($row as $colIndex => $colValue) {
             $visibleLength = mb_strlen($colValue);
@@ -169,6 +181,20 @@ class Presenter
             printf("| %s%s ", $colValue, str_repeat(' ', $padding));
         }
         echo '|' . PHP_EOL;
+    }
+
+    public function printProgressBar(string $label, float $value): void
+    {
+        $maxWidth = 40;
+        $currentWidth = ($value / 100) * $maxWidth;
+
+        // Skapa själva progressbaren
+        $bar = str_pad($this->truncateName($label, 25), 25) . ' |';
+        $bar .= str_repeat('█', floor($currentWidth));
+        $bar .= str_repeat(' ', $maxWidth - floor($currentWidth));
+        $bar .= '| ' . sprintf("%.2f%%", $value);
+
+        echo $bar . PHP_EOL;
     }
 
     public function displayCompactFormattedSummary(TransactionSummary $summary): void
