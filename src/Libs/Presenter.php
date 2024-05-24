@@ -163,6 +163,16 @@ class Presenter
             $this->formatNumber($overview->totalCurrentHoldings)
         ], $colWidths);
         $this->printHorizontalLine($colWidths);
+
+        $this->printRow([
+            'Saldo:',
+            '-',
+            '-',
+            '-',
+            '-',
+            '-'
+        ], $colWidths);
+        $this->printHorizontalLine($colWidths);
     }
 
     public function printHorizontalLine(array $colWidths): void
@@ -186,9 +196,8 @@ class Presenter
     public function printProgressBar(string $label, float $value): void
     {
         $maxWidth = 40;
-        $currentWidth = ($value / 100) * $maxWidth;
+        $currentWidth = round(($value / 100) * $maxWidth);
 
-        // Skapa själva progressbaren
         $bar = str_pad($this->truncateName($label, 25), 25) . ' |';
         $bar .= str_repeat('█', floor($currentWidth));
         $bar .= str_repeat(' ', $maxWidth - floor($currentWidth));
@@ -218,7 +227,7 @@ class Presenter
         echo $result;
     }
 
-    public function addTabs($label, $desiredColumnWidth = 45)
+    public function addTabs(string $label, int $desiredColumnWidth = 45)
     {
         $currentLength = mb_strlen($label);
         $spacesNeeded = $desiredColumnWidth - $currentLength;
