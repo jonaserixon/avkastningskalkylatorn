@@ -84,7 +84,7 @@ class Overview
     {
         $balance = 0;
         foreach ($transactions as $transaction) {
-            $amount = round($transaction->rawAmount, 2);
+            $amount = round($transaction->rawAmount, 4);
             $balance += $amount;
         }
 

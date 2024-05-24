@@ -70,11 +70,7 @@ class TransactionParser
         foreach ($transactions as $index => $transaction) {
             $transaction = $transactions[$index];
 
-            if ($groupTransactionType === 'share_transfer') {
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
-            } else {
-                $this->updateSummaryBasedOnTransactionType($summary, $groupTransactionType, $transaction);
-            }
+            $this->updateSummaryBasedOnTransactionType($summary, $groupTransactionType, $transaction);
 
             if (!in_array($transaction->name, $summary->transactionNames)) {
                 $summary->transactionNames[] = $transaction->name;
@@ -89,7 +85,7 @@ class TransactionParser
         switch ($groupTransactionType) {
             case 'buy':
                 $summary->buy += $transactionAmount;
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
+                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
                 $summary->commissionBuy += $transaction->commission;
 
                 $this->overview->totalBuyAmount += $transactionAmount;
@@ -100,7 +96,7 @@ class TransactionParser
                 break;
             case 'sell':
                 $summary->sell += $transactionAmount;
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
+                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
                 $summary->commissionSell += $transaction->commission;
 
                 $this->overview->totalSellAmount += $transactionAmount;
@@ -117,7 +113,11 @@ class TransactionParser
 
                 break;
             case 'share_split':
-                $summary->currentNumberOfShares += round($transaction->rawQuantity, 2);
+                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
+
+                break;
+            case 'share_transfer':
+                $summary->currentNumberOfShares += round($transaction->rawQuantity, 4);
 
                 break;
             case 'deposit':

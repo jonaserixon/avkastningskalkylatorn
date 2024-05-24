@@ -9,6 +9,7 @@ class Transaction
     public string $account;
     public string $type; // public TransactionType $type;
     public string $name;
+    public ?string $description = null;
     // public float $quantity; // float to handle fractional shares
     public float $rawQuantity; // float to handle fractional shares
     // public float $price;

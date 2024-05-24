@@ -18,7 +18,7 @@ class CalculateProfitCommand extends CommandProcessor
 
     public function getParsedOptions(): stdClass
     {
-        $commandOptions = $this->commands['calculate-profit']['options'];
+        $commandOptions = $this->commands['calculate']['options'];
 
         $options = new stdClass();
         $options->verbose = isset($this->options['verbose']) ?? $commandOptions['verbose']['default'];
@@ -61,5 +61,28 @@ class CalculateProfitCommand extends CommandProcessor
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
+
+        /*
+        $filePath = "/exports/export_".date('Y-m-d_His').".csv";
+        $csvHeaders = [
+            'date',
+            'amount',
+            'name',
+            'type'
+        ];
+        $f = fopen($filePath, "w");
+        fputcsv($f, $csvHeaders, ',');
+
+        foreach ($result->overview->cashFlows as $transaction) {
+            $row = [
+                'date' => $transaction->date,
+                'amount' => $transaction->rawAmount,
+                'name' => $transaction->name,
+                'type' => $transaction->type
+            ];
+
+            fputcsv($f, array_values($row), ',');
+        }
+        */
     }
 }

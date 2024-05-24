@@ -35,7 +35,10 @@ abstract class CsvParser
 
     protected function readCsvFile(string $fileName, string $separator): array
     {
+        $this->convertToUTF8($fileName);
+
         $file = fopen($fileName, 'r');
+        fgetcsv($file); // Skip headers
 
         $result = [];
         while (($fields = fgetcsv($file, 0, $separator)) !== false) {
@@ -50,22 +53,18 @@ abstract class CsvParser
     protected static function normalizeInput(string $input): string
     {
         $input = trim($input);
-        $input = static::convertToUTF8($input);
         $input = mb_strtolower($input);
 
         return $input;
     }
 
-    protected static function convertToUTF8(string $text): string
+    protected static function convertToUTF8(string $fileName): void
     {
-        $encoding = mb_detect_encoding($text, mb_detect_order(), false);
-        if ($encoding == "UTF-8") {
-            $text = mb_convert_encoding($text, 'UTF-8', 'UTF-8');
-        }
-
-        $out = iconv(mb_detect_encoding($text, mb_detect_order(), false), "UTF-8//IGNORE", $text);
-
-        return $out;
+        $fileContent = file_get_contents($fileName);
+        $currentEncoding = mb_detect_encoding($fileContent, mb_list_encodings(), true);
+        $utf8Content = mb_convert_encoding($fileContent, 'UTF-8', $currentEncoding);
+        $utf8ContentWithBom = "\xEF\xBB\xBF" . $utf8Content;
+        file_put_contents($fileName, $utf8ContentWithBom);
     }
 
     public static function convertToFloat(string $value): float
@@ -73,6 +72,6 @@ abstract class CsvParser
         $value = str_replace(' ', '', $value);
         $value = str_replace(',', '.', str_replace('.', '', $value));
 
-        return (float) $value;
+        return round((float) $value, 4);
     }
 }

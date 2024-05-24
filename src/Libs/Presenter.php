@@ -83,7 +83,7 @@ class Presenter
         echo PHP_EOL;
         echo 'Tot. nuvarande innehav: ' . $this->colorPicker($overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
-        echo 'Tot. avkastning: ' . $this->colorPicker($overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning (exkl. avgifter, källskatt, skatt): ' . $this->colorPicker($overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
     }
 

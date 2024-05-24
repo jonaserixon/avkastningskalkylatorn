@@ -46,7 +46,7 @@ class CommandProcessor
             case 'help':
                 $this->printAvailableCommands();
                 break;
-            case 'calculate-profit':
+            case 'calculate':
                 (new CalculateProfitCommand($options))->execute();
                 break;
             case 'transaction':

@@ -48,8 +48,8 @@ class Avanza extends CsvParser
         $result = [];
         foreach ($csvData as $row) {
             $transactionType = static::mapToTransactionTypeByType($row[2]);
-
             if (!$transactionType) {
+                echo "***** Could not handle transaction: {$row[3]} {$row[0]}! *****" . PHP_EOL;
                 continue;
             }
 
@@ -114,7 +114,6 @@ class Avanza extends CsvParser
         if ($transaction->type === 'other') {
             // TODO: add a specific type for this so the actual deposits can be kept clean.
             if (str_contains(mb_strtolower($transaction->name), 'kapitalmedelskonto') || str_contains(mb_strtolower($transaction->name), 'nollställning')) {
-                print_r($transaction);
                 $transaction->type = 'deposit';
                 return;
             }

@@ -40,33 +40,44 @@ class Nordnet extends CsvParser
      */
     protected function parseTransactions(string $fileName): array
     {
-        $file = fopen($fileName, 'r');
+        $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
 
-        // TODO: sortera på datum
+        $file = fopen($fileName, 'r');
+        fgetcsv($file); // Skip headers
+
+        usort($csvData, function ($a, $b) {
+            return strtotime($a[1]) <=> strtotime($b[1]);
+        });
 
         $result = [];
-        while (($fields = fgetcsv($file, 0, static::CSV_SEPARATOR)) !== false) {
-            $transactionType = static::mapToTransactionType($fields[5] ?? null);
+        foreach ($csvData as $row) {
+            $transactionType = static::mapToTransactionType($row[5] ?? null);
             if (!$transactionType) {
+                echo "***** Could not handle transaction: {$row[5]} {$row[6]} {$row[1]}! *****" . PHP_EOL;
                 continue;
             }
 
             $transaction = new Transaction();
             $transaction->bank = static::BANK_NAME;
-            $transaction->date = $fields[1]; // Affärsdag
-            $transaction->account = $fields[4]; // Depå
+            $transaction->date = $row[1]; // Affärsdag
+            $transaction->account = $row[4]; // Depå
             $transaction->type = $transactionType->value; // Transaktionstyp
-            $transaction->name = trim($fields[6]); // Värdepapper
-            $transaction->rawQuantity = (int) $fields[9]; // Antal
-            $transaction->rawAmount = static::convertToFloat($fields[14]); // Belopp
-            $transaction->commission = static::convertToFloat($fields[12]); // Total Avgift
-            $transaction->currency = $fields[17]; // Valuta
-            $transaction->isin = $fields[8]; // ISIN
+            $transaction->name = trim($row[6]); // Värdepapper
+            $transaction->rawQuantity = (int) $row[9]; // Antal
+            $transaction->rawAmount = static::convertToFloat($row[14]); // Belopp
+            $transaction->commission = static::convertToFloat($row[12]); // Total Avgift
+            $transaction->currency = $row[17]; // Valuta
+            $transaction->isin = $row[8]; // ISIN
+            $transaction->description = trim($row[23]); // Transaktionstext
+
+            $transaction->type = $this->mapTransactionTypeByName($transaction);
+
+            if ($transaction->type === 'sell') {
+                $transaction->rawQuantity = -1 * $transaction->rawQuantity;
+            }
 
             $result[] = $transaction;
         }
-
-        fclose($file);
 
         return $result;
     }
@@ -83,10 +94,24 @@ class Nordnet extends CsvParser
             'köpt' => 'buy',
             'sålt' => 'sell',
             'utdelning' => 'dividend',
-            'köp' => 'buy',
-            'sälj' => 'sell',
-            'övrigt' => 'other',
-            'värdepappersöverföring' => 'share_transfer',
+            'mak utdelning' => 'dividend', // makulerad utdelning
+            'insättning' => 'deposit',
+            'premieinbetalning' => 'deposit', // insättning till KF
+            'uttag' => 'withdrawal',
+
+            'ränta' => 'interest',
+            'kap överbel.ränta' => 'interest',
+            'kap. deb ränta' => 'interest',
+            'kap ränta' => 'interest',
+
+            'källskatt' => 'tax', // TODO: verkar vara kopplat till sparkonto av någon anledning. kolla med nordnet.
+            'avkastningsskatt' => 'tax',
+
+            'utl kupskatt' => 'foreign_withholding_tax',
+            'mak utl kupskatt' => 'foreign_withholding_tax', // makulerad källskatt
+
+            'avgift' => 'fee', // ADR etc.
+            'riskkostnad' => 'fee',
         ];
 
         if (array_key_exists($normalizedInput, $mapping)) {
@@ -94,5 +119,15 @@ class Nordnet extends CsvParser
         }
 
         return null;
+    }
+
+    public function mapTransactionTypeByName(Transaction &$transaction)
+    {
+        // Återbetald utländsk källskatt
+        if (str_contains(mb_strtolower($transaction->description), 'återbetalning') && str_contains(mb_strtolower($transaction->description), 'källskatt')) {
+            return 'returned_foreign_withholding_tax';
+        }
+
+        return $transaction->type;
     }
 }

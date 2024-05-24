@@ -8,7 +8,7 @@ class CommandDefinitions
         'help' => [
             'description' => 'Prints available commands and their options'
         ],
-        'calculate-profit' => [
+        'calculate' => [
             'description' => 'Calculate profits',
             'options' => [
                 'export-csv' => [

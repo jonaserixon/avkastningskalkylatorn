@@ -66,7 +66,7 @@ class ProfitCalculator
                     $currentValueOfShares = $summary->currentNumberOfShares * $currentPricePerShare;
     
                     $this->transactionParser->overview->totalCurrentHoldings += $currentValueOfShares;
-                    $this->transactionParser->overview->addFinalCashFlow($currentValueOfShares, $summary->name); // TODO: can we move this outside of this loop?
+                    $this->transactionParser->overview->addFinalCashFlow($currentValueOfShares, $summary->name);
     
                     $summary->currentPricePerShare = $currentPricePerShare;
                     $summary->currentValueOfShares = $currentValueOfShares;
@@ -83,26 +83,16 @@ class ProfitCalculator
                 }
             }
 
+            // TODO: remove this
             if (!empty($summary->isin)) {
                 $summary->assetReturn = $this->calculateTotalReturnForSummary($summary);
-            } else {
-                // print_r($summary);
-                // exit;
             }
         }
-
 
         // Important for calculations etc.
         usort($this->transactionParser->overview->cashFlows, function ($a, $b) {
             return strtotime($a->date) <=> strtotime($b->date);
         });
-
-        /*
-        if ($this->exportCsv) {
-            Exporter::generateCsvExport($filteredSummaries, $stockPrice);
-            Exporter::testGenerateCsvExport($this->transactionParser->overview->transactions);
-        }
-        */
 
         $result = new stdClass();
         $result->currentHoldingsMissingPricePerShare = $currentHoldingsMissingPricePerShare;
@@ -125,8 +115,7 @@ class ProfitCalculator
         foreach ($summaries as $summary) {
             if ($summary->currentValueOfShares > 0) {
                 $weighting = $summary->currentValueOfShares / $overview->totalCurrentHoldings * 100;
-                // $overview->currentHoldingsWeighting[$summary->name] = round($weighting, 2);
-                $overview->currentHoldingsWeighting[$summary->isin] = round($weighting, 2);
+                $overview->currentHoldingsWeighting[$summary->isin] = round($weighting, 4);
             }
         }
     }
@@ -146,7 +135,7 @@ class ProfitCalculator
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
 
-        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees; // TODO: move this line
+        $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
 
         return $result;
     }
@@ -168,7 +157,7 @@ class ProfitCalculator
     {
         $transactions = array_merge(
             (new Avanza())->parseBankTransactions(),
-            // (new Nordnet())->parseBankTransactions()
+            (new Nordnet())->parseBankTransactions()
         );
 
         $filters = [
