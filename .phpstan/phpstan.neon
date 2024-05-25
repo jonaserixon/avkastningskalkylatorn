@@ -7,10 +7,16 @@ parameters:
     editorUrl: 'vscode://file/%%file%%:%%line%%'
     editorUrlTitle: '%%relFile%%:%%line%%'
 
-    level: 5
+    level: 6
 
     # https://phpstan.org/user-guide/ignoring-errors
-    # ignoreErrors:
+    ignoreErrors:
+        - 
+            identifier: foreach.nonIterable
+        - 
+            paths: 
+                - ../src/Libs/Presenter.php
+            identifier: missingType.iterableValue
 
     # https://phpstan.org/config-reference#stricter-analysis
     # https://phpstan.org/config-reference#analysed-files

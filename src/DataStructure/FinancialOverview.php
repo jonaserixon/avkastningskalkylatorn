@@ -19,6 +19,8 @@ class FinancialOverview
     public float $totalForeignWithholdingTax = 0;
     public float $totalReturnedForeignWithholdingTax = 0;
     public float $totalCurrentHoldings = 0;
+
+    /** @var array<string, float> */
     public array $currentHoldingsWeighting = [];
     public float $depositAmountTotal = 0;
     public float $withdrawalAmountTotal = 0;
@@ -49,6 +51,9 @@ class FinancialOverview
         $this->cashFlows[] = $transaction;
     }
 
+    /**
+     * @param Transaction[] $transactions
+     */
     public function calculateBalance(array $transactions): float
     {
         $balance = 0;

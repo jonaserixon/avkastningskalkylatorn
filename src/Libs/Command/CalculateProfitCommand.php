@@ -7,8 +7,12 @@ use stdClass;
 
 class CalculateProfitCommand extends CommandProcessor
 {
+    /** @var mixed[] */
     private array $options;
 
+    /**
+     * @param mixed[] $options
+     */
     public function __construct(array $options)
     {
         $this->options = $options;

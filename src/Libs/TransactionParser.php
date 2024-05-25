@@ -3,9 +3,10 @@
 namespace src\Libs;
 
 use Exception;
+use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\DataStructure\FinancialAsset;
+use src\DataStructure\TransactionGroup;
 use src\Libs\Presenter;
 
 class TransactionParser
@@ -43,6 +44,10 @@ class TransactionParser
         return $assets;
     }
 
+    /**
+     * @param array<string, TransactionGroup> $groupedTransactions
+     * @return FinancialAsset[]
+     */
     private function summarizeTransactions(array $groupedTransactions): array
     {
         $assets = [];
@@ -80,6 +85,9 @@ class TransactionParser
 
     /**
      * Process grouped transactions for the asset.
+     * @param FinancialAsset $asset
+     * @param string $groupTransactionType
+     * @param Transaction[] $transactions
      */
     private function processTransactionType(FinancialAsset &$asset, string $groupTransactionType, array $transactions): void
     {
@@ -185,32 +193,25 @@ class TransactionParser
     }
 
     /**
-     * Group "raw" transactions.
+     * Group "raw" transactions into categorized lists.
      *
-     * @param Transaction[] $transactions
+     * @param Transaction[] $transactions Array of transaction objects.
+     * @return array<string, TransactionGroup>
      */
     public function groupTransactions(array $transactions): array
     {
         $groupedTransactions = [];
         foreach ($transactions as $transaction) {
             if (!array_key_exists($transaction->isin, $groupedTransactions)) {
-                $groupedTransactions[$transaction->isin] = [
-                    'buy' => [],
-                    'sell' => [],
-                    'dividends' => [],
-                    'interest' => [],
-                    'share_split' => [],
-                    'share_transfer' => [],
-                    'deposit' => [],
-                    'withdrawal' => [],
-                    'tax' => [],
-                    'other' => [],
-                    'foreign_withholding_tax' => [],
-                    'fee' => []
-                ];
+                $groupedTransactions[$transaction->isin] = new TransactionGroup();
             }
 
-            $groupedTransactions[$transaction->isin][$transaction->type][] = $transaction;
+            if (!property_exists($groupedTransactions[$transaction->isin], $transaction->type)) {
+                echo $this->presenter->redText("Unknown transaction type: '{$transaction->type}' in {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
+                continue;
+            }
+
+            $groupedTransactions[$transaction->isin]->{$transaction->type}[] = $transaction;
         }
 
         return $groupedTransactions;

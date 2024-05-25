@@ -4,8 +4,9 @@ namespace src\Libs;
 
 use Exception;
 use src\DataStructure\AssetReturn;
-use src\DataStructure\FinancialOverview;
 use src\DataStructure\FinancialAsset;
+use src\DataStructure\FinancialOverview;
+use src\DataStructure\Transaction;
 use src\Libs\FileManager\Importer\Avanza;
 use src\Libs\FileManager\Importer\Nordnet;
 use src\Libs\FileManager\Importer\StockPrice;
@@ -106,6 +107,11 @@ class ProfitCalculator
         return $result;
     }
 
+    /**
+     * Calculate the current holdings weighting for each asset.
+     * @param FinancialOverview $overview
+     * @param FinancialAsset[] $assets
+     */
     protected function calculateCurrentHoldingsWeighting(FinancialOverview $overview, array $assets): void
     {
         foreach ($assets as $asset) {
@@ -151,6 +157,7 @@ class ProfitCalculator
 
     /**
      * Returns a list of sorted and possibly filtered transactions.
+     * @return Transaction[]
      */
     public function getTransactions(): array // TODO: should be moved somewhere not related to profits
     {

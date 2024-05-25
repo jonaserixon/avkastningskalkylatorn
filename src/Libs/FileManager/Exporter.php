@@ -2,10 +2,12 @@
 
 namespace src\Libs\FileManager;
 
-// TODO: this should be able to export "anything". So the columns should be dynamic.The name of the export should be export_<command>_<date>.csv
-
 class Exporter
 {
+    /**
+     * @param string[] $headers
+     * @param mixed[] $data
+     */
     public static function exportToCsv(array $headers, array $data, string $fileName = 'export', string $delimiter = ','): void
     {
         if (empty($headers) || empty($data)) {

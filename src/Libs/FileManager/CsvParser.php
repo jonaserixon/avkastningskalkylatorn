@@ -2,14 +2,20 @@
 
 namespace src\Libs\FileManager;
 
+use src\DataStructure\Transaction;
+
 abstract class CsvParser
 {
     protected static string $DIR = '';
 
+    /** @return object[] */
     abstract protected function parseTransactions(string $fileName): array;
 
     abstract protected function validateImportFile(string $filePath): bool;
 
+    /**
+     * @return Transaction[]
+     */
     public function parseBankTransactions(): array
     {
         $result = [];
@@ -33,6 +39,9 @@ abstract class CsvParser
         return $result;
     }
 
+    /**
+     * @return mixed[]
+     */
     protected function readCsvFile(string $fileName, string $separator): array
     {
         $this->convertToUTF8($fileName);
