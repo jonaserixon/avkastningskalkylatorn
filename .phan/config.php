@@ -104,7 +104,9 @@ $config = [
         'PhanSuspiciousTruthyCondition',
         'PhanSuspiciousValueComparison',
         'PhanCoalescingNeverNull',
-        'PhanTypeComparisonFromArray'
+        'PhanTypeComparisonFromArray',
+
+        'PhanTypeSuspiciousNonTraversableForeach', // TODO: enable this in the future.
     ],
 
     'whitelist_issue_types' => [],
