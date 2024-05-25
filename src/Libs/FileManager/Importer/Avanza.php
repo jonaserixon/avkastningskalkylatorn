@@ -10,8 +10,8 @@ use src\Libs\FileManager\CsvParser;
 class Avanza extends CsvParser
 {
     protected static string $DIR = IMPORT_DIR . '/banks/avanza';
-    private const CSV_SEPARATOR = ";";
-    private const BANK_NAME = 'AVANZA';
+    protected const CSV_SEPARATOR = ";";
+    protected const BANK_NAME = 'AVANZA';
 
     protected function validateImportFile(string $filePath): bool
     {

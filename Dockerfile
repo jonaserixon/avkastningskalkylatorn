@@ -4,13 +4,13 @@ COPY . /usr/src/avkastningskalkylatorn
 
 WORKDIR /usr/src/avkastningskalkylatorn
 
-# Ensure the PHP script is executable
 RUN chmod +x /usr/src/avkastningskalkylatorn/src/index.php
-
-# Create a symbolic link
 RUN ln -s /usr/src/avkastningskalkylatorn/src/index.php /usr/local/bin/avk
-
 RUN chmod +x /usr/local/bin/avk
+
+# Add PHPStan
+ADD https://github.com/phpstan/phpstan/releases/latest/download/phpstan.phar /usr/local/bin/phpstan
+RUN chmod +x /usr/local/bin/phpstan
 
 # CMD [ "php", "./src/index.php" ]
 CMD ["tail", "-F", "/dev/null"]

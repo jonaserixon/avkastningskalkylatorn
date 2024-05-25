@@ -13,8 +13,7 @@ use stdClass;
 
 class ProfitCalculator
 {
-    private bool $exportCsv;
-    private bool $verbose;
+    // private bool $exportCsv;
     private ?string $filterBank;
     private ?string $filterIsin;
     private ?string $filterAsset;
@@ -26,8 +25,7 @@ class ProfitCalculator
     private StockPrice $stockPrice;
 
     public function __construct(
-        bool $exportCsv,
-        bool $verbose,
+        // bool $exportCsv,
         ?string $bank,
         ?string $isin,
         ?string $asset,
@@ -35,8 +33,7 @@ class ProfitCalculator
         ?string $dateTo,
         bool $currentHoldings
     ) {
-        $this->exportCsv = $exportCsv;
-        $this->verbose = $verbose;
+        // $this->exportCsv = $exportCsv;
         $this->filterBank = $bank;
         $this->filterIsin = $isin;
         $this->filterAsset = $asset;

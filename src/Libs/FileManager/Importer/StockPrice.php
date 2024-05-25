@@ -9,7 +9,7 @@ use src\Libs\FileManager\CsvParser;
 class StockPrice extends CsvParser
 {
     protected static string $DIR = STOCK_PRICE_DIR;
-    private const CSV_SEPARATOR = ",";
+    protected const CSV_SEPARATOR = ",";
 
     /**
      * @var Holding[]

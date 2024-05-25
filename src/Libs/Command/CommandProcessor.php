@@ -1,6 +1,6 @@
 <?php
 
-namespace Src\Libs\Command;
+namespace src\Libs\Command;
 
 use src\Libs\Presenter;
 

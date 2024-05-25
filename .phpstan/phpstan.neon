@@ -4,14 +4,17 @@ includes:
 parameters:
     # https://phpstan.org/user-guide/output-format
     errorFormat: table
+    editorUrl: 'vscode://file/%%file%%:%%line%%'
+    editorUrlTitle: '%%relFile%%:%%line%%'
+
+    level: 5
 
     # https://phpstan.org/user-guide/ignoring-errors
-    ignoreErrors:
+    # ignoreErrors:
 
     # https://phpstan.org/config-reference#stricter-analysis
     # https://phpstan.org/config-reference#analysed-files
-    excludePaths:
-        analyse:
-
     paths:
-        - /src
+        - ../src
+
+# phpstan analyse -c .phpstan/phpstan.neon --level=1 -v

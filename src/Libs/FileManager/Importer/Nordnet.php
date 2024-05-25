@@ -10,8 +10,8 @@ use src\Libs\FileManager\CsvParser;
 class Nordnet extends CsvParser
 {
     protected static string $DIR = IMPORT_DIR . '/banks/nordnet';
-    private const CSV_SEPARATOR = "\t";
-    private const BANK_NAME = 'NORDNET';
+    protected const CSV_SEPARATOR = "\t";
+    protected const BANK_NAME = 'NORDNET';
 
     protected function validateImportFile(string $filePath): bool
     {

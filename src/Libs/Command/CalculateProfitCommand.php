@@ -1,6 +1,6 @@
 <?php
 
-namespace Src\Libs\Command;
+namespace src\Libs\Command;
 
 use src\Libs\ProfitCalculator;
 use stdClass;
@@ -21,8 +21,8 @@ class CalculateProfitCommand extends CommandProcessor
         $commandOptions = $this->commands['calculate']['options'];
 
         $options = new stdClass();
-        $options->verbose = isset($this->options['verbose']) ?? $commandOptions['verbose']['default'];
-        $options->exportCsv = isset($this->options['export-csv']) ?? $commandOptions['export-csv']['default'];
+        $options->verbose = $this->options['verbose'] ?? $commandOptions['verbose']['default'];
+        // $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
         $options->bank = $this->options['bank'] ?? null;
         $options->isin = $this->options['isin'] ?? null;
         $options->asset = $this->options['asset'] ?? null;
@@ -38,8 +38,8 @@ class CalculateProfitCommand extends CommandProcessor
         $options = $this->getParsedOptions();
 
         $profitCalculator = new ProfitCalculator(
-            $options->exportCsv,
-            $options->verbose,
+            // $options->exportCsv,
+            // $options->verbose,
             $options->bank,
             $options->isin,
             $options->asset,
