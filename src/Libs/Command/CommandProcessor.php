@@ -7,6 +7,8 @@ use src\Libs\Presenter;
 class CommandProcessor
 {
     protected Presenter $presenter;
+
+    /** @var mixed[] */
     protected array $commands;
 
     public function __construct()
@@ -15,6 +17,9 @@ class CommandProcessor
         $this->commands = CommandDefinitions::COMMANDS;
     }
 
+    /**
+     * @param string[] $argv
+     */
     public function main(array $argv): void
     {
         if (count($argv) < 2) {
@@ -62,6 +67,10 @@ class CommandProcessor
         }
     }
 
+    /**
+     * @param string $command
+     * @param mixed[] $options
+     */
     protected function validateOptions(string $command, array $options): void
     {
         $availableOptions = $this->commands[$command]['options'] ?? null;

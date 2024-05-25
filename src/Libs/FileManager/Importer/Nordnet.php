@@ -121,7 +121,7 @@ class Nordnet extends CsvParser
         return null;
     }
 
-    public function mapTransactionTypeByName(Transaction &$transaction)
+    public function mapTransactionTypeByName(Transaction &$transaction): string
     {
         // Återbetald utländsk källskatt
         if (str_contains(mb_strtolower($transaction->description), 'återbetalning') && str_contains(mb_strtolower($transaction->description), 'källskatt')) {

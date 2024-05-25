@@ -223,7 +223,7 @@ class Presenter
         echo $result;
     }
 
-    public function addTabs(string $label, int $desiredColumnWidth = 45)
+    public function addTabs(string $label, int $desiredColumnWidth = 45): string
     {
         $currentLength = mb_strlen($label);
         $spacesNeeded = $desiredColumnWidth - $currentLength;
@@ -276,37 +276,37 @@ class Presenter
         return number_format($value, 2, '.', ' ');
     }
 
-    public function greyText($value): string
+    public function greyText(float|string $value): string
     {
         return "\033[38;5;245m" . $value . "\033[0m";
     }
 
-    public function pinkText($value): string
+    public function pinkText(float|string $value): string
     {
         return "\033[38;5;213m" . $value . "\033[0m";
     }
 
-    public function greenText($value): string
+    public function greenText(float|string $value): string
     {
         return "\033[32m" . $value . "\033[0m";
     }
 
-    public function redText($value): string
+    public function redText(float|string $value): string
     {
         return "\033[31m" . $value . "\033[0m";
     }
 
-    public function blueText($value): string
+    public function blueText(float|string $value): string
     {
         return "\033[1;34m" . $value . "\033[0m";
     }
 
-    public function cyanText(string $text): string
+    public function cyanText(float|string $text): string
     {
         return "\033[36m" . $text . "\033[0m";
     }
 
-    public function yellowText(string $text): string
+    public function yellowText(float|string $text): string
     {
         return "\033[33m" . $text . "\033[0m";
     }

@@ -140,7 +140,7 @@ class Avanza extends CsvParser
         // }
     }
 
-    public function mapTransactionTypeByName(Transaction &$transaction)
+    public function mapTransactionTypeByName(Transaction &$transaction): string
     {
         $fees = ['avgift', 'riskpremie', 'adr'];
 
