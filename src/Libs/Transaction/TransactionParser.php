@@ -26,7 +26,7 @@ class TransactionParser
      * @param Transaction[] $transactions
      * @return stdClass
      */
-    public function calculateRealizedGains(array $transactions): stdClass
+    public function _calculateRealizedGains(array $transactions): stdClass
     {
         $totalCost = 0;
         $totalShares = 0;
@@ -64,6 +64,82 @@ class TransactionParser
         return $result;
     }
 
+    public function calculateRealizedGains(array $transactions): stdClass
+    {
+        $totalCost = '0.0';  // Använd strängar för att behålla precision med bcmath
+        $totalShares = '0.0';
+        $realizedGain = '0.0';
+
+        $scale = 15;
+
+        foreach ($transactions as $transaction) {
+            $amount = $this->bcabs($transaction->rawAmount, $scale);
+            $quantity = $this->bcabs($transaction->rawQuantity, $scale);
+
+            // echo $transaction->type . ' = amount: ' . $amount . ', quantity: ' . $quantity . ', date: ' . $transaction->date . PHP_EOL;
+
+            if ($transaction->type === 'buy') {
+                // Lägg till köpkostnad och öka antalet aktier
+                $totalCost = bcadd($totalCost, $amount, $scale);
+                $totalShares = bcadd($totalShares, $quantity, $scale);
+            } elseif ($transaction->type === 'sell') {
+                // Endast räkna kapitalvinst om det finns köpta aktier att sälja
+                if (bccomp($totalShares, '0', $scale) > 0 && bccomp($totalShares, $quantity, $scale) >= 0) {
+                    $costPerShare = bcdiv($totalCost, $totalShares, $scale);
+                    $sellCost = bcmul($costPerShare, $quantity, $scale);
+
+                    // Räkna ut kapitalvinsten för de sålda aktierna
+                    $gain = bcsub($amount, $sellCost, $scale);
+                    $realizedGain = bcadd($realizedGain, $gain, $scale);
+
+                    // Minska den totala kostnaden och antalet aktier
+                    $totalCost = bcsub($totalCost, $sellCost, $scale);
+                    $totalShares = bcsub($totalShares, $quantity, $scale);
+                }
+            } elseif ($transaction->type === 'share_split') {
+                if ($totalShares != 0) {
+                    $totalShares += $transaction->rawQuantity;
+                }
+
+                // if (bccomp($totalShares, '0', $scale) != 0) {
+                //     $totalShares = bcadd($totalShares, $quantity, $scale);
+                //     if ($this->isNearlyZero($totalShares)) {
+                //         $totalShares = '0.0';
+                //     }
+                // }
+            }
+        }
+
+        if ($this->isNearlyZero($totalCost)) {
+            $totalCost = '0.0';
+        }
+
+        $result = new stdClass();
+        $result->remainingCostBase = round($totalCost, 3);
+        $result->realizedGain = round($realizedGain, 3);
+
+        // var_dump($result);
+        // exit;
+
+        return $result;
+    }
+
+    private function bcabs($value, $scale = 15)
+    {
+        return bccomp($value, '0', $scale) < 0 ? bcmul($value, '-1', $scale) : $value;
+    }
+
+    private function formatNumberForBCMath($number) {
+        if (is_numeric($number)) {
+            return number_format($number, 15, '.', ''); // Konverterar till sträng med 15 decimalers precision
+        }
+        throw new \InvalidArgumentException("Invalid number format");
+    }
+
+    private function isNearlyZero($value, $tolerance = 1e-12)
+    {
+        return bccomp($this->formatNumberForBCMath(abs($value)), $this->formatNumberForBCMath($tolerance), 15) < 0;
+    }
 
     /**
      * @param Transaction[] $transactions
@@ -145,6 +221,10 @@ class TransactionParser
             $asset->setFirstTransactionDate($firstTransactionDate);
             $asset->setLastTransactionDate($lastTransactionDate);
             $asset->name = $asset->transactionNames[0];
+
+            if ($this->isNearlyZero($asset->getCurrentNumberOfShares())) {
+                $asset->setCurrentNumberOfShares(0);
+            }
 
             if (!empty($asset->isin)) {
                 $assets[] = $asset;
@@ -266,6 +346,12 @@ class TransactionParser
                 $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
+            case 'share_loan_payout':
+                $this->overview->totalShareLoanPayout += $transactionAmount;
+                $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+
+                break;
+            case 'other': // TODO: handle this based on the cashflow but give notice.
             default:
                 echo $this->presenter->redText("Unknown transaction type: '{$transaction->type}' in {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
                 break;

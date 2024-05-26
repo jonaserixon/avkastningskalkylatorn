@@ -58,15 +58,22 @@ class Avanza extends CsvParser
             $transaction->date = $row[0]; // Datum
             $transaction->account = $row[1]; // Konto
             $transaction->name = trim($row[3]); // Värdepapper/beskrivning
-            $transaction->rawQuantity = static::convertToFloat($row[4]); // Antal
+            $transaction->rawQuantity = static::convertToFloat($row[4], 5); // Antal
             $transaction->rawPrice = static::convertToFloat($row[5]); // Kurs
             $transaction->rawAmount = static::convertToFloat($row[6]); // Belopp
             $transaction->commission = static::convertToFloat($row[7]); // Courtage
             $transaction->currency = $row[8]; // Valuta
-            $transaction->isin = $row[9]; // ISIN
+
+            // TODO: implement support for new isin codes (such as when share splits occur)
+            $isin = $row[9];
+            if ($isin === 'SE0000310336') {
+                $transaction->isin = 'SE0015812219';
+            } else {
+                $transaction->isin = $isin;
+            }
 
             if ($transaction->rawQuantity && $transaction->rawPrice) {
-                $transaction->pricePerShareSEK = abs($transaction->rawAmount) / abs($transaction->rawQuantity);
+                $transaction->pricePerShareSEK = round(abs($transaction->rawAmount) / abs($transaction->rawQuantity), 3);
             }
 
             if ($transactionType->value === 'other') {
@@ -104,6 +111,7 @@ class Avanza extends CsvParser
             'ränta' => 'interest',
             'preliminärskatt' => 'tax',
             'utländsk källskatt' => 'foreign_withholding_tax',
+            'utbetalning aktielån' => 'share_loan_payout',
         ];
 
         if (array_key_exists($normalizedInput, $mapping)) {

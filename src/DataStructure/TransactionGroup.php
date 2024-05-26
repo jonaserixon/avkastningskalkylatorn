@@ -42,4 +42,7 @@ class TransactionGroup
 
     /** @var Transaction[] */
     public array $fee = [];
+
+    /** @var Transaction[] */
+    public array $share_loan_payout = [];
 }

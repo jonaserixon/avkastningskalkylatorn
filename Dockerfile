@@ -12,5 +12,8 @@ RUN chmod +x /usr/local/bin/avk
 ADD https://github.com/phpstan/phpstan/releases/latest/download/phpstan.phar /usr/local/bin/phpstan
 RUN chmod +x /usr/local/bin/phpstan
 
+# BCMath
+RUN docker-php-ext-install bcmath
+
 # CMD [ "php", "./src/index.php" ]
 CMD ["tail", "-F", "/dev/null"]

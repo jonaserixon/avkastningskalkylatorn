@@ -209,9 +209,10 @@ class Presenter
             'Anskaffningsvärde',
             'Real. vinst',
             'Oreal. vinst',
-            'Tot. utdel.',
-            'Tot. courtage',
-            'Nuvarande värde'
+            // 'Tot. utdel.',
+            // 'Tot. courtage',
+            'Nuvarande värde',
+            'Bef. aktier'
         ];
         $colWidths = array_fill(0, count($headers), 0);
 
@@ -232,11 +233,12 @@ class Presenter
             $colWidths[0] = max($colWidths[0], mb_strlen($name));
             $colWidths[1] = max($colWidths[1], mb_strlen($asset->isin));
             $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($asset->costBasis)));
-            $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($asset->realizedGainLoss)));
-            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->unrealizedGainLoss)));
-            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->getDividendAmount())));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount())));
+            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->realizedGainLoss)));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($asset->unrealizedGainLoss)));
+            // $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($asset->getDividendAmount())));
+            // $colWidths[6] = max($colWidths[6], mb_strlen($this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount())));
             $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($asset->getCurrentValueOfShares())));
+            $colWidths[6] = max($colWidths[6], mb_strlen($asset->getCurrentNumberOfShares()));
         }
 
         $this->printHorizontalLine($colWidths);
@@ -257,9 +259,10 @@ class Presenter
                 $this->formatNumber($asset->costBasis),
                 $this->formatNumber($asset->realizedGainLoss),
                 $this->formatNumber($asset->unrealizedGainLoss),
-                $this->formatNumber($asset->getDividendAmount()),
-                $this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()),
-                $this->formatNumber($asset->getCurrentValueOfShares())
+                // $this->formatNumber($asset->getDividendAmount()),
+                // $this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()),
+                $this->formatNumber($asset->getCurrentValueOfShares()),
+                $asset->getCurrentNumberOfShares()
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }
@@ -280,9 +283,10 @@ class Presenter
             $this->formatNumber($totalCostBasis),
             $this->formatNumber($totalRealizedCapitalGainLoss),
             $this->formatNumber($totalUnrealizedCapitalGainLoss),
-            $this->formatNumber($overview->totalDividend),
-            $this->formatNumber(($overview->totalBuyCommission + $overview->totalSellCommission)),
-            $this->formatNumber($overview->totalCurrentHoldings)
+            // $this->formatNumber($overview->totalDividend),
+            // $this->formatNumber(($overview->totalBuyCommission + $overview->totalSellCommission)),
+            $this->formatNumber($overview->totalCurrentHoldings),
+            ''
         ], $colWidths);
         $this->printHorizontalLine($colWidths);
 

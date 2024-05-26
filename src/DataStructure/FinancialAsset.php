@@ -38,6 +38,7 @@ class FinancialAsset
     public function addBuy(float $amount): void
     {
         $this->buy += round($amount, 3);
+        // $this->buy = round($this->buy + round($amount, 3), 3);
     }
 
     public function getBuyAmount(): float
@@ -48,6 +49,7 @@ class FinancialAsset
     public function addSell(float $amount): void
     {
         $this->sell += round($amount, 3);
+        // $this->sell = round($this->sell + round($amount, 3), 3);
     }
 
     public function getSellAmount(): float
@@ -107,11 +109,18 @@ class FinancialAsset
 
     public function addCurrentNumberOfShares(float $amount): void
     {
-        $this->currentNumberOfShares += round($amount, 3);
+        $this->currentNumberOfShares += $amount;
+        // $this->currentNumberOfShares = round($this->currentNumberOfShares + round($amount, 2), 2);
+    }
+
+    public function setCurrentNumberOfShares(float $amount): void
+    {
+        $this->currentNumberOfShares = $amount;
     }
 
     public function getCurrentNumberOfShares(): float
     {
+        
         return $this->currentNumberOfShares;
     }
 
@@ -122,7 +131,7 @@ class FinancialAsset
 
     public function setCurrentPricePerShare(float $price): void
     {
-        $this->currentPricePerShare = round($price, 3);
+        $this->currentPricePerShare = $price;
     }
 
     public function getCurrentValueOfShares(): ?float
