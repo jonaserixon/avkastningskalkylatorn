@@ -7,6 +7,7 @@ use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
 use src\DataStructure\TransactionGroup;
 use src\Libs\Presenter;
+use stdClass;
 
 class TransactionParser
 {
@@ -19,13 +20,17 @@ class TransactionParser
         $this->overview = $overview;
     }
 
-    public function calculateRealizedGains(array $transactions)
+    /**
+     * Calculate realized gains and cost basis for a list of transactions.
+     *
+     * @param Transaction[] $transactions
+     * @return stdClass
+     */
+    public function calculateRealizedGains(array $transactions): stdClass
     {
         $totalCost = 0;
         $totalShares = 0;
         $realizedGain = 0;
-
-        // TODO: stödjer ej aktiesplittar.
 
         foreach ($transactions as $transaction) {
             if ($transaction->type === 'buy') {
@@ -45,10 +50,18 @@ class TransactionParser
                     $totalCost -= $sellCost;
                     $totalShares -= abs($transaction->rawQuantity);
                 }
+            } elseif ($transaction->type === 'share_split') {
+                if ($totalShares != 0) {
+                    $totalShares += $transaction->rawQuantity;
+                }
             }
         }
 
-        return ['remainingCostBase' => $totalCost, 'realizedGain' => $realizedGain];
+        $result = new stdClass();
+        $result->remainingCostBase = $totalCost;
+        $result->realizedGain = $realizedGain;
+
+        return $result;
     }
 
 
@@ -99,6 +112,7 @@ class TransactionParser
                 $this->processTransactionType($asset, $groupTransactionType, $transactions);
 
                 foreach ($transactions as $transaction) {
+                    // TODO: endast kolla på köp och säljtransaktioner.
                     $date = $transaction->date;
                     if (!$firstTransactionDate || $date < $firstTransactionDate) {
                         $firstTransactionDate = $date;
@@ -109,19 +123,23 @@ class TransactionParser
                 }
             }
 
+            // Skapa en kopia av transaktionerna här, vi vill inte påverka originaldatat.
             $mergedTransactions = array_merge(
                 array_map(function($item) { return clone $item; }, $companyTransactions->buy),
-                array_map(function($item) { return clone $item; }, $companyTransactions->sell)
+                array_map(function($item) { return clone $item; }, $companyTransactions->sell),
+                array_map(function($item) { return clone $item; }, $companyTransactions->share_split)
+                // TODO: stödja värdepappersflytt?
             );
-            usort($mergedTransactions, function ($a, $b) {
-                return strcasecmp($a->date, $b->date);
-            });
 
             if (!empty($mergedTransactions)) {
+                // Viktigt att sortera transaktionerna efter datum för beräkningar.
+                usort($mergedTransactions, function ($a, $b) {
+                    return strcasecmp($a->date, $b->date);
+                });
+
                 $result = $this->calculateRealizedGains($mergedTransactions);
-                // $costBasis += $this->calculateCostBasis($mergedTransactions);
-                $asset->realizedGainLoss = $result['realizedGain'];
-                $asset->costBasis = $result['remainingCostBase'];
+                $asset->realizedGainLoss = $result->realizedGain;
+                $asset->costBasis = $result->remainingCostBase;
             }
 
             $asset->setFirstTransactionDate($firstTransactionDate);
