@@ -18,7 +18,7 @@ class CommandProcessor
     }
 
     /**
-     * @param string[] $argv
+     * @param mixed[] $argv
      */
     public function main(array $argv): void
     {

@@ -19,31 +19,40 @@ class Presenter
 
             echo $this->pinkText($this->createSeparator('-', $asset->name .' ('.$asset->isin.')')) . PHP_EOL;
 
-            echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($asset->buy, 2, '.', ' ')) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($asset->sell, 2, '.', ' ')) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Utdelningar:') . $this->colorPicker($asset->dividend) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($asset->getBuyAmount(), 2, '.', ' ')) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($asset->getSellAmount(), 2, '.', ' ')) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Utdelningar:') . $this->colorPicker($asset->getDividendAmount()) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
-            echo $this->addTabs('Tot. courtage:', 50) . $this->redText($asset->commissionBuy + $asset->commissionSell) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage köp:', 50) . $this->redText($asset->commissionBuy) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage sälj:', 50) . $this->redText($asset->commissionSell) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($asset->fee) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Utländsk källskatt:') . $this->colorPicker($asset->foreignWithholdingTax) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. courtage:', 50) . $this->redText($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage köp:', 50) . $this->redText($asset->getCommissionBuyAmount()) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage sälj:', 50) . $this->redText($asset->getCommissionSellAmount()) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($asset->getFeeAmount()) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Utländsk källskatt:') . $this->colorPicker($asset->getForeignWithholdingTaxAmount()) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
-            echo $this->addTabs('Första transaktionen: ', 50) . $asset->firstTransactionDate . PHP_EOL;
-            echo $this->addTabs('Senaste transaktionen: ', 50) . $asset->lastTransactionDate . PHP_EOL;
+            echo $this->addTabs('Första transaktionen: ', 50) . $asset->getFirstTransactionDate() . PHP_EOL;
+            echo $this->addTabs('Senaste transaktionen: ', 50) . $asset->getLastTransactionDate() . PHP_EOL;
 
             echo PHP_EOL;
 
-            if ((int) $asset->currentNumberOfShares > 0) {
-                echo $this->addTabs('Nuvarande antal aktier:', 50) . number_format($asset->currentNumberOfShares, 2, '.', ' ') . ' st' . PHP_EOL;
+            foreach ($asset->bankAccounts as $bank => $accounts) {
+                echo $this->addTabs('Bank:', 50) . $bank . PHP_EOL;
+                foreach ($accounts as $account) {
+                    echo $this->addTabs('Konto:', 50) . $account . PHP_EOL;
+                }
+            }
 
-                if ($asset->currentValueOfShares) {
-                    echo $this->addTabs('Nuvarande pris/aktie') . number_format($asset->currentPricePerShare, 2, '.', ' ') . ' SEK' . PHP_EOL;
-                    echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($asset->currentValueOfShares, 2, '.', ' ') . ' SEK ' . PHP_EOL;
+            echo PHP_EOL;
+
+            if ((int) $asset->getCurrentNumberOfShares() > 0) {
+                echo $this->addTabs('Nuvarande antal aktier:', 50) . number_format($asset->getCurrentNumberOfShares(), 2, '.', ' ') . ' st' . PHP_EOL;
+
+                if ($asset->getCurrentValueOfShares()) {
+                    echo $this->addTabs('Nuvarande pris/aktie') . number_format($asset->getCurrentPricePerShare(), 2, '.', ' ') . ' SEK' . PHP_EOL;
+                    echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($asset->getCurrentValueOfShares(), 2, '.', ' ') . ' SEK ' . PHP_EOL;
                 } else {
                     echo $this->yellowText('** Saknar kurspris **') . PHP_EOL;
                 }
@@ -60,6 +69,101 @@ class Presenter
 
             echo PHP_EOL;
         }
+    }
+
+    public function displayInvestmentReport(FinancialOverview $overview, array $assets): void
+    {
+        $numberOfBuys = 0;
+        $numberOfSells = 0;
+        $numberOfDeposits = 0;
+        $numberOfWithdrawals = 0;
+        $numberOfDividends = 0;
+        foreach ($overview->cashFlows as $cashFlow) {
+            if ($cashFlow->type === 'buy') {
+                $numberOfBuys++;
+            }
+            if ($cashFlow->type === 'sell') {
+                $numberOfSells++;
+            }
+            if ($cashFlow->type === 'deposit') {
+                $numberOfDeposits++;
+            }
+            if ($cashFlow->type === 'withdrawal') {
+                $numberOfWithdrawals++;
+            }
+            if ($cashFlow->type === 'dividend') {
+                $numberOfDividends++;
+            }
+        }
+
+        echo "\n" . str_pad("=== Investment Report ===", 70, "=", STR_PAD_BOTH) . "\n\n";
+        echo "Från {$overview->firstTransactionDate} till {$overview->lastTransactionDate}\n\n";
+
+        // 1. Investments
+        echo "1. Investeringar:\n";
+        echo str_pad("Köp och sälj:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala köp: {$this->formatNumber($overview->totalBuyAmount)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Antal köp: {$numberOfBuys} st" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala sälj: {$this->formatNumber($overview->totalSellAmount)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Antal sälj: {$numberOfSells} st" . PHP_EOL;
+        
+        echo str_pad("Utdelningar:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala utdelningar: {$this->formatNumber($overview->totalDividend)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Antal utdelningar: {$numberOfDividends} st" . PHP_EOL;
+        echo str_pad(" ", 30) . "Betald utländsk källskatt: {$this->formatNumber($overview->totalForeignWithholdingTax)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Återbetald utländsk källskatt: {$this->formatNumber($overview->totalReturnedForeignWithholdingTax)} SEK" . PHP_EOL;
+
+        $totalRealizedCapitalGainLoss = 0;
+        $totalUnrealizedCapitalGainLoss = 0;
+        foreach ($assets as $asset) {
+            $totalRealizedCapitalGainLoss += $asset->realizedGainLoss;
+            $totalUnrealizedCapitalGainLoss += $asset->unrealizedGainLoss;
+        }
+
+        // print_r($assets);
+        // exit;
+
+        echo str_pad("Kapitalvinster", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala realiserade kapitalvinster: {$this->formatNumber($totalRealizedCapitalGainLoss)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala orealiserade kapitalvinster: {$this->formatNumber($totalUnrealizedCapitalGainLoss)} SEK" . PHP_EOL;
+        
+        
+        // 2. Banking Transactions
+        echo PHP_EOL;
+        echo "\n2. Banktransaktioner:\n";
+        echo str_pad("Insättning:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala insättningar: {$this->formatNumber($overview->depositAmountTotal)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Antal insättningar: {$numberOfDeposits} st" . PHP_EOL;
+        echo str_pad("Uttag:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala uttag: {$this->formatNumber($overview->withdrawalAmountTotal)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Antal uttag: {$numberOfWithdrawals} st" . PHP_EOL;
+        echo str_pad("Ränta:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala räntor: {$this->formatNumber($overview->totalInterest)} SEK" . PHP_EOL;
+
+        // 3. Fees and Taxes
+        echo PHP_EOL;
+        echo "\n3. Avgifter och skatter:\n";
+        echo str_pad("Courtage:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt köpcourtage: " . $this->formatNumber($overview->totalBuyCommission) . " SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt säljcourtage: " . $this->formatNumber($overview->totalSellCommission) . " SEK" . PHP_EOL;
+
+        echo str_pad("Avgifter:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala avgifter: {$this->formatNumber($overview->totalFee)} SEK" . PHP_EOL;
+
+        echo str_pad("Skatter:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala skatter: {$this->formatNumber($overview->totalTax)} SEK" . PHP_EOL;
+
+        // 4. Current Portfolio Valuation
+        echo PHP_EOL;
+        echo "\n4. Portföljvärde:\n";
+        echo str_pad("Nuvarande innehav:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt nuvarande innehav: {$this->formatNumber($overview->totalCurrentHoldings)} SEK" . PHP_EOL;
+        echo str_pad("Likvider:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt likvider: " . $this->formatNumber($overview->calculateBalance($overview->cashFlows) - $overview->totalCurrentHoldings) . " SEK" . PHP_EOL;
+        echo str_pad("Totalt portföljvärde:", 30) . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt portföljvärde: {$this->formatNumber($overview->calculateBalance($overview->cashFlows))} SEK" . PHP_EOL;
+
+        echo "\n" . str_repeat("=", 70) . "\n";
     }
 
     public function displayFinancialOverview(FinancialOverview $overview): void
@@ -118,9 +222,9 @@ class Presenter
             $colWidths[0] = max($colWidths[0], mb_strlen($name));
             $colWidths[1] = max($colWidths[1], mb_strlen($asset->isin));
             $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($asset->assetReturn->totalReturnInclFees)));
-            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->dividend)));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($asset->commissionBuy + $asset->commissionSell)));
-            $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($asset->currentValueOfShares)));
+            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->getDividendAmount())));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount())));
+            $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($asset->getCurrentValueOfShares())));
         }
 
         $this->printHorizontalLine($colWidths);
@@ -139,9 +243,9 @@ class Presenter
                 $name,
                 $asset->isin,
                 $this->formatNumber($asset->assetReturn->totalReturnInclFees),
-                $this->formatNumber($asset->dividend),
-                $this->formatNumber($asset->commissionBuy + $asset->commissionSell),
-                $this->formatNumber($asset->currentValueOfShares)
+                $this->formatNumber($asset->getDividendAmount()),
+                $this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()),
+                $this->formatNumber($asset->getCurrentValueOfShares())
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }

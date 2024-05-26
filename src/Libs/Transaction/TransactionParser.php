@@ -1,8 +1,7 @@
 <?php
 
-namespace src\Libs;
+namespace src\Libs\Transaction;
 
-use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
@@ -14,41 +13,80 @@ class TransactionParser
     private Presenter $presenter;
     public FinancialOverview $overview;
 
-    public function __construct()
+    public function __construct(FinancialOverview $overview)
     {
         $this->presenter = new Presenter();
+        $this->overview = $overview;
     }
+
+    public function calculateRealizedGains(array $transactions)
+    {
+        $totalCost = 0;
+        $totalShares = 0;
+        $realizedGain = 0;
+
+        // TODO: stödjer ej aktiesplittar.
+
+        foreach ($transactions as $transaction) {
+            if ($transaction->type === 'buy') {
+                // Lägg till köpkostnad och öka antalet aktier
+                $totalCost += abs($transaction->rawAmount);
+                $totalShares += abs($transaction->rawQuantity);
+            } elseif ($transaction->type === 'sell') {
+                // Endast räkna kapitalvinst om det finns köpta aktier att sälja
+                if ($totalShares > 0 && $totalShares >= abs($transaction->rawQuantity)) {
+                    $costPerShare = $totalCost / $totalShares;
+                    $sellCost = $costPerShare * abs($transaction->rawQuantity);
+
+                    // Räkna ut kapitalvinsten för de sålda aktierna
+                    $realizedGain += (abs($transaction->rawAmount) - $sellCost);
+
+                    // Minska den totala kostnaden och antalet aktier
+                    $totalCost -= $sellCost;
+                    $totalShares -= abs($transaction->rawQuantity);
+                }
+            }
+        }
+
+        return ['remainingCostBase' => $totalCost, 'realizedGain' => $realizedGain];
+    }
+
 
     /**
      * @param Transaction[] $transactions
-     * @return FinancialAsset[]
      */
-    public function getFinancialAssets(array $transactions): array
+    public function calculateCostBasis(array $transactions): float
     {
-        $this->overview = new FinancialOverview();
-        $this->overview->firstTransactionDate = $transactions[0]->date;
-        $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->date;
+        $totalCost = 0;
+        $totalShares = 0;
 
-        $groupedTransactions = $this->groupTransactions($transactions);
-        $assets = $this->summarizeTransactions($groupedTransactions);
-
-        if (empty($assets)) {
-            throw new Exception('No transaction file in csv format in the imports directory.');
+        foreach ($transactions as $transaction) {
+            if ($transaction->type === 'buy') {
+                $totalCost += abs($transaction->rawAmount);
+                $totalShares += abs($transaction->rawQuantity);
+            } elseif ($transaction->type === 'sell') {
+                if ($totalShares > 0) {
+                    $costPerShare = $totalCost / $totalShares;
+                    $sellCost = $costPerShare * abs($transaction->rawQuantity);
+                    $totalCost -= $sellCost;
+                    $totalShares -= abs($transaction->rawQuantity);
+                }
+            }
         }
 
-        // Sort assets by name for readability.
-        usort($assets, function ($a, $b) {
-            return strcasecmp($a->name, $b->name);
-        });
+        // Sätt kostnadsbasen till 0 om alla aktier har sålts
+        if ($totalShares == 0) {
+            $totalCost = 0;
+        }
 
-        return $assets;
+        return $totalCost;
     }
 
     /**
      * @param array<string, TransactionGroup> $groupedTransactions
      * @return FinancialAsset[]
      */
-    private function summarizeTransactions(array $groupedTransactions): array
+    public function summarizeTransactions(array $groupedTransactions): array
     {
         $assets = [];
         foreach ($groupedTransactions as $isin => $companyTransactions) {
@@ -71,8 +109,23 @@ class TransactionParser
                 }
             }
 
-            $asset->firstTransactionDate = $firstTransactionDate;
-            $asset->lastTransactionDate = $lastTransactionDate;
+            $mergedTransactions = array_merge(
+                array_map(function($item) { return clone $item; }, $companyTransactions->buy),
+                array_map(function($item) { return clone $item; }, $companyTransactions->sell)
+            );
+            usort($mergedTransactions, function ($a, $b) {
+                return strcasecmp($a->date, $b->date);
+            });
+
+            if (!empty($mergedTransactions)) {
+                $result = $this->calculateRealizedGains($mergedTransactions);
+                // $costBasis += $this->calculateCostBasis($mergedTransactions);
+                $asset->realizedGainLoss = $result['realizedGain'];
+                $asset->costBasis = $result['remainingCostBase'];
+            }
+
+            $asset->setFirstTransactionDate($firstTransactionDate);
+            $asset->setLastTransactionDate($lastTransactionDate);
             $asset->name = $asset->transactionNames[0];
 
             if (!empty($asset->isin)) {
@@ -85,6 +138,7 @@ class TransactionParser
 
     /**
      * Process grouped transactions for the asset.
+     *
      * @param FinancialAsset $asset
      * @param string $groupTransactionType
      * @param Transaction[] $transactions
@@ -95,6 +149,14 @@ class TransactionParser
             $transaction = $transactions[$index];
 
             $this->updateAssetBasedOnTransactionType($asset, $groupTransactionType, $transaction);
+
+
+            if (!in_array($transaction->bank, array_keys($asset->bankAccounts))) {
+                $asset->bankAccounts[$transaction->bank] = [];
+            }
+            if (!in_array($transaction->account, $asset->bankAccounts[$transaction->bank])) {
+                $asset->bankAccounts[$transaction->bank][] = $transaction->account;
+            }
 
             if (!in_array($transaction->name, $asset->transactionNames)) {
                 $asset->transactionNames[] = $transaction->name;
@@ -108,9 +170,9 @@ class TransactionParser
 
         switch ($groupTransactionType) {
             case 'buy':
-                $asset->buy += $transactionAmount;
-                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
-                $asset->commissionBuy += $transaction->commission;
+                $asset->addBuy($transactionAmount);
+                $asset->addCurrentNumberOfShares($transaction->rawQuantity);
+                $asset->addCommissionBuy($transaction->commission);
 
                 $this->overview->totalBuyAmount += $transactionAmount;
                 $this->overview->totalBuyCommission += $transaction->commission;
@@ -119,9 +181,9 @@ class TransactionParser
 
                 break;
             case 'sell':
-                $asset->sell += $transactionAmount;
-                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
-                $asset->commissionSell += $transaction->commission;
+                $asset->addSell($transactionAmount);
+                $asset->addCurrentNumberOfShares($transaction->rawQuantity);
+                $asset->addCommissionSell($transaction->commission);
 
                 $this->overview->totalSellAmount += $transactionAmount;
                 $this->overview->totalSellCommission += $transaction->commission;
@@ -130,18 +192,18 @@ class TransactionParser
 
                 break;
             case 'dividend':
-                $asset->dividend += $transactionAmount;
+                $asset->addDividend($transactionAmount);
 
                 $this->overview->totalDividend += $transactionAmount;
                 $this->overview->addCashFlow($transaction->date, $transactionAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
 
                 break;
             case 'share_split':
-                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
+                $asset->addCurrentNumberOfShares($transaction->rawQuantity);
 
                 break;
             case 'share_transfer':
-                $asset->currentNumberOfShares += round($transaction->rawQuantity, 4);
+                $asset->addCurrentNumberOfShares($transaction->rawQuantity);
 
                 break;
             case 'deposit':
@@ -166,7 +228,7 @@ class TransactionParser
                 break;
             case 'foreign_withholding_tax':
                 if (!empty($asset->isin)) {
-                    $asset->foreignWithholdingTax += $transactionAmount;
+                    $asset->addForeignWithholdingTax($transactionAmount);
                 }
 
                 $this->overview->totalForeignWithholdingTax += $transactionAmount;
@@ -179,7 +241,7 @@ class TransactionParser
                 break;
             case 'fee':
                 if (!empty($asset->isin)) {
-                    $asset->fee += $transactionAmount;
+                    $asset->addFee($transactionAmount);
                 }
 
                 $this->overview->totalFee += $transactionAmount;

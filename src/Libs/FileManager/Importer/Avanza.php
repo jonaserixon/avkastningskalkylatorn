@@ -65,6 +65,10 @@ class Avanza extends CsvParser
             $transaction->currency = $row[8]; // Valuta
             $transaction->isin = $row[9]; // ISIN
 
+            if ($transaction->rawQuantity && $transaction->rawPrice) {
+                $transaction->pricePerShareSEK = abs($transaction->rawAmount) / abs($transaction->rawQuantity);
+            }
+
             if ($transactionType->value === 'other') {
                 $transaction->type = $this->mapTransactionTypeByName($transaction);
             } else {
