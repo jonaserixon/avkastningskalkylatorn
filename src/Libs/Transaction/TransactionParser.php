@@ -74,17 +74,34 @@ class TransactionParser
 
         $scale = 15;
 
+        $actualQuantity = 0;
         foreach ($transactions as $transaction) {
+            $actualQuantity += $transaction->rawQuantity;
             $amount = $this->bcabs($transaction->rawAmount, $scale);
             $quantity = $this->bcabs($transaction->rawQuantity, $scale);
+            // $amount = $this->formatNumberForBCMath($transaction->rawAmount);
+            // $quantity = $this->formatNumberForBCMath($transaction->rawQuantity);
 
             // echo $transaction->type . ' = amount: ' . $amount . ', quantity: ' . $quantity . ', date: ' . $transaction->date . PHP_EOL;
 
             if ($transaction->type === 'buy') {
+                // "Hanterar" makulerade köptransaktioner
+                if ($transaction->rawAmount > 0 && $transaction->rawQuantity < 0) {
+                    echo $this->presenter->redText("Warning: Buy transaction with negative quantity: {$transaction->rawQuantity} for {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
+                    // $amount = -$amount;
+                    // $quantity = -$quantity;
+                    $amount = bcsub("0", $amount, $scale); // Gör $amount negativ
+                    $quantity = bcsub("0", $quantity, $scale); // Gör $quantity negativ
+                }
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
                 $totalQuantity = bcadd($totalQuantity, $quantity, $scale);
             } elseif ($transaction->type === 'sell') {
+                // Leta efter makulerade säljtransaktioner
+                if ($transaction->rawAmount < 0 && $transaction->rawQuantity > 0) {
+                    echo $this->presenter->redText("Warning: Sell transaction with negative amount: {$transaction->rawAmount} for {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
+
+                }
                 // Endast räkna kapitalvinst om det finns köpta aktier att sälja
                 if (bccomp($totalQuantity, '0', $scale) > 0 && bccomp($totalQuantity, $quantity, $scale) >= 0) {
                     $costPerShare = bcdiv($totalCost, $totalQuantity, $scale);
@@ -102,13 +119,6 @@ class TransactionParser
                 if ($totalQuantity != 0) {
                     $totalQuantity += $transaction->rawQuantity;
                 }
-
-                // if (bccomp($totalQuantity, '0', $scale) != 0) {
-                //     $totalQuantity = bcadd($totalQuantity, $quantity, $scale);
-                //     if ($this->isNearlyZero($totalQuantity)) {
-                //         $totalQuantity = '0.0';
-                //     }
-                // }
             }
         }
 
@@ -116,9 +126,17 @@ class TransactionParser
             $totalCost = 0;
         }
 
+        // Om det inte finns några aktier kvar så kan vi anta att det inte finns något anskaffningsvärde kvar.
+        if ($actualQuantity == 0 || $this->isNearlyZero($totalQuantity)) {
+            print("Warning: No shares left for {$transactions[0]->name} ({$transactions[0]->isin})") . PHP_EOL;
+            $totalCost = 0;
+        }
+
         $result = new stdClass();
         $result->remainingCostBase = round(floatval($totalCost), 3);
         $result->realizedGain = round(floatval($realizedGain), 3);
+        $result->totalQuantity = round(floatval($totalQuantity), 3);
+        $result->actualQuantity = round(floatval($actualQuantity), 3);
 
         return $result;
     }
