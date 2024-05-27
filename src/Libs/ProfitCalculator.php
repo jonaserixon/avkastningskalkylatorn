@@ -139,6 +139,8 @@ class ProfitCalculator
         $totalReturnInclFees += $overview->totalCurrentHoldings;
         $totalReturnInclFees += $overview->totalBuyAmount;
         $totalReturnInclFees += $overview->totalFee;
+        $totalReturnInclFees += $overview->totalTax;
+        $totalReturnInclFees += $overview->totalInterest;
         $totalReturnInclFees += $overview->totalForeignWithholdingTax;
         $totalReturnInclFees += $overview->totalReturnedForeignWithholdingTax;
 

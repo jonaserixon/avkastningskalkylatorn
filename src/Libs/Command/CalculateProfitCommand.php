@@ -62,7 +62,7 @@ class CalculateProfitCommand extends CommandProcessor
             $this->presenter->generateAssetTable($result->overview, $result->assets);
         }
 
-        $this->presenter->displayFinancialOverview($result->overview);
+        // $this->presenter->displayFinancialOverview($result->overview);
 
         if (!empty($result->overview->currentHoldingsWeighting)) {
             echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
@@ -77,6 +77,8 @@ class CalculateProfitCommand extends CommandProcessor
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
+
+        $this->presenter->displayAssetNotices($result->assets);
 
         /*
         $filePath = "/exports/export_".date('Y-m-d_His').".csv";
