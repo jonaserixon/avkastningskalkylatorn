@@ -18,4 +18,5 @@ enum TransactionType: string
     case DEPOSIT = 'deposit';
     case WITHDRAWAL = 'withdrawal';
     case OTHER = 'other';
+    case SHARE_LOAN_PAYOUT = 'share_loan_payout';
 }

@@ -64,11 +64,16 @@ class Nordnet extends CsvParser
             $transaction->type = $transactionType->value; // Transaktionstyp
             $transaction->name = trim($row[6]); // Värdepapper
             $transaction->rawQuantity = (int) $row[9]; // Antal
+            $transaction->rawPrice = static::convertToFloat($row[10]); // Kurs
             $transaction->rawAmount = static::convertToFloat($row[14]); // Belopp
             $transaction->commission = static::convertToFloat($row[12]); // Total Avgift
             $transaction->currency = $row[17]; // Valuta
             $transaction->isin = $row[8]; // ISIN
             $transaction->description = trim($row[23]); // Transaktionstext
+
+            if ($transaction->rawQuantity && $transaction->rawPrice) {
+                $transaction->pricePerShareSEK = abs($transaction->rawAmount) / abs($transaction->rawQuantity);
+            }
 
             $transaction->type = $this->mapTransactionTypeByName($transaction);
 

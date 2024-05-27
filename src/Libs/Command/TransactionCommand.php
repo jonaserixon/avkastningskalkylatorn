@@ -3,6 +3,7 @@
 namespace src\Libs\Command;
 
 use src\Libs\ProfitCalculator;
+use src\Libs\Transaction\TransactionLoader;
 use stdClass;
 
 class TransactionCommand extends CommandProcessor
@@ -25,7 +26,7 @@ class TransactionCommand extends CommandProcessor
         $commandOptions = $this->commands['transaction']['options'];
 
         $options = new stdClass();
-        $options->verbose = $this->options['verbose'] ?? $commandOptions['verbose']['default'];
+        // $options->verbose = $this->options['verbose'] ?? $commandOptions['verbose']['default'];
         // $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
         $options->bank = $this->options['bank'] ?? null;
         $options->isin = $this->options['isin'] ?? null;
@@ -42,8 +43,8 @@ class TransactionCommand extends CommandProcessor
     {
         $options = $this->getParsedOptions();
 
-        $profitCalculator = new ProfitCalculator(
-            // $options->exportCsv,
+        $transactionLoader = new TransactionLoader(
+            // $this->exportCsv,
             $options->bank,
             $options->isin,
             $options->asset,
@@ -52,7 +53,9 @@ class TransactionCommand extends CommandProcessor
             $options->currentHoldings
         );
 
-        $result = $profitCalculator->calculate();
+        $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
+        $profitCalculator = new ProfitCalculator($options->currentHoldings);
+        $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
         if ($options->cashFlow) {
             foreach ($result->overview->cashFlows as $cashFlow) {

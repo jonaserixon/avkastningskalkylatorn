@@ -18,7 +18,7 @@ class CommandProcessor
     }
 
     /**
-     * @param string[] $argv
+     * @param mixed[] $argv
      */
     public function main(array $argv): void
     {
@@ -47,6 +47,8 @@ class CommandProcessor
 
         $this->validateOptions($command, $options);
 
+        $startTime = microtime(true);
+
         switch ($command) {
             case 'help':
                 $this->printAvailableCommands();
@@ -65,6 +67,10 @@ class CommandProcessor
                 $this->printAvailableCommands();
                 break;
         }
+
+        $endTime = microtime(true);
+        $executionTime = round($endTime - $startTime, 5);
+        echo "\n=============\n" . $this->presenter->greenText("Execution time: $executionTime seconds\n");
     }
 
     /**

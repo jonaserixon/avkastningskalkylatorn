@@ -81,11 +81,12 @@ abstract class CsvParser
         file_put_contents($fileName, $utf8ContentWithBom);
     }
 
-    public static function convertToFloat(string $value): float
+    public static function convertToFloat(string $value, int $numberOfDecimals = 2): float
     {
         $value = str_replace(' ', '', $value);
         $value = str_replace(',', '.', str_replace('.', '', $value));
+        $value = (float) $value;
 
-        return round((float) $value, 4);
+        return round($value, $numberOfDecimals);
     }
 }

@@ -3,6 +3,7 @@
 namespace src\Libs\Command;
 
 use src\Libs\ProfitCalculator;
+use src\Libs\Transaction\TransactionLoader;
 use stdClass;
 
 class CalculateProfitCommand extends CommandProcessor
@@ -41,9 +42,8 @@ class CalculateProfitCommand extends CommandProcessor
     {
         $options = $this->getParsedOptions();
 
-        $profitCalculator = new ProfitCalculator(
-            // $options->exportCsv,
-            // $options->verbose,
+        $transactionLoader = new TransactionLoader(
+            // $this->exportCsv,
             $options->bank,
             $options->isin,
             $options->asset,
@@ -52,7 +52,9 @@ class CalculateProfitCommand extends CommandProcessor
             $options->currentHoldings
         );
 
-        $result = $profitCalculator->calculate();
+        $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
+        $profitCalculator = new ProfitCalculator($options->currentHoldings);
+        $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
         if ($options->verbose) {
             $this->presenter->displayDetailedAssets($result->assets);
@@ -60,7 +62,7 @@ class CalculateProfitCommand extends CommandProcessor
             $this->presenter->generateAssetTable($result->overview, $result->assets);
         }
 
-        $this->presenter->displayFinancialOverview($result->overview);
+        // $this->presenter->displayFinancialOverview($result->overview);
 
         if (!empty($result->overview->currentHoldingsWeighting)) {
             echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
@@ -70,9 +72,13 @@ class CalculateProfitCommand extends CommandProcessor
             }
         }
 
+        $this->presenter->displayInvestmentReport($result->overview, $result->assets);
+
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
+
+        $this->presenter->displayAssetNotices($result->assets);
 
         /*
         $filePath = "/exports/export_".date('Y-m-d_His').".csv";

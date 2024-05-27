@@ -19,6 +19,7 @@ class FinancialOverview
     public float $totalForeignWithholdingTax = 0;
     public float $totalReturnedForeignWithholdingTax = 0;
     public float $totalCurrentHoldings = 0;
+    public float $totalShareLoanPayout = 0;
 
     /** @var array<string, float> */
     public array $currentHoldingsWeighting = [];
