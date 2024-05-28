@@ -24,7 +24,6 @@ class TransactionLoader
     public FinancialOverview $overview;
 
     public function __construct(
-        // bool $exportCsv,
         ?string $filterBank,
         ?string $filterIsin,
         ?string $filterAsset,
@@ -32,7 +31,6 @@ class TransactionLoader
         ?string $filterDateTo,
         bool $filterCurrentHoldings
     ) {
-        // $this->exportCsv = $exportCsv;
         $this->filterBank = $filterBank;
         $this->filterIsin = $filterIsin;
         $this->filterAsset = $filterAsset;
@@ -55,10 +53,10 @@ class TransactionLoader
         $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->date;
 
         $groupedTransactions = $this->transactionParser->groupTransactions($transactions);
-        $assets = $this->transactionParser->summarizeTransactions($groupedTransactions);
+        $assets = $this->transactionParser->addTransactionsToAsset($groupedTransactions);
 
         if (empty($assets)) {
-            throw new Exception('No transaction file in csv format in the imports directory.');
+            throw new Exception('No transaction file in csv format in the "/imports/banks" directory.');
         }
 
         // Sort assets by name for readability.

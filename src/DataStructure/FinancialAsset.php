@@ -2,10 +2,12 @@
 
 namespace src\DataStructure;
 
+use Exception;
+
 class FinancialAsset
 {
     public string $name;
-    public string $isin;
+    public ?string $isin = null;
     private float $buy = 0;
     private float $sell = 0;
     private float $dividend = 0;
@@ -14,26 +16,52 @@ class FinancialAsset
     private float $fee = 0;
     public float $preliminaryCurrencyExchangeRateFee = 0; // TODO: implement "preliminary" currency exchange rate based on isin
     private float $foreignWithholdingTax = 0;
-    private float $currentNumberOfShares = 0; // float to handle fractional shares
+    private float $currentNumberOfShares = 0;
     private ?float $currentPricePerShare = 0;
     private ?float $currentValueOfShares = 0;
-    public string $firstTransactionDate;
-    public string $lastTransactionDate;
+    private string $firstTransactionDate;
+    private string $lastTransactionDate;
     public ?AssetReturn $assetReturn = null;
 
     // TODO: move this to the AssetReturn structure.
     public float $realizedGainLoss = 0;
     public float $unrealizedGainLoss = 0;
     public float $costBasis = 0;
+    //
 
     /** @var string[] */
     public array $transactionNames = [];
 
     /** @var string[] */
-    public array $notices = []; // TODO: lägg till info om aktiesplittar, kurspris, värdepappersöverföringar, etc.
+    public array $notices = [];
 
     /** @var mixed[] */
     public array $bankAccounts = [];
+
+    private TransactionGroup $groupedTransactions;
+
+    public function addTransactions(TransactionGroup $transactions): void
+    {
+        $this->groupedTransactions = $transactions;
+    }
+
+    /**
+     * @param string $type
+     * @return Transaction[]
+     */
+    public function getTransactionsByType(string $type): array
+    {
+        if (!property_exists($this->groupedTransactions, $type)) {
+            throw new Exception("Transaction type $type does not exist.");
+        }
+
+        return $this->groupedTransactions->{$type};
+    }
+
+    public function getTransactions(): TransactionGroup
+    {
+        return $this->groupedTransactions;
+    }
 
     public function addBuy(float $amount): void
     {
@@ -113,14 +141,14 @@ class FinancialAsset
         // $this->currentNumberOfShares = round($this->currentNumberOfShares + round($amount, 2), 2);
     }
 
-    public function setCurrentNumberOfShares(float $amount): void
+    public function resetCurrentNumberOfShares(): void
     {
-        $this->currentNumberOfShares = $amount;
+        $this->currentNumberOfShares = 0;
     }
 
     public function getCurrentNumberOfShares(): float
     {
-        
+
         return $this->currentNumberOfShares;
     }
 

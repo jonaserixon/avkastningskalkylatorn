@@ -5,7 +5,6 @@ namespace src\Libs\FileManager\Importer;
 use Exception;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
-use src\Libs\FileManager\CsvParser;
 
 class Avanza extends CsvParser
 {
@@ -58,10 +57,10 @@ class Avanza extends CsvParser
             $transaction->date = $row[0]; // Datum
             $transaction->account = $row[1]; // Konto
             $transaction->name = trim($row[3]); // Värdepapper/beskrivning
-            $transaction->rawQuantity = static::convertToFloat($row[4], 5); // Antal
-            $transaction->rawPrice = static::convertToFloat($row[5]); // Kurs
-            $transaction->rawAmount = static::convertToFloat($row[6], 5); // Belopp
-            $transaction->commission = static::convertToFloat($row[7]); // Courtage
+            $transaction->rawQuantity = static::convertNumericToFloat($row[4], 5); // Antal
+            $transaction->rawPrice = static::convertNumericToFloat($row[5]); // Kurs
+            $transaction->rawAmount = static::convertNumericToFloat($row[6], 5); // Belopp
+            $transaction->commission = static::convertNumericToFloat($row[7]); // Courtage
             $transaction->currency = $row[8]; // Valuta
 
             // TODO: implement support for new isin codes (such as when share splits occur)

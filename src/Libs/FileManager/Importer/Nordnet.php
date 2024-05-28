@@ -5,7 +5,6 @@ namespace src\Libs\FileManager\Importer;
 use Exception;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
-use src\Libs\FileManager\CsvParser;
 
 class Nordnet extends CsvParser
 {
@@ -64,9 +63,9 @@ class Nordnet extends CsvParser
             $transaction->type = $transactionType->value; // Transaktionstyp
             $transaction->name = trim($row[6]); // Värdepapper
             $transaction->rawQuantity = (int) $row[9]; // Antal
-            $transaction->rawPrice = static::convertToFloat($row[10]); // Kurs
-            $transaction->rawAmount = static::convertToFloat($row[14]); // Belopp
-            $transaction->commission = static::convertToFloat($row[12]); // Total Avgift
+            $transaction->rawPrice = static::convertNumericToFloat($row[10]); // Kurs
+            $transaction->rawAmount = static::convertNumericToFloat($row[14]); // Belopp
+            $transaction->commission = static::convertNumericToFloat($row[12]); // Total Avgift
             $transaction->currency = $row[17]; // Valuta
             $transaction->isin = $row[8]; // ISIN
             $transaction->description = trim($row[23]); // Transaktionstext
