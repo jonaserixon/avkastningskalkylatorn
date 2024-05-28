@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Libs\FileManager;
+namespace src\Libs\FileManager\Importer;
 
 use src\DataStructure\Transaction;
 
@@ -81,7 +81,7 @@ abstract class CsvParser
         file_put_contents($fileName, $utf8ContentWithBom);
     }
 
-    public static function convertToFloat(string $value, int $numberOfDecimals = 2): float
+    public static function convertNumericToFloat(string $value, int $numberOfDecimals = 2): float
     {
         $value = str_replace(' ', '', $value);
         $value = str_replace(',', '.', str_replace('.', '', $value));

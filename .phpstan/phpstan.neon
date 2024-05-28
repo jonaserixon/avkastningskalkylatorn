@@ -12,8 +12,6 @@ parameters:
     # https://phpstan.org/user-guide/ignoring-errors
     ignoreErrors:
         - 
-            identifier: foreach.nonIterable
-        - 
             identifier: missingType.iterableValue
             paths: 
                 - ../src/Libs/Presenter.php
@@ -22,5 +20,3 @@ parameters:
     # https://phpstan.org/config-reference#analysed-files
     paths:
         - ../src
-
-# phpstan analyse -c .phpstan/phpstan.neon --level=x -v

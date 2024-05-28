@@ -54,7 +54,7 @@ class TransactionCommand extends CommandProcessor
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-        $profitCalculator = new ProfitCalculator($options->currentHoldings);
+        $profitCalculator = new ProfitCalculator($this->presenter, $options->currentHoldings);
         $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
         if ($options->cashFlow) {

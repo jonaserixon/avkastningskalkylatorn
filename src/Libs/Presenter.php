@@ -249,6 +249,23 @@ class Presenter
             $colWidths[7] = max($colWidths[7], mb_strlen($this->formatNumber($asset->getCurrentValueOfShares())));
         }
 
+        // TODO: calculate this elsewhere
+        $totalRealizedCapitalGainLoss = 0;
+        $totalUnrealizedCapitalGainLoss = 0;
+        $totalCostBasis = 0;
+        foreach ($assets as $asset) {
+            $totalRealizedCapitalGainLoss += $asset->realizedGainLoss;
+            $totalUnrealizedCapitalGainLoss += $asset->unrealizedGainLoss;
+            $totalCostBasis += $asset->costBasis;
+        }
+
+        $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($totalCostBasis)));
+        $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($totalRealizedCapitalGainLoss)));
+        $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($totalUnrealizedCapitalGainLoss)));
+        $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($overview->totalDividend)));
+        $colWidths[6] = max($colWidths[6], mb_strlen($this->formatNumber($overview->totalBuyCommission + $overview->totalSellCommission)));
+        $colWidths[7] = max($colWidths[7], mb_strlen($this->formatNumber($overview->totalCurrentHoldings)));
+
         $this->printHorizontalLine($colWidths);
         $this->printRow($headers, $colWidths);
         $this->printHorizontalLine($colWidths);
@@ -275,15 +292,7 @@ class Presenter
             $this->printHorizontalLine($colWidths);
         }
 
-        // TODO: calculate this elsewhere
-        $totalRealizedCapitalGainLoss = 0;
-        $totalUnrealizedCapitalGainLoss = 0;
-        $totalCostBasis = 0;
-        foreach ($assets as $asset) {
-            $totalRealizedCapitalGainLoss += $asset->realizedGainLoss;
-            $totalUnrealizedCapitalGainLoss += $asset->unrealizedGainLoss;
-            $totalCostBasis += $asset->costBasis;
-        }
+        
 
         $this->printRow([
             'Summering:',

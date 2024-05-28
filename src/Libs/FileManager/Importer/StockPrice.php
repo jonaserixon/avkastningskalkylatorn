@@ -4,7 +4,6 @@ namespace src\Libs\FileManager\Importer;
 
 use Exception;
 use src\DataStructure\Holding;
-use src\Libs\FileManager\CsvParser;
 
 class StockPrice extends CsvParser
 {
