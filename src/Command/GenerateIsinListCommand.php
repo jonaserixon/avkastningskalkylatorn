@@ -1,9 +1,9 @@
 <?php
 
-namespace src\Libs\Command;
+namespace src\Command;
 
-use src\Libs\FileManager\Exporter;
-use src\Libs\Transaction\TransactionLoader;
+use src\Service\FileManager\Exporter;
+use src\Service\Transaction\TransactionLoader;
 use stdClass;
 
 class GenerateIsinListCommand extends CommandProcessor

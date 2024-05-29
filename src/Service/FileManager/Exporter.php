@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Libs\FileManager;
+namespace src\Service\FileManager;
 
 use Exception;
 

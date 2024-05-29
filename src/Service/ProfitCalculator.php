@@ -1,23 +1,22 @@
 <?php
 
-namespace src\Libs;
+namespace src\Service;
 
 use src\DataStructure\AssetReturn;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\Libs\FileManager\CsvProcessor\StockPrice;
+use src\Service\FileManager\CsvProcessor\StockPrice;
+use src\View\Logger;
 use stdClass;
 
 class ProfitCalculator
 {
     private bool $filterCurrentHoldings;
     private StockPrice $stockPrice;
-    private Presenter $presenter;
 
-    public function __construct(Presenter $presenter, bool $currentHoldings)
+    public function __construct(bool $currentHoldings)
     {
-        $this->presenter = $presenter;
         $this->filterCurrentHoldings = $currentHoldings;
         $this->stockPrice = new StockPrice();
     }
@@ -66,8 +65,7 @@ class ProfitCalculator
                 }
 
                 if ($shareTransferQuantity != 0) {
-                    // echo $this->presenter->redText("Warning: Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount) . PHP_EOL;
-                    $asset->notices[] = "Share transfer(s) for {$asset->name} ({$asset->isin}) needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->costBasis + $shareTransferAmount, 3) . ")";
+                    Logger::getInstance()->addNotice("Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->costBasis + $shareTransferAmount, 3) . ")");
                 }
             }
 
@@ -252,10 +250,12 @@ class ProfitCalculator
             if ($transaction->getType() === 'buy') {
                 // "Hanterar" makulerade köptransaktioner
                 if ($transaction->getRawAmount() > 0 && $transaction->getRawQuantity() < 0) {
-                    echo $this->presenter->redText("Warning: Buy transaction with negative quantity: {$transaction->getRawQuantity()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]") . PHP_EOL;
+                    Logger::getInstance()->addWarning("Buy transaction with negative quantity: {$transaction->getRawQuantity()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
+
                     $amount = bcsub("0", $amount, $scale); // Gör $amount negativ
                     $quantity = bcsub("0", $quantity, $scale); // Gör $quantity negativ
                 }
+
 
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
@@ -263,8 +263,7 @@ class ProfitCalculator
             } elseif ($transaction->getType() === 'sell') {
                 // Leta efter makulerade säljtransaktioner
                 if ($transaction->getRawAmount() < 0 && $transaction->getRawQuantity() > 0) {
-                    echo $this->presenter->redText("Warning: Sell transaction with negative amount: {$transaction->getRawAmount()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]") . PHP_EOL;
-
+                    Logger::getInstance()->addWarning("Sell transaction with negative amount: {$transaction->getRawAmount()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
                 }
 
                 // Endast räkna kapitalvinst om det finns köpta aktier att sälja
@@ -293,7 +292,7 @@ class ProfitCalculator
 
         // Om det inte finns några aktier kvar så kan vi anta att det inte finns något anskaffningsvärde kvar.
         if ($totalCost != 0 && ($actualQuantity == 0 || Utility::isNearlyZero($totalQuantity))) {
-            print("Notice: No shares left for {$transactions[0]->getName()} ({$transactions[0]->getIsin()}) ") . $totalCost . PHP_EOL;
+            Logger::getInstance()->addNotice("No shares left for {$transactions[0]->getName()} ({$transactions[0]->getIsin()}) " . $totalCost);
             $totalCost = '0.0';
         }
 

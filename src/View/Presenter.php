@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Libs;
+namespace src\View;
 
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\FinancialAsset;
@@ -96,7 +96,7 @@ class Presenter
             }
         }
 
-        echo PHP_EOL . str_pad("=== Investment Report ===", 70, "=", STR_PAD_BOTH) . PHP_EOL . PHP_EOL;
+        echo PHP_EOL . $this->whiteBackground(str_pad("=== Investment Report ===", 70, "=", STR_PAD_BOTH)) . PHP_EOL . PHP_EOL;
         echo "Från {$overview->firstTransactionDate} till {$overview->lastTransactionDate}" . PHP_EOL . PHP_EOL;
 
         // 1. Investments
@@ -471,13 +471,28 @@ class Presenter
         return "\033[33m" . $text . "\033[0m";
     }
 
+    public function blackText(string $text): string
+    {
+        return "\033[30m" . $text . "\033[0m";
+    }
+
     public function greenBackground(string $text): string
     {
         return "\033[42m" . $this->blackText($text) . "\033[0m";
     }
 
-    public function blackText(string $text): string
+    public function redBackground(string $text): string
     {
-        return "\033[30m" . $text . "\033[0m";
+        return "\033[41m" . $this->blackText($text) . "\033[0m";
+    }
+
+    public function whiteBackground(string $text): string
+    {
+        return "\033[47m" . $this->blackText($text). "\033[0m";
+    }
+
+    public function blackBackground(string $text): string
+    {
+        return "\033[40m" . $text . "\033[0m";
     }
 }

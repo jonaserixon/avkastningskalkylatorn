@@ -1,12 +1,14 @@
 <?php
 
-namespace src\Libs\Command;
+namespace src\Command;
 
-use src\Libs\Presenter;
+use src\View\Logger;
+use src\View\Presenter;
 
 class CommandProcessor
 {
     protected Presenter $presenter;
+    protected Logger $logger;
 
     /** @var mixed[] */
     protected array $commands;
@@ -67,6 +69,11 @@ class CommandProcessor
                 $this->printAvailableCommands();
                 break;
         }
+
+        Logger::getInstance()
+            ->printInfos()
+            ->printNotices()
+            ->printWarnings();
 
         $endTime = microtime(true);
         $executionTime = round($endTime - $startTime, 5);

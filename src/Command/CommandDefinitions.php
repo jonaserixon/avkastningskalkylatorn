@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Libs\Command;
+namespace src\Command;
 
 class CommandDefinitions
 {

@@ -1,10 +1,11 @@
 <?php
 
-namespace src\Libs\Command;
+namespace src\Command;
 
-use src\Libs\ProfitCalculator;
-use src\Libs\Transaction\TransactionLoader;
+use src\Service\ProfitCalculator;
+use src\Service\Transaction\TransactionLoader;
 use stdClass;
+use src\View\Logger;
 
 class CalculateProfitCommand extends CommandProcessor
 {
@@ -53,7 +54,7 @@ class CalculateProfitCommand extends CommandProcessor
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-        $profitCalculator = new ProfitCalculator($this->presenter, $options->currentHoldings);
+        $profitCalculator = new ProfitCalculator($options->currentHoldings);
         $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
         if ($options->verbose) {
@@ -82,7 +83,7 @@ class CalculateProfitCommand extends CommandProcessor
         }
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
-            echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
+            Logger::getInstance()->addInfo('Kurspris saknas för ' . $companyMissingPrice);
         }
 
         $this->presenter->displayAssetNotices($result->assets);
