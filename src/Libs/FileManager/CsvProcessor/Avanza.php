@@ -84,7 +84,13 @@ class Avanza extends CsvProcessor
             if ($type === 'other') { // Special handling of "övrigt" since it contains so many different types of transactions.
                 $type = $this->mapOtherTransactionType($name);
             }
-            $type = $this->customTransactionTypeMapper($name, $type, $rawQuantity, $commission);
+            $type = $this->customTransactionTypeMapper($name, $type, $rawQuantity, $commission, $rawAmount);
+
+            if ($type === 'share_split') {
+                // $rawQuantity = null;
+                // $rawPrice = null;
+                // $pricePerShareSEK = null;
+            }
 
             $transaction = new Transaction(
                 date: $date,
@@ -104,6 +110,8 @@ class Avanza extends CsvProcessor
 
             $result[] = $transaction;
         }
+
+        // exit;
 
         return $result;
     }
@@ -139,7 +147,7 @@ class Avanza extends CsvProcessor
         return null;
     }
 
-    protected function customTransactionTypeMapper(string $name, string $type, ?float $rawQuantity, ?float $commission): string
+    protected function customTransactionTypeMapper(string $name, string $type, ?float $rawQuantity, ?float $commission, ?float $rawAmount): string
     {
         if ($type === 'other') {
             // TODO: add a specific type for this so the actual deposits can be kept clean.
@@ -151,7 +159,7 @@ class Avanza extends CsvProcessor
         }
 
         // Check if this can be considered a share split.
-        if ($type === 'other' && $rawQuantity != 0 && $commission == 0) {
+        if ($type === 'other' && $rawQuantity != 0 && $commission == 0 && empty($rawAmount)) {
             return 'share_split';
         }
 
