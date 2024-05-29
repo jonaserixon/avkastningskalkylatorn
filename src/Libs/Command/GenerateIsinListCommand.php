@@ -3,7 +3,6 @@
 namespace src\Libs\Command;
 
 use src\Libs\FileManager\Exporter;
-use src\Libs\ProfitCalculator;
 use src\Libs\Transaction\TransactionLoader;
 use stdClass;
 
@@ -28,7 +27,6 @@ class GenerateIsinListCommand extends CommandProcessor
 
         $options = new stdClass();
         $options->verbose = $this->options['verbose'] ?? $commandOptions['verbose']['default'];
-        // $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
         $options->bank = $this->options['bank'] ?? null;
         $options->isin = $this->options['isin'] ?? null;
         $options->asset = $this->options['asset'] ?? null;
@@ -44,7 +42,6 @@ class GenerateIsinListCommand extends CommandProcessor
         $options = $this->getParsedOptions();
 
         $transactionLoader = new TransactionLoader(
-            // $this->exportCsv,
             $options->bank,
             $options->isin,
             $options->asset,
@@ -54,11 +51,9 @@ class GenerateIsinListCommand extends CommandProcessor
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-        $profitCalculator = new ProfitCalculator($this->presenter, $options->currentHoldings);
-        $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
         $isinList = [];
-        foreach ($result->assets as $asset) {
+        foreach ($assets as $asset) {
             $isinList[] = [
                 'name' => $asset->name,
                 'isin' => $asset->isin

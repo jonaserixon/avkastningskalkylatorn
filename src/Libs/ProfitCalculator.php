@@ -84,8 +84,8 @@ class ProfitCalculator
                         $currentValueOfShares,
                         $asset->name,
                         'current_holding_value',
-                        '',
-                        ''
+                        '-',
+                        '-'
                     );
                     $overview->lastTransactionDate = date('Y-m-d');
 

@@ -34,6 +34,7 @@ class CalculateProfitCommand extends CommandProcessor
         $options->dateFrom = $this->options['date-from'] ?? null;
         $options->dateTo = $this->options['date-to'] ?? null;
         $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
+        $options->overview = $this->options['overview'] ?? $commandOptions['overview']['default'];
 
         return $options;
     }
@@ -76,35 +77,14 @@ class CalculateProfitCommand extends CommandProcessor
             }
         }
 
-        $this->presenter->displayInvestmentReport($result->overview, $result->assets);
+        if ($options->overview) {
+            $this->presenter->displayInvestmentReport($result->overview, $result->assets);
+        }
 
         foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
             echo $this->presenter->blueText('Info: Kurspris saknas för ' . $companyMissingPrice) . PHP_EOL;
         }
 
         $this->presenter->displayAssetNotices($result->assets);
-
-        /*
-        $filePath = "/exports/export_".date('Y-m-d_His').".csv";
-        $csvHeaders = [
-            'date',
-            'amount',
-            'name',
-            'type'
-        ];
-        $f = fopen($filePath, "w");
-        fputcsv($f, $csvHeaders, ',');
-
-        foreach ($result->overview->cashFlows as $transaction) {
-            $row = [
-                'date' => $transaction->date,
-                'amount' => $transaction->rawAmount,
-                'name' => $transaction->name,
-                'type' => $transaction->type
-            ];
-
-            fputcsv($f, array_values($row), ',');
-        }
-        */
     }
 }
