@@ -86,12 +86,6 @@ class Avanza extends CsvProcessor
             }
             $type = $this->customTransactionTypeMapper($name, $type, $rawQuantity, $commission, $rawAmount);
 
-            if ($type === 'share_split') {
-                // $rawQuantity = null;
-                // $rawPrice = null;
-                // $pricePerShareSEK = null;
-            }
-
             $transaction = new Transaction(
                 date: $date,
                 bank: static::BANK_NAME,
