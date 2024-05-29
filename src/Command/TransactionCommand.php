@@ -4,6 +4,7 @@ namespace src\Command;
 
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
+use src\View\TextColorizer;
 use stdClass;
 
 class TransactionCommand extends CommandProcessor
@@ -60,11 +61,11 @@ class TransactionCommand extends CommandProcessor
 
             foreach ((array) $result->overview->cashFlows as $cashFlow) {
                 $res = $cashFlow->getDateString() . ' | ';
-                $res .= $this->presenter->greyText($cashFlow->getBank()) . ' | ';
-                $res .= $this->presenter->greenText($cashFlow->getAccount()) . ' | ';
-                $res .= $this->presenter->pinkText($cashFlow->getName()) . ' | ';
-                $res .= $this->presenter->yellowText($cashFlow->getType()) . ' | ';
-                $res .= $this->presenter->cyanText($this->presenter->formatNumber($cashFlow->getRawAmount()));
+                $res .= TextColorizer::colorText($cashFlow->getBank(), 'grey') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->getAccount(), 'green') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->getName(), 'pink') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->getType(), 'yellow') . ' | ';
+                $res .= TextColorizer::colorText($this->presenter->formatNumber($cashFlow->getRawAmount()), 'cyan');
 
                 echo $res . PHP_EOL;
             }
@@ -72,13 +73,13 @@ class TransactionCommand extends CommandProcessor
             echo 'Datum | Bank | Konto | Namn | Typ | Belopp | Antal | Pris' . PHP_EOL;
             foreach ($transactions as $transaction) {
                 $res = $transaction->getDateString() . ' | ';
-                $res .= $this->presenter->greyText($transaction->getBank()) . ' | ';
-                $res .= $this->presenter->greenText($transaction->getAccount()) . ' | ';
-                $res .= $this->presenter->pinkText($transaction->getName() . " ({$transaction->getIsin()})") . ' | ';
-                $res .= $this->presenter->yellowText($transaction->getType()) . ' | ';
-                $res .= $this->presenter->cyanText($this->presenter->formatNumber($transaction->getRawAmount())) . ' | ';
-                $res .= $this->presenter->greyText($this->presenter->formatNumber($transaction->getRawQuantity())) . ' | ';
-                $res .= $this->presenter->greenBackground($this->presenter->formatNumber($transaction->getRawPrice()));
+                $res .= TextColorizer::colorText($transaction->getBank(), 'grey') . ' | ';
+                $res .= TextColorizer::colorText($transaction->getAccount(), 'green') . ' | ';
+                $res .= TextColorizer::colorText($transaction->getName() . " ({$transaction->getIsin()})", 'pink') . ' | ';
+                $res .= TextColorizer::colorText($transaction->getType(), 'yellow') . ' | ';
+                $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->getRawAmount()), 'cyan') . ' | ';
+                $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->getRawQuantity()), 'grey') . ' | ';
+                $res .= TextColorizer::backgroundColor($this->presenter->formatNumber($transaction->getRawPrice()), 'green');
 
                 echo $res . PHP_EOL;
             }

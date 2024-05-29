@@ -73,6 +73,10 @@ class FinancialOverview
     {
         $balance = 0;
         foreach ($transactions as $transaction) {
+            if ($transaction->getRawAmount() === null) {
+                continue;
+            }
+
             $amount = round($transaction->getRawAmount(), 4);
             $balance += $amount;
         }

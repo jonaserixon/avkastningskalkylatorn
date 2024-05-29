@@ -24,24 +24,24 @@ parameters:
     checkDynamicProperties: true
     checkFunctionNameCase: true
     checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    # checkUninitializedProperties: true
+    reportAnyTypeWideningInVarTag: true
+    checkMissingOverrideMethodAttribute: true
+    checkAlwaysTrueCheckTypeFunctionCall: true
+    checkInternalClassCaseSensitivity: true
+    reportStaticMethodSignatures: true
+    reportAlwaysTrueInLastCondition: true
+    reportWrongPhpDocTypeInVarTag: true
 
     # polluteScopeWithLoopInitialAssignments: true
     # polluteScopeWithAlwaysIterableForeach: true
-    # checkAlwaysTrueCheckTypeFunctionCall: true
     # checkAlwaysTrueInstanceof: true
     # checkAlwaysTrueStrictComparison: true
     # checkExplicitMixedMissingReturn: true
-    # checkInternalClassCaseSensitivity: true
     # reportMaybesInMethodSignatures: true
     # reportMaybesInPropertyPhpDocTypes: true
-    # reportStaticMethodSignatures: true
-    # checkUninitializedProperties: true
     # rememberPossiblyImpureFunctionValues: true
     # checkImplicitMixed: true
     # checkBenevolentUnionTypes: true
     # reportPossiblyNonexistentGeneralArrayOffset: true
     # reportPossiblyNonexistentConstantArrayOffset: true
-    # reportAlwaysTrueInLastCondition: true
-    # reportWrongPhpDocTypeInVarTag: true
-    # reportAnyTypeWideningInVarTag: true
-    # checkMissingOverrideMethodAttribute: true

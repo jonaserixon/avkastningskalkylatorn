@@ -7,8 +7,6 @@ use src\DataStructure\FinancialAsset;
 
 class Presenter
 {
-    private const TAB_SIZE = 4;
-
     /**
      * @param FinancialAsset[] $assets
      */
@@ -17,18 +15,18 @@ class Presenter
         foreach ($assets as $asset) {
             echo PHP_EOL;
 
-            echo $this->pinkText($this->createSeparator('-', $asset->name .' ('.$asset->isin.')')) . PHP_EOL;
+            echo TextColorizer::colorText($this->createSeparator('-', $asset->name .' ('.$asset->isin.')'), 'pink') . PHP_EOL;
 
-            echo $this->addTabs('Köpbelopp:') . $this->cyanText(number_format($asset->getBuyAmount(), 2, '.', ' ')) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Säljbelopp:') . $this->blueText(number_format($asset->getSellAmount(), 2, '.', ' ')) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Köpbelopp:') . TextColorizer::colorText(number_format($asset->getBuyAmount(), 2, '.', ' '), 'cyan') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Säljbelopp:') . TextColorizer::colorText(number_format($asset->getSellAmount(), 2, '.', ' '), 'blue') . ' SEK' . PHP_EOL;
             echo $this->addTabs('Utdelningar:') . $this->colorPicker($asset->getDividendAmount()) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
-            echo $this->addTabs('Tot. courtage:', 50) . $this->redText($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage köp:', 50) . $this->redText($asset->getCommissionBuyAmount()) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage sälj:', 50) . $this->redText($asset->getCommissionSellAmount()) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Tot. avgifter:', 50) . $this->redText($asset->getFeeAmount()) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. courtage:', 50) . TextColorizer::colorText($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount(), 'red') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage köp:', 50) . TextColorizer::colorText($asset->getCommissionBuyAmount(), 'red') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage sälj:', 50) . TextColorizer::colorText($asset->getCommissionSellAmount(), 'red') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avgifter:', 50) . TextColorizer::colorText($asset->getFeeAmount(), 'red') . ' SEK' . PHP_EOL;
             echo $this->addTabs('Utländsk källskatt:') . $this->colorPicker($asset->getForeignWithholdingTaxAmount()) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
@@ -54,7 +52,7 @@ class Presenter
                     echo $this->addTabs('Nuvarande pris/aktie') . number_format($asset->getCurrentPricePerShare(), 2, '.', ' ') . ' SEK' . PHP_EOL;
                     echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($asset->getCurrentValueOfShares(), 2, '.', ' ') . ' SEK ' . PHP_EOL;
                 } else {
-                    echo $this->yellowText('** Saknar kurspris **') . PHP_EOL;
+                    echo TextColorizer::colorText('** Saknar kurspris **', 'yellow') . PHP_EOL;
                 }
 
                 echo PHP_EOL;
@@ -96,11 +94,11 @@ class Presenter
             }
         }
 
-        echo PHP_EOL . $this->whiteBackground(str_pad("=== Investment Report ===", 70, "=", STR_PAD_BOTH)) . PHP_EOL . PHP_EOL;
+        echo PHP_EOL . TextColorizer::backgroundColor(str_pad("=== Investment Report ===", 70, "=", STR_PAD_BOTH), 'white') . PHP_EOL . PHP_EOL;
         echo "Från {$overview->firstTransactionDate} till {$overview->lastTransactionDate}" . PHP_EOL . PHP_EOL;
 
         // 1. Investments
-        echo "1. Investeringar:" . PHP_EOL;
+        echo TextColorizer::backgroundColor("1. Investeringar:") . PHP_EOL;
         echo str_pad("Köp och sälj:", 30) . PHP_EOL;
         echo str_pad(" ", 30) . "Totala köp: {$this->formatNumber($overview->totalBuyAmount)} SEK" . PHP_EOL;
         echo str_pad(" ", 30) . "Antal köp: {$numberOfBuys} st" . PHP_EOL;
@@ -108,10 +106,10 @@ class Presenter
         echo str_pad(" ", 30) . "Antal sälj: {$numberOfSells} st" . PHP_EOL;
         
         echo str_pad("Utdelningar:", 30) . PHP_EOL;
-        echo str_pad(" ", 30) . "Totala utdelningar: {$this->formatNumber($overview->totalDividend)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala utdelningar: {$this->colorPicker($overview->totalDividend)} SEK" . PHP_EOL;
         echo str_pad(" ", 30) . "Antal utdelningar: {$numberOfDividends} st" . PHP_EOL;
-        echo str_pad(" ", 30) . "Betald utländsk källskatt: {$this->formatNumber($overview->totalForeignWithholdingTax)} SEK" . PHP_EOL;
-        echo str_pad(" ", 30) . "Återbetald utländsk källskatt: {$this->formatNumber($overview->totalReturnedForeignWithholdingTax)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Betald utländsk källskatt: {$this->colorPicker($overview->totalForeignWithholdingTax)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Återbetald utländsk källskatt: {$this->colorPicker($overview->totalReturnedForeignWithholdingTax)} SEK" . PHP_EOL;
 
         // TODO: calculate this elsewhere
         $totalRealizedCapitalGainLoss = 0;
@@ -122,12 +120,12 @@ class Presenter
         }
 
         echo str_pad("Kapitalvinster", 30) . PHP_EOL;
-        echo str_pad(" ", 30) . "Totalt realiserade kapitalvinster/förlust: {$this->formatNumber($totalRealizedCapitalGainLoss)} SEK" . PHP_EOL;
-        echo str_pad(" ", 30) . "Totalt orealiserade kapitalvinster/förlust: {$this->formatNumber($totalUnrealizedCapitalGainLoss)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt realiserade kapitalvinster/förlust: {$this->colorPicker($totalRealizedCapitalGainLoss)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt orealiserade kapitalvinster/förlust: {$this->colorPicker($totalUnrealizedCapitalGainLoss)} SEK" . PHP_EOL;
         
         // 2. Banking Transactions
         echo PHP_EOL;
-        echo "2. Banktransaktioner:" . PHP_EOL;
+        echo TextColorizer::backgroundColor("2. Banktransaktioner:") . PHP_EOL;
         echo str_pad("Insättning:", 30) . PHP_EOL;
         echo str_pad(" ", 30) . "Totala insättningar: {$this->formatNumber($overview->depositAmountTotal)} SEK" . PHP_EOL;
         echo str_pad(" ", 30) . "Antal insättningar: {$numberOfDeposits} st" . PHP_EOL;
@@ -135,24 +133,24 @@ class Presenter
         echo str_pad(" ", 30) . "Totala uttag: {$this->formatNumber($overview->withdrawalAmountTotal)} SEK" . PHP_EOL;
         echo str_pad(" ", 30) . "Antal uttag: {$numberOfWithdrawals} st" . PHP_EOL;
         echo str_pad("Ränta:", 30) . PHP_EOL;
-        echo str_pad(" ", 30) . "Totala räntor: {$this->formatNumber($overview->totalInterest)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala räntor: {$this->colorPicker($overview->totalInterest)} SEK" . PHP_EOL;
 
         // 3. Fees and Taxes
         echo PHP_EOL;
-        echo "3. Avgifter och skatter:" . PHP_EOL;
+        echo TextColorizer::backgroundColor("3. Avgifter och skatter:") . PHP_EOL;
         echo str_pad("Courtage:", 30) . PHP_EOL;
-        echo str_pad(" ", 30) . "Totalt köpcourtage: " . $this->formatNumber($overview->totalBuyCommission) . " SEK" . PHP_EOL;
-        echo str_pad(" ", 30) . "Totalt säljcourtage: " . $this->formatNumber($overview->totalSellCommission) . " SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt köpcourtage: " . TextColorizer::colorText($this->formatNumber($overview->totalBuyCommission), 'red') . " SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt säljcourtage: " . TextColorizer::colorText($this->formatNumber($overview->totalSellCommission), 'red') . " SEK" . PHP_EOL;
 
         echo str_pad("Avgifter:", 30) . PHP_EOL;
-        echo str_pad(" ", 30) . "Totala avgifter: {$this->formatNumber($overview->totalFee)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala avgifter: {$this->colorPicker($overview->totalFee)} SEK" . PHP_EOL;
 
         echo str_pad("Skatter:", 30) . PHP_EOL;
-        echo str_pad(" ", 30) . "Totala skatter: {$this->formatNumber($overview->totalTax)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totala skatter: {$this->colorPicker($overview->totalTax)} SEK" . PHP_EOL;
 
         // 4. Current Portfolio Valuation
         echo PHP_EOL;
-        echo "4. Portföljvärde:" . PHP_EOL;
+        echo TextColorizer::backgroundColor("4. Portföljvärde:") . PHP_EOL;
         echo str_pad("Nuvarande innehav:", 30) . PHP_EOL;
         echo str_pad(" ", 30) . "Totalt nuvarande innehav: {$this->formatNumber($overview->totalCurrentHoldings)} SEK" . PHP_EOL;
         echo str_pad("Likvider:", 30) . PHP_EOL;
@@ -160,6 +158,8 @@ class Presenter
         echo str_pad("Totalt portföljvärde:", 30) . PHP_EOL;
         echo str_pad(" ", 30) . "Totalt portföljvärde: {$this->formatNumber($overview->calculateBalance($overview->cashFlows))} SEK" . PHP_EOL;
         echo str_pad("Totalt avkastning:", 30) . PHP_EOL;
+
+        // TODO: calculate this elsewhere
         $totalReturn = 0;
         $totalReturn += $totalRealizedCapitalGainLoss;
         $totalReturn += $totalUnrealizedCapitalGainLoss;
@@ -169,13 +169,14 @@ class Presenter
         $totalReturn += $overview->totalForeignWithholdingTax;
         $totalReturn += $overview->totalFee;
         $totalReturn += $overview->totalTax;
-        echo str_pad(" ", 30) . "Totalt avkastning (inkl. avgifter, källskatt, skatt, räntor): {$this->formatNumber($totalReturn)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt avkastning (inkl. avgifter, källskatt, skatt, räntor): {$this->colorPicker($totalReturn)} SEK" . PHP_EOL;
 
         echo $this->formatNumber($overview->returns->totalReturnInclFees) . PHP_EOL;
 
         echo PHP_EOL . str_repeat("=", 70) . PHP_EOL;
     }
 
+    /*
     public function displayFinancialOverview(FinancialOverview $overview): void
     {
         $currentBalance = $overview->calculateBalance($overview->cashFlows) - $overview->totalCurrentHoldings;
@@ -204,6 +205,7 @@ class Presenter
         echo 'Tot. avkastning (inkl. avgifter, källskatt, skatt): ' . $this->colorPicker($overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
     }
+    */
 
     /**
      * @param FinancialAsset[] $assets
@@ -324,7 +326,7 @@ class Presenter
     {
         foreach ($assets as $asset) {
             foreach ($asset->notices as $notice) {
-                echo $this->blueText($notice) . PHP_EOL;
+                echo TextColorizer::colorText($notice, 'blue') . PHP_EOL;
             }
         }
     }
@@ -355,32 +357,11 @@ class Presenter
 
         $bar = str_pad($this->truncateName($label, 20), 20) . ' |';
 
-        $bar .= $this->blueText(str_repeat('█', $currentWidth));
+        $bar .= TextColorizer::colorText(str_repeat('█', $currentWidth), 'blue');
         $bar .= str_repeat(' ', $maxWidth - $currentWidth);
-        $bar .= '| ' . $this->cyanText(sprintf("%.2f%%", $value));
+        $bar .= '| ' . TextColorizer::colorText(sprintf("%.2f%%", $value), 'cyan');
 
         echo $bar . PHP_EOL;
-    }
-
-    public function displayCompactFormattedAsset(FinancialAsset $asset): void
-    {
-        if (!$asset->assetReturn) {
-            return;
-        }
-
-        $assetName = $asset->name .' ('.$asset->isin.')';
-        $assetNameTextLength = mb_strlen($assetName);
-
-        // Calculate the number of spaces needed to align text
-        $spaces = str_repeat(' ', (70 - $assetNameTextLength + self::TAB_SIZE) < 0 ? 0 : (70 - $assetNameTextLength + self::TAB_SIZE));
-
-        $result = $this->pinkText($assetName);
-        $result .= $spaces;
-        $result .= ' | ';
-        $result .= $this->colorPicker($asset->assetReturn->totalReturnInclFees) . ' SEK';
-        $result .= PHP_EOL.PHP_EOL;
-
-        echo $result;
     }
 
     public function addTabs(string $label, int $desiredColumnWidth = 45): string
@@ -426,73 +407,15 @@ class Presenter
     public function colorPicker(float $value): string
     {
         if ($value == 0) {
-            return $this->blueText(number_format($value, 2, '.', ' '));
+            return TextColorizer::colorText($this->formatNumber($value), 'blue');
         }
-        return $value > 0 ? $this->greenText(number_format($value, 2, '.', ' ')) : $this->redText(number_format($value, 2, '.', ' '));
+
+        $color = $value > 0 ? 'green' : 'red';
+        return TextColorizer::colorText($this->formatNumber($value), $color);
     }
 
     public function formatNumber(float $value): string
     {
         return number_format($value, 2, '.', ' ');
-    }
-
-    public function greyText(float|string $value): string
-    {
-        return "\033[38;5;245m" . $value . "\033[0m";
-    }
-
-    public function pinkText(float|string $value): string
-    {
-        return "\033[38;5;213m" . $value . "\033[0m";
-    }
-
-    public function greenText(float|string $value): string
-    {
-        return "\033[32m" . $value . "\033[0m";
-    }
-
-    public function redText(float|string $value): string
-    {
-        return "\033[31m" . $value . "\033[0m";
-    }
-
-    public function blueText(float|string $value): string
-    {
-        return "\033[1;34m" . $value . "\033[0m";
-    }
-
-    public function cyanText(float|string $text): string
-    {
-        return "\033[36m" . $text . "\033[0m";
-    }
-
-    public function yellowText(float|string $text): string
-    {
-        return "\033[33m" . $text . "\033[0m";
-    }
-
-    public function blackText(string $text): string
-    {
-        return "\033[30m" . $text . "\033[0m";
-    }
-
-    public function greenBackground(string $text): string
-    {
-        return "\033[42m" . $this->blackText($text) . "\033[0m";
-    }
-
-    public function redBackground(string $text): string
-    {
-        return "\033[41m" . $this->blackText($text) . "\033[0m";
-    }
-
-    public function whiteBackground(string $text): string
-    {
-        return "\033[47m" . $this->blackText($text). "\033[0m";
-    }
-
-    public function blackBackground(string $text): string
-    {
-        return "\033[40m" . $text . "\033[0m";
     }
 }

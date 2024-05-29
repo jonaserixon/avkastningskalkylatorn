@@ -6,6 +6,8 @@ use InvalidArgumentException;
 
 class TextColorizer
 {
+    // TODO: skapa konstanter för färger och bakgrunder
+
     /** @var array<string, string> */
     private static array $colors = [
         'grey' => "\033[38;5;245m",
@@ -26,6 +28,8 @@ class TextColorizer
         'black' => "\033[40m",
         'yellow' => "\033[43m",
         'blue' => "\033[44m",
+        'pink' => "\033[45m",
+        'grey' => "\033[47m",
     ];
 
     public static function colorText(string|float $text, string $color): string
@@ -33,14 +37,19 @@ class TextColorizer
         if (!isset(self::$colors[$color])) {
             throw new InvalidArgumentException("Color '{$color}' is not defined.");
         }
+
         return self::$colors[$color] . $text . "\033[0m";
     }
 
-    public static function backgroundColor(string $text, string $color): string
+    public static function backgroundColor(string $text, string $backgroundColor = 'white', string $textColor = 'black'): string
     {
-        if (!isset(self::$backgrounds[$color])) {
-            throw new InvalidArgumentException("Background color '{$color}' is not defined.");
+        if (!isset(self::$backgrounds[$backgroundColor])) {
+            throw new InvalidArgumentException("Background color '{$backgroundColor}' is not defined.");
         }
-        return self::$backgrounds[$color] . static::colorText($text, 'black') . "\033[0m"; // Using black text by default
+        if (!isset(self::$colors[$textColor])) {
+            throw new InvalidArgumentException("Text color '{$textColor}' is not defined.");
+        }
+
+        return self::$backgrounds[$backgroundColor] . static::colorText($text, $textColor) . "\033[0m";
     }
 }

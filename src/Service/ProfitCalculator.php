@@ -236,11 +236,15 @@ class ProfitCalculator
         $totalCost = '0.0';
         $totalQuantity = '0.0';
         $realizedGain = '0.0';
+        $actualQuantity = 0;
 
         $scale = 15;
 
-        $actualQuantity = 0;
         foreach ($transactions as $transaction) {
+            if ($transaction->getRawAmount() === null || $transaction->getRawQuantity() === null) {
+                continue;
+            }
+
             $actualQuantity += $transaction->getRawQuantity();
             $amount = Utility::bcabs($transaction->getRawAmount(), $scale);
             $quantity = Utility::bcabs($transaction->getRawQuantity(), $scale);

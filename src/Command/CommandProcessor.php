@@ -4,6 +4,7 @@ namespace src\Command;
 
 use src\View\Logger;
 use src\View\Presenter;
+use src\View\TextColorizer;
 
 class CommandProcessor
 {
@@ -77,7 +78,7 @@ class CommandProcessor
 
         $endTime = microtime(true);
         $executionTime = round($endTime - $startTime, 5);
-        echo "\n=============\n" . $this->presenter->greenText("Execution time: $executionTime seconds\n");
+        echo "\n=============\n" . TextColorizer::colorText("Execution time: $executionTime seconds\n", 'green');
     }
 
     /**
@@ -93,13 +94,13 @@ class CommandProcessor
 
         foreach ($options as $option => $value) {
             if (!array_key_exists($option, $availableOptions)) {
-                echo $this->presenter->redText("Unknown option: $option\n\n");
+                echo TextColorizer::colorText("Unknown option: $option\n\n", 'red');
                 $this->printAvailableCommands($command);
                 exit(1);
             } else {
                 $requiresValue = $availableOptions[$option]['require-value'];
                 if ($requiresValue && $value === true) {
-                    echo $this->presenter->redText("Option '$option' requires a value\n\n");
+                    echo TextColorizer::colorText("Option '$option' requires a value\n\n", 'red');
                     $this->printAvailableCommands($command);
                     exit(1);
                 }
@@ -109,31 +110,31 @@ class CommandProcessor
 
     protected function unknownCommand(string $command): void
     {
-        echo $this->presenter->redText("Unknown command: $command\n\n");
+        echo TextColorizer::colorText("Unknown command: $command\n\n", 'red');
     }
 
     protected function printAvailableCommands(?string $command = null): void
     {
         if ($command && array_key_exists($command, $this->commands)) {
-            echo $this->presenter->cyanText("Command: ") .  $command . "\n";
+            echo TextColorizer::colorText("Command: ", 'cyan') .  $command . "\n";
             echo $this->commands[$command]['description'] . "\n";
-            echo $this->presenter->cyanText("Options:\n");
+            echo TextColorizer::colorText("Options:\n", 'cyan');
 
             foreach ($this->commands[$command]['options'] as $option => $details) {
-                echo $this->presenter->blueText("  --$option\n");
+                echo TextColorizer::colorText("  --$option\n", 'blue');
                 echo "    " . $details['description'] . "\n";
             }
         } else {
-            echo $this->presenter->pinkText("Available commands:\n\n");
+            echo TextColorizer::colorText("Available commands:\n\n", 'pink');
             foreach ($this->commands as $command => $commandDetails) {
-                echo $this->presenter->cyanText("Command: ") .  $command . "\n";
+                echo TextColorizer::colorText("Command: ", 'cyan') .  $command . "\n";
                 echo $commandDetails['description'] . "\n";
 
                 if (isset($commandDetails['options'])) {
-                    echo $this->presenter->cyanText("Options:\n");
+                    echo TextColorizer::colorText("Options:\n", 'cyan');
 
                     foreach ($commandDetails['options'] as $option => $details) {
-                        echo $this->presenter->blueText("  --$option\n");
+                        echo TextColorizer::colorText("  --$option\n", 'blue');
                         echo "    " . $details['description'] . "\n";
                     }
                 }

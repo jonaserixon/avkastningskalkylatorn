@@ -51,17 +51,19 @@ class FinancialAsset
      */
     public function getTransactionsByType(string $type): array
     {
-        if (!property_exists($this->groupedTransactions, $type)) {
-            throw new Exception("Transaction type $type does not exist.");
+        if (!isset($this->groupedTransactions->{$type})) {
+            throw new Exception("Transaction type $type does not exist on {$this->isin}");
         }
 
         return $this->groupedTransactions->{$type};
     }
 
+    /*
     public function getTransactions(): TransactionGroup
     {
         return $this->groupedTransactions;
     }
+    */
 
     public function addBuy(float $amount): void
     {

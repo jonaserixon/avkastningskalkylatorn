@@ -2,10 +2,12 @@
 
 namespace src\Command;
 
+use src\Command\CommandProcessor;
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
-use stdClass;
 use src\View\Logger;
+use src\View\TextColorizer;
+use stdClass;
 
 class CalculateProfitCommand extends CommandProcessor
 {
@@ -69,7 +71,7 @@ class CalculateProfitCommand extends CommandProcessor
             $weightings = array_values($result->overview->currentHoldingsWeighting);
 
             if (!empty($weightings)) {
-                echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
+                echo PHP_EOL . TextColorizer::backgroundColor('Portföljviktning: ', 'pink', 'black') . PHP_EOL. PHP_EOL;
 
                 $maxValue = max($weightings);
                 foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
