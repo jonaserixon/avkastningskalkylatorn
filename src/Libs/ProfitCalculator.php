@@ -67,7 +67,7 @@ class ProfitCalculator
 
                 if ($shareTransferQuantity != 0) {
                     // echo $this->presenter->redText("Warning: Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount) . PHP_EOL;
-                    $asset->notices[] = "Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->costBasis + $shareTransferAmount, 3) . ")";
+                    $asset->notices[] = "Share transfer(s) for {$asset->name} ({$asset->isin}) needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->costBasis + $shareTransferAmount, 3) . ")";
                 }
             }
 

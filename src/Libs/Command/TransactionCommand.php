@@ -69,13 +69,16 @@ class TransactionCommand extends CommandProcessor
                 echo $res . PHP_EOL;
             }
         } else {
+            echo 'Datum | Bank | Konto | Namn | Typ | Belopp | Antal | Pris' . PHP_EOL;
             foreach ($transactions as $transaction) {
                 $res = $transaction->getDateString() . ' | ';
                 $res .= $this->presenter->greyText($transaction->getBank()) . ' | ';
                 $res .= $this->presenter->greenText($transaction->getAccount()) . ' | ';
-                $res .= $this->presenter->pinkText($transaction->getName()) . ' | ';
+                $res .= $this->presenter->pinkText($transaction->getName() . " ({$transaction->getIsin()})") . ' | ';
                 $res .= $this->presenter->yellowText($transaction->getType()) . ' | ';
-                $res .= $this->presenter->cyanText($this->presenter->formatNumber($transaction->getRawAmount()));
+                $res .= $this->presenter->cyanText($this->presenter->formatNumber($transaction->getRawAmount())) . ' | ';
+                $res .= $this->presenter->greyText($this->presenter->formatNumber($transaction->getRawQuantity())) . ' | ';
+                $res .= $this->presenter->greenBackground($this->presenter->formatNumber($transaction->getRawPrice()));
 
                 echo $res . PHP_EOL;
             }

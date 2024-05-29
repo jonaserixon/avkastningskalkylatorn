@@ -470,4 +470,14 @@ class Presenter
     {
         return "\033[33m" . $text . "\033[0m";
     }
+
+    public function greenBackground(string $text): string
+    {
+        return "\033[42m" . $this->blackText($text) . "\033[0m";
+    }
+
+    public function blackText(string $text): string
+    {
+        return "\033[30m" . $text . "\033[0m";
+    }
 }
