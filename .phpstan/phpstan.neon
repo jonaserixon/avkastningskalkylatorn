@@ -7,7 +7,7 @@ parameters:
     editorUrl: 'vscode://file/%%file%%:%%line%%'
     editorUrlTitle: '%%relFile%%:%%line%%'
 
-    level: 6
+    level: 7
 
     # https://phpstan.org/user-guide/ignoring-errors
     ignoreErrors:
@@ -20,3 +20,27 @@ parameters:
     # https://phpstan.org/config-reference#analysed-files
     paths:
         - ../src
+
+    polluteScopeWithLoopInitialAssignments: true
+    polluteScopeWithAlwaysIterableForeach: true
+    checkAlwaysTrueCheckTypeFunctionCall: true
+    checkAlwaysTrueInstanceof: true
+    checkAlwaysTrueStrictComparison: true
+    checkExplicitMixedMissingReturn: true
+    checkFunctionNameCase: true #
+    checkInternalClassCaseSensitivity: true
+    reportMaybesInMethodSignatures: true
+    reportMaybesInPropertyPhpDocTypes: true
+    reportStaticMethodSignatures: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    checkUninitializedProperties: true
+    checkDynamicProperties: true
+    rememberPossiblyImpureFunctionValues: true
+    checkImplicitMixed: true
+    checkBenevolentUnionTypes: true
+    reportPossiblyNonexistentGeneralArrayOffset: true
+    reportPossiblyNonexistentConstantArrayOffset: true
+    reportAlwaysTrueInLastCondition: true
+    reportWrongPhpDocTypeInVarTag: true
+    reportAnyTypeWideningInVarTag: true
+    checkMissingOverrideMethodAttribute: true

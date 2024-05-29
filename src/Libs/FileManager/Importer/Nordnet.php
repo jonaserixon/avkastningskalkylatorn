@@ -42,6 +42,9 @@ class Nordnet extends CsvParser
         $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
 
         $file = fopen($fileName, 'r');
+        if ($file === false) {
+            throw new Exception('Failed to open file: ' . basename($fileName));
+        }
         fgetcsv($file); // Skip headers
 
         usort($csvData, function ($a, $b) {
@@ -56,29 +59,43 @@ class Nordnet extends CsvParser
                 continue;
             }
 
-            $transaction = new Transaction();
-            $transaction->bank = static::BANK_NAME;
-            $transaction->date = $row[1]; // Affärsdag
-            $transaction->account = $row[4]; // Depå
-            $transaction->type = $transactionType->value; // Transaktionstyp
-            $transaction->name = trim($row[6]); // Värdepapper
-            $transaction->rawQuantity = (int) $row[9]; // Antal
-            $transaction->rawPrice = static::convertNumericToFloat($row[10]); // Kurs
-            $transaction->rawAmount = static::convertNumericToFloat($row[14]); // Belopp
-            $transaction->commission = static::convertNumericToFloat($row[12]); // Total Avgift
-            $transaction->currency = $row[17]; // Valuta
-            $transaction->isin = $row[8]; // ISIN
-            $transaction->description = trim($row[23]); // Transaktionstext
+            $date = date_create($row[1]);
+            $account = $row[4];
+            $type = $transactionType->value;
+            $name = trim($row[6]);
+            $description = trim($row[23]);
+            $rawQuantity = static::convertNumericToFloat($row[9]);
+            $rawPrice = static::convertNumericToFloat($row[10]);
+            $pricePerShareSEK = null;
+            $rawAmount = static::convertNumericToFloat($row[14]);
+            $commission = static::convertNumericToFloat($row[12]);
+            $currency = $row[17];
+            $isin = $row[8];
 
-            if ($transaction->rawQuantity && $transaction->rawPrice) {
-                $transaction->pricePerShareSEK = abs($transaction->rawAmount) / abs($transaction->rawQuantity);
+            if ($rawQuantity && $rawPrice && $rawAmount) {
+                $pricePerShareSEK = abs($rawAmount) / abs($rawQuantity);
             }
 
-            $transaction->type = $this->mapTransactionTypeByName($transaction);
-
-            if ($transaction->type === 'sell') {
-                $transaction->rawQuantity = -1 * $transaction->rawQuantity;
+            $type = $this->mapTransactionTypeByName($type, $description);
+            if ($type === 'sell') {
+                $rawQuantity = -1 * $rawQuantity; // Sell transactions must have negative quantity
             }
+
+            $transaction = new Transaction(
+                date: $date,
+                bank: static::BANK_NAME,
+                account: $account,
+                type: $type,
+                name: $name,
+                description: $description,
+                rawQuantity: $rawQuantity,
+                rawPrice: $rawPrice,
+                pricePerShareSEK: $pricePerShareSEK,
+                rawAmount: $rawAmount,
+                commission: $commission,
+                currency: $currency,
+                isin: $isin
+            );
 
             $result[] = $transaction;
         }
@@ -125,13 +142,13 @@ class Nordnet extends CsvParser
         return null;
     }
 
-    public function mapTransactionTypeByName(Transaction &$transaction): string
+    public function mapTransactionTypeByName(string $type, string $description): string
     {
         // Återbetald utländsk källskatt
-        if (str_contains(mb_strtolower($transaction->description), 'återbetalning') && str_contains(mb_strtolower($transaction->description), 'källskatt')) {
+        if (str_contains(mb_strtolower($description), 'återbetalning') && str_contains(mb_strtolower($description), 'källskatt')) {
             return 'returned_foreign_withholding_tax';
         }
 
-        return $transaction->type;
+        return $type;
     }
 }

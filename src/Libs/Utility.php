@@ -18,4 +18,12 @@ class Utility
     {
         return number_format($number, $decimals, '.', ''); // Konverterar till sträng med 15 decimalers precision
     }
+
+    public static function strContains(string $haystack, string $needle): bool
+    {
+        $haystack = mb_strtolower($haystack);
+        $needle = mb_strtolower($needle);
+
+        return str_contains($haystack, $needle);
+    }
 }

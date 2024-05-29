@@ -19,7 +19,7 @@ class TransactionLoader
     private ?string $filterDateTo;
     private bool $filterCurrentHoldings;
 
-    private TransactionParser $transactionParser;
+    private TransactionMapper $transactionMapper;
     private StockPrice $stockPrice;
     public FinancialOverview $overview;
 
@@ -39,7 +39,7 @@ class TransactionLoader
         $this->filterCurrentHoldings = $filterCurrentHoldings;
 
         $this->overview = new FinancialOverview();
-        $this->transactionParser = new TransactionParser($this->overview);
+        $this->transactionMapper = new TransactionMapper($this->overview);
         $this->stockPrice = new StockPrice();
     }
 
@@ -49,11 +49,11 @@ class TransactionLoader
      */
     public function getFinancialAssets(array $transactions): array
     {
-        $this->overview->firstTransactionDate = $transactions[0]->date;
-        $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->date;
+        $this->overview->firstTransactionDate = $transactions[0]->getDateString();
+        $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
 
-        $groupedTransactions = $this->transactionParser->groupTransactions($transactions);
-        $assets = $this->transactionParser->addTransactionsToAsset($groupedTransactions);
+        $groupedTransactions = $this->transactionMapper->groupTransactions($transactions);
+        $assets = $this->transactionMapper->addTransactionsToAsset($groupedTransactions);
 
         if (empty($assets)) {
             throw new Exception('No transaction file in csv format in the "/imports/banks" directory.');
@@ -95,7 +95,7 @@ class TransactionLoader
                         // To support multiple assets
                         $assets = explode(',', $value);
                         foreach ($assets as $asset) {
-                            if (str_contains(mb_strtoupper($transaction->name), trim($asset))) {
+                            if (str_contains(mb_strtoupper($transaction->getName()), trim($asset))) {
                                 return true;
                             }
                         }
@@ -104,19 +104,21 @@ class TransactionLoader
                     }
 
                     if ($key === 'dateFrom') {
-                        return strtotime($transaction->date) >= strtotime($value);
+                        return strtotime($transaction->getDateString()) >= strtotime($value);
                     }
 
                     if ($key === 'dateTo') {
-                        return strtotime($transaction->date) <= strtotime($value);
+                        return strtotime($transaction->getDateString()) <= strtotime($value);
                     }
 
                     if ($key === 'currentHoldings') {
-                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->isin);
+                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->getIsin());
                         return $currentPricePerShare !== null;
                     }
 
-                    return mb_strtoupper($transaction->{$key}) === $value;
+                    $getter = 'get' . ucfirst($key);
+                    $valueToCompare = $transaction->{$getter}();
+                    return mb_strtoupper($valueToCompare) === $value;
                 });
             }
         }
@@ -127,17 +129,17 @@ class TransactionLoader
 
         // Sort transactions by date, bank and ISIN. (important for calculations and handling of transactions)
         usort($transactions, function ($a, $b) {
-            $dateComparison = strtotime($a->date) <=> strtotime($b->date);
+            $dateComparison = strtotime($a->getDateString()) <=> strtotime($b->getDateString());
             if ($dateComparison !== 0) {
                 return $dateComparison;
             }
 
-            $bankComparison = strcmp($a->bank, $b->bank);
+            $bankComparison = strcmp($a->getBank(), $b->getBank());
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }
 
-            return strcmp($a->isin, $b->isin);
+            return strcmp($a->getIsin(), $b->getIsin());
         });
 
         return $transactions;

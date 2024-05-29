@@ -79,19 +79,19 @@ class Presenter
         $numberOfWithdrawals = 0;
         $numberOfDividends = 0;
         foreach ($overview->cashFlows as $cashFlow) {
-            if ($cashFlow->type === 'buy') {
+            if ($cashFlow->getType() === 'buy') {
                 $numberOfBuys++;
             }
-            if ($cashFlow->type === 'sell') {
+            if ($cashFlow->getType() === 'sell') {
                 $numberOfSells++;
             }
-            if ($cashFlow->type === 'deposit') {
+            if ($cashFlow->getType() === 'deposit') {
                 $numberOfDeposits++;
             }
-            if ($cashFlow->type === 'withdrawal') {
+            if ($cashFlow->getType() === 'withdrawal') {
                 $numberOfWithdrawals++;
             }
-            if ($cashFlow->type === 'dividend') {
+            if ($cashFlow->getType() === 'dividend') {
                 $numberOfDividends++;
             }
         }

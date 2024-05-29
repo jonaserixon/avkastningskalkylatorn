@@ -41,13 +41,21 @@ class FinancialOverview
 
     public function addCashFlow(string $date, float $amount, string $name, string $type, string $account, string $bank): void
     {
-        $transaction = new Transaction();
-        $transaction->date = $date;
-        $transaction->rawAmount = $amount;
-        $transaction->name = $name;
-        $transaction->type = $type;
-        $transaction->account = $account;
-        $transaction->bank = $bank;
+        $transaction = new Transaction(
+            date_create($date),
+            $bank,
+            $account,
+            $type,
+            $name,
+            null,
+            0,
+            0,
+            null,
+            $amount,
+            null,
+            'SEK',
+            null
+        );
 
         $this->cashFlows[] = $transaction;
     }
@@ -59,7 +67,7 @@ class FinancialOverview
     {
         $balance = 0;
         foreach ($transactions as $transaction) {
-            $amount = round($transaction->rawAmount, 4);
+            $amount = round($transaction->getRawAmount(), 4);
             $balance += $amount;
         }
 

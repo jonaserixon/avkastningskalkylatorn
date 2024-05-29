@@ -58,7 +58,7 @@ class TransactionCommand extends CommandProcessor
         $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
         if ($options->cashFlow) {
-            foreach ($result->overview->cashFlows as $cashFlow) {
+            foreach ((array) $result->overview->cashFlows as $cashFlow) {
                 $res = $cashFlow->date . ' | ';
                 $res .= $this->presenter->cyanText($cashFlow->rawAmount) . ' | ';
                 $res .= $this->presenter->yellowText($cashFlow->type) . ' | ';
