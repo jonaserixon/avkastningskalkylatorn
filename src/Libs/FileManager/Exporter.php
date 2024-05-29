@@ -2,6 +2,8 @@
 
 namespace src\Libs\FileManager;
 
+use Exception;
+
 class Exporter
 {
     /**
@@ -17,6 +19,9 @@ class Exporter
         $filePath = '/exports/' . $fileName . '_' . date('Y-m-d_His') . '.csv';
 
         $file = fopen($filePath, 'w');
+        if ($file === false) {
+            throw new Exception('Failed to open file: ' . basename($filePath));
+        }
         fputcsv($file, $headers, $delimiter);
 
         foreach ($data as $row) {

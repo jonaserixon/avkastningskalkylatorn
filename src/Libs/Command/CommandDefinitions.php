@@ -45,6 +45,11 @@ class CommandDefinitions
                     'description' => 'More detailed output',
                     'default' => false,
                     'require-value' => false
+                ],
+                'overview' => [
+                    'description' => 'Show investment overview report',
+                    'default' => false,
+                    'require-value' => false
                 ]
             ]
         ],

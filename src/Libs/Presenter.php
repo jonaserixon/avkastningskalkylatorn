@@ -79,19 +79,19 @@ class Presenter
         $numberOfWithdrawals = 0;
         $numberOfDividends = 0;
         foreach ($overview->cashFlows as $cashFlow) {
-            if ($cashFlow->type === 'buy') {
+            if ($cashFlow->getType() === 'buy') {
                 $numberOfBuys++;
             }
-            if ($cashFlow->type === 'sell') {
+            if ($cashFlow->getType() === 'sell') {
                 $numberOfSells++;
             }
-            if ($cashFlow->type === 'deposit') {
+            if ($cashFlow->getType() === 'deposit') {
                 $numberOfDeposits++;
             }
-            if ($cashFlow->type === 'withdrawal') {
+            if ($cashFlow->getType() === 'withdrawal') {
                 $numberOfWithdrawals++;
             }
-            if ($cashFlow->type === 'dividend') {
+            if ($cashFlow->getType() === 'dividend') {
                 $numberOfDividends++;
             }
         }
@@ -390,7 +390,7 @@ class Presenter
 
         $tabsCount = ceil($spacesNeeded / 8);
 
-        $tabsCount = max($tabsCount, 1);
+        $tabsCount = intval(max($tabsCount, 1));
 
         return $label . str_repeat("\t", $tabsCount);
     }
@@ -469,5 +469,15 @@ class Presenter
     public function yellowText(float|string $text): string
     {
         return "\033[33m" . $text . "\033[0m";
+    }
+
+    public function greenBackground(string $text): string
+    {
+        return "\033[42m" . $this->blackText($text) . "\033[0m";
+    }
+
+    public function blackText(string $text): string
+    {
+        return "\033[30m" . $text . "\033[0m";
     }
 }

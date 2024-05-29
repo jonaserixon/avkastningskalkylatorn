@@ -6,7 +6,7 @@ use src\DataStructure\AssetReturn;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\Libs\FileManager\Importer\StockPrice;
+use src\Libs\FileManager\CsvProcessor\StockPrice;
 use stdClass;
 
 class ProfitCalculator
@@ -47,7 +47,7 @@ class ProfitCalculator
             if (!empty($mergedTransactions)) {
                 // Viktigt att sortera transaktionerna efter datum inför beräkningar.
                 usort($mergedTransactions, function ($a, $b) {
-                    return strcasecmp($a->date, $b->date);
+                    return strcasecmp($a->getDateString(), $b->getDateString());
                 });
 
                 $result = $this->calculateRealizedGains($mergedTransactions);
@@ -61,13 +61,13 @@ class ProfitCalculator
                 $shareTransferQuantity = 0;
                 $shareTransferAmount = 0;
                 foreach ($asset->getTransactionsByType('share_transfer') as $shareTransfer) {
-                    $shareTransferAmount += $shareTransfer->rawQuantity * $shareTransfer->rawPrice;
-                    $shareTransferQuantity += $shareTransfer->rawQuantity;
+                    $shareTransferAmount += $shareTransfer->getRawQuantity() * $shareTransfer->getRawPrice();
+                    $shareTransferQuantity += $shareTransfer->getRawQuantity();
                 }
 
                 if ($shareTransferQuantity != 0) {
                     // echo $this->presenter->redText("Warning: Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount) . PHP_EOL;
-                    $asset->notices[] = "Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->costBasis + $shareTransferAmount, 3) . ")";
+                    $asset->notices[] = "Share transfer(s) for {$asset->name} ({$asset->isin}) needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->costBasis + $shareTransferAmount, 3) . ")";
                 }
             }
 
@@ -84,8 +84,8 @@ class ProfitCalculator
                         $currentValueOfShares,
                         $asset->name,
                         'current_holding_value',
-                        '',
-                        ''
+                        '-',
+                        '-'
                     );
                     $overview->lastTransactionDate = date('Y-m-d');
 
@@ -112,7 +112,7 @@ class ProfitCalculator
 
         // Important for calculations etc.
         usort($overview->cashFlows, function ($a, $b) {
-            return strtotime($a->date) <=> strtotime($b->date);
+            return strtotime($a->getDateString()) <=> strtotime($b->getDateString());
         });
 
         $result = new stdClass();
@@ -163,7 +163,7 @@ class ProfitCalculator
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
 
-        // $this->transactionParser->overview->totalProfitInclFees += $totalReturnInclFees;
+        // $this->transactionMapper->overview->totalProfitInclFees += $totalReturnInclFees;
 
         return $result;
     }
@@ -243,35 +243,33 @@ class ProfitCalculator
 
         $actualQuantity = 0;
         foreach ($transactions as $transaction) {
-            $actualQuantity += $transaction->rawQuantity;
-            $amount = Utility::bcabs($transaction->rawAmount, $scale);
-            $quantity = Utility::bcabs($transaction->rawQuantity, $scale);
-            // $amount = $this->formatNumberForBCMath($transaction->rawAmount);
-            // $quantity = $this->formatNumberForBCMath($transaction->rawQuantity);
+            $actualQuantity += $transaction->getRawQuantity();
+            $amount = Utility::bcabs($transaction->getRawAmount(), $scale);
+            $quantity = Utility::bcabs($transaction->getRawQuantity(), $scale);
 
             // echo $transaction->type . ' = amount: ' . $amount . ', quantity: ' . $quantity . ', date: ' . $transaction->date . PHP_EOL;
 
-            if ($transaction->type === 'buy') {
+            if ($transaction->getType() === 'buy') {
                 // "Hanterar" makulerade köptransaktioner
-                if ($transaction->rawAmount > 0 && $transaction->rawQuantity < 0) {
-                    echo $this->presenter->redText("Warning: Buy transaction with negative quantity: {$transaction->rawQuantity} for {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
-                    // $amount = -$amount;
-                    // $quantity = -$quantity;
+                if ($transaction->getRawAmount() > 0 && $transaction->getRawQuantity() < 0) {
+                    echo $this->presenter->redText("Warning: Buy transaction with negative quantity: {$transaction->getRawQuantity()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]") . PHP_EOL;
                     $amount = bcsub("0", $amount, $scale); // Gör $amount negativ
                     $quantity = bcsub("0", $quantity, $scale); // Gör $quantity negativ
                 }
+
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
-                $totalQuantity = bcadd($totalQuantity, $quantity, $scale);
-            } elseif ($transaction->type === 'sell') {
+                $totalQuantity = bcadd((string) $totalQuantity, $quantity, $scale);
+            } elseif ($transaction->getType() === 'sell') {
                 // Leta efter makulerade säljtransaktioner
-                if ($transaction->rawAmount < 0 && $transaction->rawQuantity > 0) {
-                    echo $this->presenter->redText("Warning: Sell transaction with negative amount: {$transaction->rawAmount} for {$transaction->name} ({$transaction->isin}) [{$transaction->date}]") . PHP_EOL;
+                if ($transaction->getRawAmount() < 0 && $transaction->getRawQuantity() > 0) {
+                    echo $this->presenter->redText("Warning: Sell transaction with negative amount: {$transaction->getRawAmount()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]") . PHP_EOL;
 
                 }
+
                 // Endast räkna kapitalvinst om det finns köpta aktier att sälja
-                if (bccomp($totalQuantity, '0', $scale) > 0 && bccomp($totalQuantity, $quantity, $scale) >= 0) {
-                    $costPerShare = bcdiv($totalCost, $totalQuantity, $scale);
+                if (bccomp((string) $totalQuantity, '0', $scale) > 0 && bccomp((string) $totalQuantity, $quantity, $scale) >= 0) {
+                    $costPerShare = bcdiv($totalCost, (string) $totalQuantity, $scale);
                     $sellCost = bcmul($costPerShare, $quantity, $scale);
 
                     // Räkna ut kapitalvinsten för de sålda aktierna
@@ -280,23 +278,23 @@ class ProfitCalculator
 
                     // Minska den totala kostnaden och antalet aktier
                     $totalCost = bcsub($totalCost, $sellCost, $scale);
-                    $totalQuantity = bcsub($totalQuantity, $quantity, $scale);
+                    $totalQuantity = bcsub((string) $totalQuantity, $quantity, $scale);
                 }
-            } elseif ($transaction->type === 'share_split') {
+            } elseif ($transaction->getType() === 'share_split') {
                 if ($totalQuantity != 0) {
-                    $totalQuantity += $transaction->rawQuantity;
+                    $totalQuantity += $transaction->getRawQuantity();
                 }
             }
         }
 
         if (Utility::isNearlyZero($totalCost)) {
-            $totalCost = 0;
+            $totalCost = '0.0';
         }
 
         // Om det inte finns några aktier kvar så kan vi anta att det inte finns något anskaffningsvärde kvar.
         if ($totalCost != 0 && ($actualQuantity == 0 || Utility::isNearlyZero($totalQuantity))) {
-            print("Notice: No shares left for {$transactions[0]->name} ({$transactions[0]->isin}) ") . $totalCost . PHP_EOL;
-            $totalCost = 0;
+            print("Notice: No shares left for {$transactions[0]->getName()} ({$transactions[0]->getIsin()}) ") . $totalCost . PHP_EOL;
+            $totalCost = '0.0';
         }
 
         $result = new stdClass();

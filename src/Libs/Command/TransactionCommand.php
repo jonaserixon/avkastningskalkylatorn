@@ -26,8 +26,6 @@ class TransactionCommand extends CommandProcessor
         $commandOptions = $this->commands['transaction']['options'];
 
         $options = new stdClass();
-        // $options->verbose = $this->options['verbose'] ?? $commandOptions['verbose']['default'];
-        // $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
         $options->bank = $this->options['bank'] ?? null;
         $options->isin = $this->options['isin'] ?? null;
         $options->asset = $this->options['asset'] ?? null;
@@ -44,7 +42,6 @@ class TransactionCommand extends CommandProcessor
         $options = $this->getParsedOptions();
 
         $transactionLoader = new TransactionLoader(
-            // $this->exportCsv,
             $options->bank,
             $options->isin,
             $options->asset,
@@ -53,26 +50,38 @@ class TransactionCommand extends CommandProcessor
             $options->currentHoldings
         );
 
-        $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-        $profitCalculator = new ProfitCalculator($this->presenter, $options->currentHoldings);
-        $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
+        $transactions = $transactionLoader->getTransactions();
 
         if ($options->cashFlow) {
-            foreach ($result->overview->cashFlows as $cashFlow) {
-                $res = $cashFlow->date . ' | ';
-                $res .= $this->presenter->cyanText($cashFlow->rawAmount) . ' | ';
-                $res .= $this->presenter->yellowText($cashFlow->type) . ' | ';
-                $res .= $this->presenter->pinkText($cashFlow->name) . ' | ';
-                $res .= $this->presenter->greenText($cashFlow->account) . ' | ';
-                $res .= $this->presenter->greyText($cashFlow->bank);
+            $assets = $transactionLoader->getFinancialAssets($transactions);
+
+            $profitCalculator = new ProfitCalculator($this->presenter, $options->currentHoldings);
+            $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
+
+            foreach ((array) $result->overview->cashFlows as $cashFlow) {
+                $res = $cashFlow->getDateString() . ' | ';
+                $res .= $this->presenter->greyText($cashFlow->getBank()) . ' | ';
+                $res .= $this->presenter->greenText($cashFlow->getAccount()) . ' | ';
+                $res .= $this->presenter->pinkText($cashFlow->getName()) . ' | ';
+                $res .= $this->presenter->yellowText($cashFlow->getType()) . ' | ';
+                $res .= $this->presenter->cyanText($this->presenter->formatNumber($cashFlow->getRawAmount()));
 
                 echo $res . PHP_EOL;
             }
-            return;
-        }
+        } else {
+            echo 'Datum | Bank | Konto | Namn | Typ | Belopp | Antal | Pris' . PHP_EOL;
+            foreach ($transactions as $transaction) {
+                $res = $transaction->getDateString() . ' | ';
+                $res .= $this->presenter->greyText($transaction->getBank()) . ' | ';
+                $res .= $this->presenter->greenText($transaction->getAccount()) . ' | ';
+                $res .= $this->presenter->pinkText($transaction->getName() . " ({$transaction->getIsin()})") . ' | ';
+                $res .= $this->presenter->yellowText($transaction->getType()) . ' | ';
+                $res .= $this->presenter->cyanText($this->presenter->formatNumber($transaction->getRawAmount())) . ' | ';
+                $res .= $this->presenter->greyText($this->presenter->formatNumber($transaction->getRawQuantity())) . ' | ';
+                $res .= $this->presenter->greenBackground($this->presenter->formatNumber($transaction->getRawPrice()));
 
-        // foreach ($transactions as $transaction) {
-        //     echo $transaction->date . ' ' . $transaction->amount . ' ' . $transaction->type . ' ' . $transaction->name . PHP_EOL;
-        // }
+                echo $res . PHP_EOL;
+            }
+        }
     }
 }

@@ -6,9 +6,9 @@ use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\Libs\FileManager\Importer\Avanza;
-use src\Libs\FileManager\Importer\Nordnet;
-use src\Libs\FileManager\Importer\StockPrice;
+use src\Libs\FileManager\CsvProcessor\Avanza;
+use src\Libs\FileManager\CsvProcessor\Nordnet;
+use src\Libs\FileManager\CsvProcessor\StockPrice;
 
 class TransactionLoader
 {
@@ -19,7 +19,7 @@ class TransactionLoader
     private ?string $filterDateTo;
     private bool $filterCurrentHoldings;
 
-    private TransactionParser $transactionParser;
+    private TransactionMapper $transactionMapper;
     private StockPrice $stockPrice;
     public FinancialOverview $overview;
 
@@ -39,7 +39,7 @@ class TransactionLoader
         $this->filterCurrentHoldings = $filterCurrentHoldings;
 
         $this->overview = new FinancialOverview();
-        $this->transactionParser = new TransactionParser($this->overview);
+        $this->transactionMapper = new TransactionMapper($this->overview);
         $this->stockPrice = new StockPrice();
     }
 
@@ -49,11 +49,11 @@ class TransactionLoader
      */
     public function getFinancialAssets(array $transactions): array
     {
-        $this->overview->firstTransactionDate = $transactions[0]->date;
-        $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->date;
+        $this->overview->firstTransactionDate = $transactions[0]->getDateString();
+        $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
 
-        $groupedTransactions = $this->transactionParser->groupTransactions($transactions);
-        $assets = $this->transactionParser->addTransactionsToAsset($groupedTransactions);
+        $groupedTransactions = $this->transactionMapper->groupTransactions($transactions);
+        $assets = $this->transactionMapper->addTransactionsToAsset($groupedTransactions);
 
         if (empty($assets)) {
             throw new Exception('No transaction file in csv format in the "/imports/banks" directory.');
@@ -89,13 +89,12 @@ class TransactionLoader
 
         foreach ($filters as $key => $value) {
             if ($value) {
-                $value = mb_strtoupper($value);
                 $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
-                    if ($key === 'asset') {
+                    if ($key === 'asset' && is_string($value)) {
                         // To support multiple assets
-                        $assets = explode(',', $value);
+                        $assets = explode(',', mb_strtoupper($value));
                         foreach ($assets as $asset) {
-                            if (str_contains(mb_strtoupper($transaction->name), trim($asset))) {
+                            if (str_contains(mb_strtoupper($transaction->getName()), trim($asset))) {
                                 return true;
                             }
                         }
@@ -103,20 +102,26 @@ class TransactionLoader
                         return false;
                     }
 
-                    if ($key === 'dateFrom') {
-                        return strtotime($transaction->date) >= strtotime($value);
+                    if ($key === 'dateFrom' && is_string($value)) {
+                        return strtotime($transaction->getDateString()) >= strtotime($value);
                     }
 
-                    if ($key === 'dateTo') {
-                        return strtotime($transaction->date) <= strtotime($value);
+                    if ($key === 'dateTo' && is_string($value)) {
+                        return strtotime($transaction->getDateString()) <= strtotime($value);
                     }
 
                     if ($key === 'currentHoldings') {
-                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->isin);
+                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->getIsin());
                         return $currentPricePerShare !== null;
                     }
 
-                    return mb_strtoupper($transaction->{$key}) === $value;
+                    if ($key === 'bank' && is_string($value)) {
+                        return mb_strtoupper($transaction->getBank()) === mb_strtoupper($value);
+                    }
+
+                    if ($key === 'isin' && is_string($value)) {
+                        return mb_strtoupper($transaction->getIsin()) === mb_strtoupper($value);
+                    }
                 });
             }
         }
@@ -127,17 +132,17 @@ class TransactionLoader
 
         // Sort transactions by date, bank and ISIN. (important for calculations and handling of transactions)
         usort($transactions, function ($a, $b) {
-            $dateComparison = strtotime($a->date) <=> strtotime($b->date);
+            $dateComparison = strtotime($a->getDateString()) <=> strtotime($b->getDateString());
             if ($dateComparison !== 0) {
                 return $dateComparison;
             }
 
-            $bankComparison = strcmp($a->bank, $b->bank);
+            $bankComparison = strcmp($a->getBank(), $b->getBank());
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }
 
-            return strcmp($a->isin, $b->isin);
+            return strcmp($a->getIsin(), $b->getIsin());
         });
 
         return $transactions;
