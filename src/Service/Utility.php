@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Libs;
+namespace src\Service;
 
 class Utility
 {

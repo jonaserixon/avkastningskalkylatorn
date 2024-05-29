@@ -1,9 +1,9 @@
 <?php
 
-namespace src\Libs\Command;
+namespace src\Command;
 
-use src\Libs\ProfitCalculator;
-use src\Libs\Transaction\TransactionLoader;
+use src\Service\ProfitCalculator;
+use src\Service\Transaction\TransactionLoader;
 use stdClass;
 
 class TransactionCommand extends CommandProcessor
@@ -55,7 +55,7 @@ class TransactionCommand extends CommandProcessor
         if ($options->cashFlow) {
             $assets = $transactionLoader->getFinancialAssets($transactions);
 
-            $profitCalculator = new ProfitCalculator($this->presenter, $options->currentHoldings);
+            $profitCalculator = new ProfitCalculator($options->currentHoldings);
             $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
             foreach ((array) $result->overview->cashFlows as $cashFlow) {

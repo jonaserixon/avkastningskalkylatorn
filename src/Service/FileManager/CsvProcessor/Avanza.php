@@ -1,11 +1,12 @@
 <?php
 
-namespace src\Libs\FileManager\CsvProcessor;
+namespace src\Service\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
-use src\Libs\Utility;
+use src\Service\Utility;
+use src\View\Logger;
 
 class Avanza extends CsvProcessor
 {
@@ -49,13 +50,13 @@ class Avanza extends CsvProcessor
         foreach ($csvData as $row) {
             $transactionType = static::mapToTransactionTypeByType($row[2]);
             if (!$transactionType) {
-                echo "***** Could not handle transaction: {$row[3]} {$row[0]}! *****" . PHP_EOL;
+                Logger::getInstance()->addWarning("Could not handle transaction: {$row[3]} {$row[0]} when importing Avanza transactions.");
                 continue;
             }
 
             $date = date_create($row[0]);
             if ($date === false) {
-                echo "***** Could not parse date: {$row[0]}! *****" . PHP_EOL;
+                Logger::getInstance()->addWarning("Could not parse date: {$row[0]} when importing Avaanza transactions.");
                 continue;
             }
 

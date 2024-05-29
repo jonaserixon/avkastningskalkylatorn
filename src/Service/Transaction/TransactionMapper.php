@@ -1,23 +1,21 @@
 <?php
 
-namespace src\Libs\Transaction;
+namespace src\Service\Transaction;
 
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
 use src\DataStructure\TransactionGroup;
-use src\Libs\Presenter;
-use src\Libs\Utility;
+use src\View\Logger;
+use src\Service\Utility;
 use stdClass;
 
 class TransactionMapper
 {
-    private Presenter $presenter;
     public FinancialOverview $overview;
 
     public function __construct(FinancialOverview $overview)
     {
-        $this->presenter = new Presenter();
         $this->overview = $overview;
     }
 
@@ -138,7 +136,7 @@ class TransactionMapper
                 break;
             case 'other': // TODO: handle this based on the cashflow but give a notice.
             default:
-                echo $this->presenter->redText("Unhandled transaction type: '{$transaction->getType()}' in '{$transaction->getName()}' ({$transaction->getIsin()}) [{$transaction->getDateString()}] from bank: {$transaction->getBank()}") . PHP_EOL;
+                Logger::getInstance()->addWarning("Unhandled transaction type: '{$transaction->getType()}' in '{$transaction->getName()}' ({$transaction->getIsin()}) [{$transaction->getDateString()}] from bank: {$transaction->getBank()}");
                 break;
         }
     }
@@ -250,7 +248,7 @@ class TransactionMapper
             }
 
             if (!property_exists($groupedTransactions[$transaction->getIsin()], $transaction->getType())) {
-                echo $this->presenter->redText("Unknown transaction type: '{$transaction->getType()}' in {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]") . PHP_EOL;
+                Logger::getInstance()->addWarning("Unknown transaction type: '{$transaction->getType()}' in {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
                 continue;
             }
 

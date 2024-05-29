@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Libs\FileManager\CsvProcessor;
+namespace src\Service\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Transaction;

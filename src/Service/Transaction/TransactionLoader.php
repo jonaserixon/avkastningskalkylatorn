@@ -1,14 +1,14 @@
 <?php
 
-namespace src\Libs\Transaction;
+namespace src\Service\Transaction;
 
 use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\Libs\FileManager\CsvProcessor\Avanza;
-use src\Libs\FileManager\CsvProcessor\Nordnet;
-use src\Libs\FileManager\CsvProcessor\StockPrice;
+use src\Service\FileManager\CsvProcessor\Avanza;
+use src\Service\FileManager\CsvProcessor\Nordnet;
+use src\Service\FileManager\CsvProcessor\StockPrice;
 
 class TransactionLoader
 {

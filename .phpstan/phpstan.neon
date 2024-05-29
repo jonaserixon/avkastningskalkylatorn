@@ -11,10 +11,10 @@ parameters:
 
     # https://phpstan.org/user-guide/ignoring-errors
     ignoreErrors:
-        - 
-            identifier: missingType.iterableValue
-            paths: 
-                - ../src/Libs/Presenter.php
+        # - 
+        #     identifier: missingType.iterableValue
+        #     paths: 
+        #         - ../src/Libs/Presenter.php
 
     # https://phpstan.org/config-reference#stricter-analysis
     # https://phpstan.org/config-reference#analysed-files

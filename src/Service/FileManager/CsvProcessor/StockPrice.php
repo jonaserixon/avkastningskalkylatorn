@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Libs\FileManager\CsvProcessor;
+namespace src\Service\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Holding;
@@ -40,7 +40,7 @@ class StockPrice
      * Based off of this template: https://docs.google.com/spreadsheets/d/10dohImvsGkBNfA_qB5EATt3tX01UKdmBozDhD7bMB18/edit?usp=sharing
      * @return Holding[]
      */
-    protected function parseTransactions(string $fileName): array
+    protected function parseTransactions(): array
     {
         $files = glob(STOCK_PRICE_DIR . '/*.csv');
         if (empty($files)) {
@@ -82,7 +82,7 @@ class StockPrice
     public function getCurrentPriceByIsin(string $isin): ?float
     {
         if (empty($this->currentHoldingsData)) {
-            $this->currentHoldingsData = $this->parseTransactions(''); // TODO: fixa detta.
+            $this->currentHoldingsData = $this->parseTransactions();
         }
 
         foreach ($this->currentHoldingsData as $holding) {
@@ -97,7 +97,7 @@ class StockPrice
     public function getNameByIsin(string $isin): ?string
     {
         if (empty($this->currentHoldingsData)) {
-            $this->currentHoldingsData = $this->parseTransactions(''); // TODO: fixa detta.
+            $this->currentHoldingsData = $this->parseTransactions();
         }
 
         foreach ($this->currentHoldingsData as $holding) {
