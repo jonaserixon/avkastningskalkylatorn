@@ -253,11 +253,10 @@ class ProfitCalculator
                 // "Hanterar" makulerade köptransaktioner
                 if ($transaction->getRawAmount() > 0 && $transaction->getRawQuantity() < 0) {
                     echo $this->presenter->redText("Warning: Buy transaction with negative quantity: {$transaction->getRawQuantity()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]") . PHP_EOL;
-                    // $amount = -$amount;
-                    // $quantity = -$quantity;
                     $amount = bcsub("0", $amount, $scale); // Gör $amount negativ
                     $quantity = bcsub("0", $quantity, $scale); // Gör $quantity negativ
                 }
+
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
                 $totalQuantity = bcadd((string) $totalQuantity, $quantity, $scale);
@@ -267,6 +266,7 @@ class ProfitCalculator
                     echo $this->presenter->redText("Warning: Sell transaction with negative amount: {$transaction->getRawAmount()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]") . PHP_EOL;
 
                 }
+
                 // Endast räkna kapitalvinst om det finns köpta aktier att sälja
                 if (bccomp((string) $totalQuantity, '0', $scale) > 0 && bccomp((string) $totalQuantity, $quantity, $scale) >= 0) {
                     $costPerShare = bcdiv($totalCost, (string) $totalQuantity, $scale);
