@@ -4,8 +4,7 @@ COPY . /usr/src/avkastningskalkylatorn
 
 WORKDIR /usr/src/avkastningskalkylatorn
 
-RUN sed -i '1s;^;#!/usr/bin/env php\n;' src/index.php && chmod +x src/index.php
-
+RUN echo "alias avk='php /usr/src/avkastningskalkylatorn/src/index.php'" >> /root/.bashrc
 RUN ln -sf /usr/src/avkastningskalkylatorn/src/index.php /usr/local/bin/avk
 
 # Add PHPStan
