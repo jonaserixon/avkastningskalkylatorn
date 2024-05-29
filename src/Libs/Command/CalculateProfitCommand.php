@@ -64,10 +64,15 @@ class CalculateProfitCommand extends CommandProcessor
         // $this->presenter->displayFinancialOverview($result->overview);
 
         if (!empty($result->overview->currentHoldingsWeighting)) {
-            echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
-            $maxValue = max(array_values($result->overview->currentHoldingsWeighting));
-            foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
-                $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+            $weightings = array_values($result->overview->currentHoldingsWeighting);
+
+            if (!empty($weightings)) {
+                echo PHP_EOL . $this->presenter->pinkText('Portföljviktning: ') . PHP_EOL. PHP_EOL;
+
+                $maxValue = max($weightings);
+                foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
+                    $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+                }
             }
         }
 

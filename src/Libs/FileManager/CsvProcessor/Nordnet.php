@@ -1,12 +1,12 @@
 <?php
 
-namespace src\Libs\FileManager\Importer;
+namespace src\Libs\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
 
-class Nordnet extends CsvParser
+class Nordnet extends CsvProcessor
 {
     protected static string $DIR = IMPORT_DIR . '/banks/nordnet';
     protected const CSV_SEPARATOR = "\t";
@@ -60,6 +60,11 @@ class Nordnet extends CsvParser
             }
 
             $date = date_create($row[1]);
+            if ($date === false) {
+                echo "***** Could not parse date: {$row[1]}! *****" . PHP_EOL;
+                continue;
+            }
+
             $account = $row[4];
             $type = $transactionType->value;
             $name = trim($row[6]);

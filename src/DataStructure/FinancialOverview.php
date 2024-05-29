@@ -2,6 +2,7 @@
 
 namespace src\DataStructure;
 
+use Exception;
 use src\DataStructure\Transaction;
 
 // TODO: more consistent naming.
@@ -41,8 +42,13 @@ class FinancialOverview
 
     public function addCashFlow(string $date, float $amount, string $name, string $type, string $account, string $bank): void
     {
+        $dateTime = date_create($date);
+        if ($dateTime === false) {
+            throw new Exception('Invalid date while trying to add cash flow: ' . $date);
+        }
+
         $transaction = new Transaction(
-            date_create($date),
+            $dateTime,
             $bank,
             $account,
             $type,

@@ -1,13 +1,13 @@
 <?php
 
-namespace src\Libs\FileManager\Importer;
+namespace src\Libs\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
 use src\Libs\Utility;
 
-class Avanza extends CsvParser
+class Avanza extends CsvProcessor
 {
     protected static string $DIR = IMPORT_DIR . '/banks/avanza';
     protected const CSV_SEPARATOR = ";";
@@ -54,6 +54,11 @@ class Avanza extends CsvParser
             }
 
             $date = date_create($row[0]);
+            if ($date === false) {
+                echo "***** Could not parse date: {$row[0]}! *****" . PHP_EOL;
+                continue;
+            }
+
             $account = $row[1];
             $name = trim($row[3]);
             $rawQuantity = static::convertNumericToFloat($row[4], 5);

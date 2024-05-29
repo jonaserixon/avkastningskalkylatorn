@@ -6,7 +6,7 @@ use Exception;
 
 class FinancialAsset
 {
-    public string $name;
+    public string $name = '';
     public ?string $isin = null;
     private float $buy = 0;
     private float $sell = 0;
@@ -19,8 +19,8 @@ class FinancialAsset
     private float $currentNumberOfShares = 0;
     private ?float $currentPricePerShare = 0;
     private ?float $currentValueOfShares = 0;
-    private string $firstTransactionDate;
-    private string $lastTransactionDate;
+    private ?string $firstTransactionDate = null;
+    private ?string $lastTransactionDate = null;
     public ?AssetReturn $assetReturn = null;
 
     // TODO: move this to the AssetReturn structure.
@@ -38,7 +38,7 @@ class FinancialAsset
     /** @var mixed[] */
     public array $bankAccounts = [];
 
-    private TransactionGroup $groupedTransactions;
+    private ?TransactionGroup $groupedTransactions = null;
 
     public function addTransactions(TransactionGroup $transactions): void
     {
@@ -172,7 +172,7 @@ class FinancialAsset
         $this->currentValueOfShares = round($value, 3);
     }
 
-    public function getFirstTransactionDate(): string
+    public function getFirstTransactionDate(): ?string
     {
         return $this->firstTransactionDate;
     }
@@ -182,7 +182,7 @@ class FinancialAsset
         $this->firstTransactionDate = $date;
     }
 
-    public function getLastTransactionDate(): string
+    public function getLastTransactionDate(): ?string
     {
         return $this->lastTransactionDate;
     }

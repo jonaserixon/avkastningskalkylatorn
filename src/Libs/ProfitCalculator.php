@@ -6,7 +6,7 @@ use src\DataStructure\AssetReturn;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\Libs\FileManager\Importer\StockPrice;
+use src\Libs\FileManager\CsvProcessor\StockPrice;
 use stdClass;
 
 class ProfitCalculator
@@ -260,7 +260,7 @@ class ProfitCalculator
                 }
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
-                $totalQuantity = bcadd($totalQuantity, $quantity, $scale);
+                $totalQuantity = bcadd((string) $totalQuantity, $quantity, $scale);
             } elseif ($transaction->getType() === 'sell') {
                 // Leta efter makulerade säljtransaktioner
                 if ($transaction->getRawAmount() < 0 && $transaction->getRawQuantity() > 0) {
@@ -268,8 +268,8 @@ class ProfitCalculator
 
                 }
                 // Endast räkna kapitalvinst om det finns köpta aktier att sälja
-                if (bccomp($totalQuantity, '0', $scale) > 0 && bccomp($totalQuantity, $quantity, $scale) >= 0) {
-                    $costPerShare = bcdiv($totalCost, $totalQuantity, $scale);
+                if (bccomp((string) $totalQuantity, '0', $scale) > 0 && bccomp((string) $totalQuantity, $quantity, $scale) >= 0) {
+                    $costPerShare = bcdiv($totalCost, (string) $totalQuantity, $scale);
                     $sellCost = bcmul($costPerShare, $quantity, $scale);
 
                     // Räkna ut kapitalvinsten för de sålda aktierna
@@ -278,7 +278,7 @@ class ProfitCalculator
 
                     // Minska den totala kostnaden och antalet aktier
                     $totalCost = bcsub($totalCost, $sellCost, $scale);
-                    $totalQuantity = bcsub($totalQuantity, $quantity, $scale);
+                    $totalQuantity = bcsub((string) $totalQuantity, $quantity, $scale);
                 }
             } elseif ($transaction->getType() === 'share_split') {
                 if ($totalQuantity != 0) {
@@ -288,13 +288,13 @@ class ProfitCalculator
         }
 
         if (Utility::isNearlyZero($totalCost)) {
-            $totalCost = 0;
+            $totalCost = '0.0';
         }
 
         // Om det inte finns några aktier kvar så kan vi anta att det inte finns något anskaffningsvärde kvar.
         if ($totalCost != 0 && ($actualQuantity == 0 || Utility::isNearlyZero($totalQuantity))) {
             print("Notice: No shares left for {$transactions[0]->getName()} ({$transactions[0]->getIsin()}) ") . $totalCost . PHP_EOL;
-            $totalCost = 0;
+            $totalCost = '0.0';
         }
 
         $result = new stdClass();

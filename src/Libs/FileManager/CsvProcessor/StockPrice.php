@@ -1,11 +1,11 @@
 <?php
 
-namespace src\Libs\FileManager\Importer;
+namespace src\Libs\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Holding;
 
-class StockPrice extends CsvParser
+class StockPrice
 {
     protected static string $DIR = STOCK_PRICE_DIR;
     protected const CSV_SEPARATOR = ",";
@@ -43,6 +43,9 @@ class StockPrice extends CsvParser
     protected function parseTransactions(string $fileName): array
     {
         $files = glob(STOCK_PRICE_DIR . '/*.csv');
+        if (empty($files)) {
+            return [];
+        }
 
         $latestFile = '';
         $latestTime = 0;
@@ -63,13 +66,13 @@ class StockPrice extends CsvParser
             fgetcsv($file);
 
             while (($fields = fgetcsv($file, 0, static::CSV_SEPARATOR)) !== false) {
-                $holding = new Holding();
+                $holding = new Holding(
+                    name: trim($fields[0]),
+                    isin: trim($fields[1]),
+                    price: (float) $fields[3]
+                );
 
-                $holding->name = trim($fields[0]);
-                $holding->isin = trim($fields[1]);
-                $holding->price = (float) $fields[3];
-
-                $holdings[$holding->isin] = $holding;
+                $holdings[$holding->getIsin()] = $holding;
             }
         }
 
@@ -83,8 +86,8 @@ class StockPrice extends CsvParser
         }
 
         foreach ($this->currentHoldingsData as $holding) {
-            if ($holding->isin === $isin) {
-                return $holding->price;
+            if ($holding->getIsin() === $isin) {
+                return $holding->getPrice();
             }
         }
 
@@ -98,8 +101,8 @@ class StockPrice extends CsvParser
         }
 
         foreach ($this->currentHoldingsData as $holding) {
-            if ($holding->isin === $isin) {
-                return $holding->name;
+            if ($holding->getIsin() === $isin) {
+                return $holding->getName();
             }
         }
 

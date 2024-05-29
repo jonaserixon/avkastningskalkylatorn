@@ -6,9 +6,9 @@ use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
-use src\Libs\FileManager\Importer\Avanza;
-use src\Libs\FileManager\Importer\Nordnet;
-use src\Libs\FileManager\Importer\StockPrice;
+use src\Libs\FileManager\CsvProcessor\Avanza;
+use src\Libs\FileManager\CsvProcessor\Nordnet;
+use src\Libs\FileManager\CsvProcessor\StockPrice;
 
 class TransactionLoader
 {
@@ -89,11 +89,10 @@ class TransactionLoader
 
         foreach ($filters as $key => $value) {
             if ($value) {
-                $value = mb_strtoupper($value);
                 $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
-                    if ($key === 'asset') {
+                    if ($key === 'asset' && is_string($value)) {
                         // To support multiple assets
-                        $assets = explode(',', $value);
+                        $assets = explode(',', mb_strtoupper($value));
                         foreach ($assets as $asset) {
                             if (str_contains(mb_strtoupper($transaction->getName()), trim($asset))) {
                                 return true;
@@ -103,11 +102,11 @@ class TransactionLoader
                         return false;
                     }
 
-                    if ($key === 'dateFrom') {
+                    if ($key === 'dateFrom' && is_string($value)) {
                         return strtotime($transaction->getDateString()) >= strtotime($value);
                     }
 
-                    if ($key === 'dateTo') {
+                    if ($key === 'dateTo' && is_string($value)) {
                         return strtotime($transaction->getDateString()) <= strtotime($value);
                     }
 
@@ -116,9 +115,13 @@ class TransactionLoader
                         return $currentPricePerShare !== null;
                     }
 
-                    $getter = 'get' . ucfirst($key);
-                    $valueToCompare = $transaction->{$getter}();
-                    return mb_strtoupper($valueToCompare) === $value;
+                    if ($key === 'bank' && is_string($value)) {
+                        return mb_strtoupper($transaction->getBank()) === mb_strtoupper($value);
+                    }
+
+                    if ($key === 'isin' && is_string($value)) {
+                        return mb_strtoupper($transaction->getIsin()) === mb_strtoupper($value);
+                    }
                 });
             }
         }

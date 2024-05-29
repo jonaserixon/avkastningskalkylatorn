@@ -390,7 +390,7 @@ class Presenter
 
         $tabsCount = ceil($spacesNeeded / 8);
 
-        $tabsCount = max($tabsCount, 1);
+        $tabsCount = intval(max($tabsCount, 1));
 
         return $label . str_repeat("\t", $tabsCount);
     }
