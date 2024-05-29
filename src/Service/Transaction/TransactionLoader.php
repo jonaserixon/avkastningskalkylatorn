@@ -40,6 +40,7 @@ class TransactionLoader
 
         $this->overview = new FinancialOverview();
         $this->transactionMapper = new TransactionMapper($this->overview);
+        $this->transactionMapper = new TransactionMapper($this->overview);
         $this->stockPrice = new StockPrice();
     }
 
@@ -51,7 +52,11 @@ class TransactionLoader
     {
         $this->overview->firstTransactionDate = $transactions[0]->getDateString();
         $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
+        $this->overview->firstTransactionDate = $transactions[0]->getDateString();
+        $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
 
+        $groupedTransactions = $this->transactionMapper->groupTransactions($transactions);
+        $assets = $this->transactionMapper->addTransactionsToAsset($groupedTransactions);
         $groupedTransactions = $this->transactionMapper->groupTransactions($transactions);
         $assets = $this->transactionMapper->addTransactionsToAsset($groupedTransactions);
 

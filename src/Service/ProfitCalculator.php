@@ -256,6 +256,7 @@ class ProfitCalculator
                     $quantity = bcsub("0", $quantity, $scale); // Gör $quantity negativ
                 }
 
+
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
                 $totalQuantity = bcadd((string) $totalQuantity, $quantity, $scale);
