@@ -3,6 +3,7 @@
 namespace src\DataStructure;
 
 use Exception;
+use src\Enum\TransactionType;
 
 class FinancialAsset
 {
@@ -38,32 +39,48 @@ class FinancialAsset
     /** @var mixed[] */
     public array $bankAccounts = [];
 
-    private ?TransactionGroup $groupedTransactions = null;
+    /** @var Transaction[] */
+    private array $transactions = [];
 
-    public function addTransactions(TransactionGroup $transactions): void
+    /**
+     * @return Transaction[]
+     */
+    public function getTransactions(): array
     {
-        $this->groupedTransactions = $transactions;
+        return $this->transactions;
     }
 
     /**
-     * @param string $type
+     * @param TransactionType $type
      * @return Transaction[]
      */
-    public function getTransactionsByType(string $type): array
+    public function getTransactionsByType(TransactionType $type): array
     {
-        if (!isset($this->groupedTransactions->{$type})) {
-            throw new Exception("Transaction type $type does not exist on {$this->isin}");
+        $matchedTransactions = [];
+        foreach ($this->transactions as $transaction) {
+            if ($transaction->getType() === $type) {
+                $matchedTransactions[] = $transaction;
+            }
         }
 
-        return $this->groupedTransactions->{$type};
+        return $matchedTransactions;
     }
 
-    /*
-    public function getTransactions(): TransactionGroup
+    public function hasTransactionOfType(TransactionType $type): bool
     {
-        return $this->groupedTransactions;
+        foreach ($this->transactions as $transaction) {
+            if ($transaction->getType() === $type) {
+                return true;
+            }
+        }
+
+        return false;
     }
-    */
+
+    public function addTransaction(Transaction $transaction): void
+    {
+        $this->transactions[] = $transaction;
+    }
 
     public function addBuy(float $amount): void
     {

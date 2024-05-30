@@ -52,8 +52,8 @@ class TransactionLoader
         $this->overview->firstTransactionDate = $transactions[0]->getDateString();
         $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
 
-        $groupedTransactions = $this->transactionMapper->groupTransactions($transactions);
-        $assets = $this->transactionMapper->addTransactionsToAsset($groupedTransactions);
+        // $groupedTransactions = $this->transactionMapper->groupTransactions($transactions);
+        $assets = $this->transactionMapper->addTransactionsToAsset($transactions);
 
         if (empty($assets)) {
             throw new Exception('No transaction file in csv format in the "/imports/banks" directory.');
@@ -116,7 +116,7 @@ class TransactionLoader
                     }
 
                     if ($key === 'bank' && is_string($value)) {
-                        return mb_strtoupper($transaction->getBank()) === mb_strtoupper($value);
+                        return mb_strtoupper($transaction->getBankValue()) === mb_strtoupper($value);
                     }
 
                     if ($key === 'isin' && is_string($value)) {

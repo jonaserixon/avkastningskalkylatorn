@@ -2,8 +2,6 @@
 
 namespace src\Enum;
 
-// TODO: implementera enums ordentligt.
-
 enum TransactionType: string
 {
     case BUY = 'buy';
