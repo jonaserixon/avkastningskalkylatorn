@@ -4,6 +4,7 @@ namespace src\Service\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Transaction;
+use src\Enum\Bank;
 use src\Enum\TransactionType;
 use src\Service\Utility;
 use src\View\Logger;
@@ -69,7 +70,7 @@ class Avanza extends CsvProcessor
             $commission = static::convertNumericToFloat($row[7]);
             $currency = $row[8];
             $isin = $row[9];
-            $type = $transactionType->value;
+            $type = $transactionType;
 
             // TODO: implement support for new isin codes (such as when share splits occur)
             $isin = $row[9];
@@ -82,14 +83,14 @@ class Avanza extends CsvProcessor
             }
 
             // TODO: improve this logic
-            if ($type === 'other') { // Special handling of "övrigt" since it contains so many different types of transactions.
+            if ($type->value === 'other') { // Special handling of "övrigt" since it contains so many different types of transactions.
                 $type = $this->mapOtherTransactionType($name);
             }
             $type = $this->customTransactionTypeMapper($name, $type, $rawQuantity, $commission, $rawAmount);
 
             $transaction = new Transaction(
                 date: $date,
-                bank: static::BANK_NAME,
+                bank: Bank::AVANZA,
                 account: $account,
                 type: $type,
                 name: $name,
@@ -105,8 +106,6 @@ class Avanza extends CsvProcessor
 
             $result[] = $transaction;
         }
-
-        // exit;
 
         return $result;
     }
@@ -142,20 +141,20 @@ class Avanza extends CsvProcessor
         return null;
     }
 
-    protected function customTransactionTypeMapper(string $name, string $type, ?float $rawQuantity, ?float $commission, ?float $rawAmount): string
+    protected function customTransactionTypeMapper(string $name, TransactionType $type, ?float $rawQuantity, ?float $commission, ?float $rawAmount): TransactionType
     {
-        if ($type === 'other') {
+        if ($type->value === 'other') {
             // TODO: add a specific type for this so the actual deposits can be kept clean.
             if (Utility::strContains($name, 'kapitalmedelskonto') ||
                 Utility::strContains($name, 'nollställning')
             ) {
-                return 'deposit';
+                return TransactionType::DEPOSIT;
             }
         }
 
         // Check if this can be considered a share split.
-        if ($type === 'other' && $rawQuantity != 0 && $commission == 0 && empty($rawAmount)) {
-            return 'share_split';
+        if ($type->value === 'other' && $rawQuantity != 0 && $commission == 0 && empty($rawAmount)) {
+            return TransactionType::SHARE_SPLIT;
         }
 
         /*
@@ -177,12 +176,12 @@ class Avanza extends CsvProcessor
         return $type;
     }
 
-    public function mapOtherTransactionType(string $name): string
+    public function mapOtherTransactionType(string $name): TransactionType
     {
         $fees = ['avgift', 'riskpremie', 'adr'];
         foreach ($fees as $fee) {
             if (Utility::strContains($name, $fee)) {
-                return 'fee';
+                return TransactionType::FEE;
             }
         }
 
@@ -190,16 +189,16 @@ class Avanza extends CsvProcessor
         if (Utility::strContains($name, 'återbetalning') &&
             Utility::strContains($name, 'källskatt')
         ) {
-            return 'returned_foreign_withholding_tax';
+            return TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX;
         }
 
         $taxes = ['skatt']; // 'avkastningsskatt', 'källskatt',
         foreach ($taxes as $tax) {
             if (Utility::strContains($name, $tax)) {
-                return 'tax';
+                return TransactionType::TAX;
             }
         }
 
-        return 'other';
+        return TransactionType::OTHER;
     }
 }

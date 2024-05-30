@@ -4,6 +4,7 @@ namespace src\Service\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Transaction;
+use src\Enum\Bank;
 use src\Enum\TransactionType;
 
 class Nordnet extends CsvProcessor
@@ -81,14 +82,14 @@ class Nordnet extends CsvProcessor
                 $pricePerShareSEK = abs($rawAmount) / abs($rawQuantity);
             }
 
-            $type = $this->mapTransactionTypeByName($type, $description);
-            if ($type === 'sell') {
+            $type = $this->mapTransactionTypeByName($transactionType, $description);
+            if ($type->value === 'sell') {
                 $rawQuantity = -1 * $rawQuantity; // Sell transactions must have negative quantity
             }
 
             $transaction = new Transaction(
                 date: $date,
-                bank: static::BANK_NAME,
+                bank: Bank::NORDNET,
                 account: $account,
                 type: $type,
                 name: $name,
@@ -147,11 +148,11 @@ class Nordnet extends CsvProcessor
         return null;
     }
 
-    public function mapTransactionTypeByName(string $type, string $description): string
+    public function mapTransactionTypeByName(TransactionType $type, string $description): TransactionType
     {
         // Återbetald utländsk källskatt
         if (str_contains(mb_strtolower($description), 'återbetalning') && str_contains(mb_strtolower($description), 'källskatt')) {
-            return 'returned_foreign_withholding_tax';
+            return TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX;
         }
 
         return $type;

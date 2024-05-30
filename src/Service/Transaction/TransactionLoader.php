@@ -137,7 +137,7 @@ class TransactionLoader
                 return $dateComparison;
             }
 
-            $bankComparison = strcmp($a->getBank(), $b->getBank());
+            $bankComparison = strcmp($a->getBankValue(), $b->getBankValue());
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }

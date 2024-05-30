@@ -6,8 +6,9 @@ use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
 use src\DataStructure\TransactionGroup;
-use src\View\Logger;
+use src\Enum\TransactionType;
 use src\Service\Utility;
+use src\View\Logger;
 use stdClass;
 
 class TransactionMapper
@@ -80,11 +81,11 @@ class TransactionMapper
 
             $this->updateAssetBasedOnTransactionType($asset, $groupTransactionType, $transaction);
 
-            if (!in_array($transaction->getBank(), array_keys($asset->bankAccounts))) {
-                $asset->bankAccounts[$transaction->getBank()] = [];
+            if (!in_array($transaction->getBankValue(), array_keys($asset->bankAccounts))) {
+                $asset->bankAccounts[$transaction->getBankValue()] = [];
             }
-            if (!in_array($transaction->getAccount(), $asset->bankAccounts[$transaction->getBank()])) {
-                $asset->bankAccounts[$transaction->getBank()][] = $transaction->getAccount();
+            if (!in_array($transaction->getAccount(), $asset->bankAccounts[$transaction->getBankValue()])) {
+                $asset->bankAccounts[$transaction->getBankValue()][] = $transaction->getAccount();
             }
             if (!in_array($transaction->getName(), $asset->transactionNames)) {
                 $asset->transactionNames[] = $transaction->getName();
@@ -136,7 +137,7 @@ class TransactionMapper
                 break;
             case 'other': // TODO: handle this based on the cashflow but give a notice.
             default:
-                Logger::getInstance()->addWarning("Unhandled transaction type: '{$transaction->getType()}' in '{$transaction->getName()}' ({$transaction->getIsin()}) [{$transaction->getDateString()}] from bank: {$transaction->getBank()}");
+                Logger::getInstance()->addWarning("Unhandled transaction type: '{$transaction->getTypeValue()}' in '{$transaction->getName()}' ({$transaction->getIsin()}) [{$transaction->getDateString()}] from bank: {$transaction->getBankValue()}");
                 break;
         }
     }
@@ -247,12 +248,12 @@ class TransactionMapper
                 $groupedTransactions[$transaction->getIsin()] = new TransactionGroup();
             }
 
-            if (!property_exists($groupedTransactions[$transaction->getIsin()], $transaction->getType())) {
-                Logger::getInstance()->addWarning("Unknown transaction type: '{$transaction->getType()}' in {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
+            if (!property_exists($groupedTransactions[$transaction->getIsin()], $transaction->getTypeValue())) {
+                Logger::getInstance()->addWarning("Unknown transaction type: '{$transaction->getTypeValue()}' in {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
                 continue;
             }
 
-            $groupedTransactions[$transaction->getIsin()]->{$transaction->getType()}[] = $transaction;
+            $groupedTransactions[$transaction->getIsin()]->{$transaction->getTypeValue()}[] = $transaction;
         }
 
         return $groupedTransactions;
@@ -271,7 +272,7 @@ class TransactionMapper
     private function getInitialAndLastTransactionDate(array $transactions, ?string $firstTransactionDate, ?string $lastTransactionDate): stdClass
     {
         foreach ($transactions as $transaction) {
-            if (!in_array($transaction->getType(), ['buy', 'sell'])) {
+            if (!in_array($transaction->getType(), [TransactionType::BUY, TransactionType::SELL])) {
                 continue;
             }
 
