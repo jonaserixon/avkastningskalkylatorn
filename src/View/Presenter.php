@@ -4,6 +4,7 @@ namespace src\View;
 
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\FinancialAsset;
+use src\Enum\TransactionType;
 
 class Presenter
 {
@@ -69,6 +70,9 @@ class Presenter
         }
     }
 
+    /**
+     * @param FinancialAsset[] $assets
+     */
     public function displayInvestmentReport(FinancialOverview $overview, array $assets): void
     {
         $numberOfBuys = 0;
@@ -77,19 +81,19 @@ class Presenter
         $numberOfWithdrawals = 0;
         $numberOfDividends = 0;
         foreach ($overview->cashFlows as $cashFlow) {
-            if ($cashFlow->getType() === 'buy') {
+            if ($cashFlow->getType() === TransactionType::BUY) {
                 $numberOfBuys++;
             }
-            if ($cashFlow->getType() === 'sell') {
+            if ($cashFlow->getType() === TransactionType::SELL) {
                 $numberOfSells++;
             }
-            if ($cashFlow->getType() === 'deposit') {
+            if ($cashFlow->getType() === TransactionType::DEPOSIT) {
                 $numberOfDeposits++;
             }
-            if ($cashFlow->getType() === 'withdrawal') {
+            if ($cashFlow->getType() === TransactionType::WITHDRAWAL) {
                 $numberOfWithdrawals++;
             }
-            if ($cashFlow->getType() === 'dividend') {
+            if ($cashFlow->getType() === TransactionType::DIVIDEND) {
                 $numberOfDividends++;
             }
         }
@@ -322,6 +326,9 @@ class Presenter
         */
     }
 
+    /**
+     * @param FinancialAsset[] $assets
+     */
     public function displayAssetNotices(array $assets): void
     {
         foreach ($assets as $asset) {

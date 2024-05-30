@@ -61,10 +61,10 @@ class TransactionCommand extends CommandProcessor
 
             foreach ((array) $result->overview->cashFlows as $cashFlow) {
                 $res = $cashFlow->getDateString() . ' | ';
-                $res .= TextColorizer::colorText($cashFlow->getBank(), 'grey') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->getBankValue(), 'grey') . ' | ';
                 $res .= TextColorizer::colorText($cashFlow->getAccount(), 'green') . ' | ';
                 $res .= TextColorizer::colorText($cashFlow->getName(), 'pink') . ' | ';
-                $res .= TextColorizer::colorText($cashFlow->getType(), 'yellow') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->getTypeValue(), 'yellow') . ' | ';
                 $res .= TextColorizer::colorText($this->presenter->formatNumber($cashFlow->getRawAmount()), 'cyan');
 
                 echo $res . PHP_EOL;
@@ -73,10 +73,10 @@ class TransactionCommand extends CommandProcessor
             echo 'Datum | Bank | Konto | Namn | Typ | Belopp | Antal | Pris' . PHP_EOL;
             foreach ($transactions as $transaction) {
                 $res = $transaction->getDateString() . ' | ';
-                $res .= TextColorizer::colorText($transaction->getBank(), 'grey') . ' | ';
+                $res .= TextColorizer::colorText($transaction->getBankValue(), 'grey') . ' | ';
                 $res .= TextColorizer::colorText($transaction->getAccount(), 'green') . ' | ';
                 $res .= TextColorizer::colorText($transaction->getName() . " ({$transaction->getIsin()})", 'pink') . ' | ';
-                $res .= TextColorizer::colorText($transaction->getType(), 'yellow') . ' | ';
+                $res .= TextColorizer::colorText($transaction->getTypeValue(), 'yellow') . ' | ';
                 $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->getRawAmount()), 'cyan') . ' | ';
                 $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->getRawQuantity()), 'grey') . ' | ';
                 $res .= TextColorizer::backgroundColor($this->presenter->formatNumber($transaction->getRawPrice()), 'green');

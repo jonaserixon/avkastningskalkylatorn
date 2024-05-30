@@ -6,6 +6,8 @@ use src\DataStructure\AssetReturn;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
+use src\Enum\Bank;
+use src\Enum\TransactionType;
 use src\Service\FileManager\CsvProcessor\StockPrice;
 use src\View\Logger;
 use stdClass;
@@ -22,9 +24,10 @@ class ProfitCalculator
     }
 
     /**
+     * Calculate realized gains, unrealized gains, current value of shares and total return for each asset.
+     *
      * @param FinancialAsset[] $assets
      * @param FinancialOverview $overview
-     *
      * @return stdClass
      */
     public function calculate(array $assets, FinancialOverview $overview): stdClass
@@ -38,9 +41,9 @@ class ProfitCalculator
 
             // Skapa en kopia av transaktionerna här, vi vill inte påverka originaldatat.
             $mergedTransactions = array_merge(
-                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType('buy')),
-                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType('sell')),
-                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType('share_split'))
+                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::BUY)),
+                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::SELL)),
+                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::SHARE_SPLIT))
             );
 
             if (!empty($mergedTransactions)) {
@@ -56,10 +59,10 @@ class ProfitCalculator
             unset($mergedTransactions);
 
             // Temporary solution for Avanzas handling of share transfers from Avanza to another bank(?).
-            if (!empty($asset->getTransactionsByType('share_transfer')) && empty($asset->getCurrentNumberOfShares()) && $asset->getBuyAmount() < 0) {
+            if (!empty($asset->hasTransactionOfType(TransactionType::SHARE_TRANSFER)) && empty($asset->getCurrentNumberOfShares()) && $asset->getBuyAmount() < 0) {
                 $shareTransferQuantity = 0;
                 $shareTransferAmount = 0;
-                foreach ($asset->getTransactionsByType('share_transfer') as $shareTransfer) {
+                foreach ($asset->getTransactionsByType(TransactionType::SHARE_TRANSFER) as $shareTransfer) {
                     $shareTransferAmount += $shareTransfer->getRawQuantity() * $shareTransfer->getRawPrice();
                     $shareTransferQuantity += $shareTransfer->getRawQuantity();
                 }
@@ -81,9 +84,9 @@ class ProfitCalculator
                         date('Y-m-d'),
                         $currentValueOfShares,
                         $asset->name,
-                        'current_holding_value',
+                        TransactionType::CURRENT_HOLDING,
                         '-',
-                        '-'
+                        Bank::NOT_SPECIFIED
                     );
                     $overview->lastTransactionDate = date('Y-m-d');
 
@@ -251,7 +254,7 @@ class ProfitCalculator
 
             // echo $transaction->type . ' = amount: ' . $amount . ', quantity: ' . $quantity . ', date: ' . $transaction->date . PHP_EOL;
 
-            if ($transaction->getType() === 'buy') {
+            if ($transaction->getTypeValue() === 'buy') {
                 // "Hanterar" makulerade köptransaktioner
                 if ($transaction->getRawAmount() > 0 && $transaction->getRawQuantity() < 0) {
                     Logger::getInstance()->addWarning("Buy transaction with negative quantity: {$transaction->getRawQuantity()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
@@ -264,7 +267,7 @@ class ProfitCalculator
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
                 $totalQuantity = bcadd((string) $totalQuantity, $quantity, $scale);
-            } elseif ($transaction->getType() === 'sell') {
+            } elseif ($transaction->getTypeValue() === 'sell') {
                 // Leta efter makulerade säljtransaktioner
                 if ($transaction->getRawAmount() < 0 && $transaction->getRawQuantity() > 0) {
                     Logger::getInstance()->addWarning("Sell transaction with negative amount: {$transaction->getRawAmount()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
@@ -283,7 +286,7 @@ class ProfitCalculator
                     $totalCost = bcsub($totalCost, $sellCost, $scale);
                     $totalQuantity = bcsub((string) $totalQuantity, $quantity, $scale);
                 }
-            } elseif ($transaction->getType() === 'share_split') {
+            } elseif ($transaction->getTypeValue() === 'share_split') {
                 if ($totalQuantity != 0) {
                     $totalQuantity += $transaction->getRawQuantity();
                 }

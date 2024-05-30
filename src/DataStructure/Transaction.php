@@ -3,13 +3,15 @@
 namespace src\DataStructure;
 
 use DateTime;
+use src\Enum\Bank;
+use src\Enum\TransactionType;
 
 class Transaction
 {
     private DateTime $date;
-    private string $bank; // private Bank $bank;
+    private Bank $bank;
     private string $account;
-    private string $type; // private TransactionType $type;
+    private TransactionType $type;
     private string $name;
     private ?string $description;
     private ?float $rawQuantity; // float to handle fractional shares
@@ -22,9 +24,9 @@ class Transaction
 
     public function __construct(
         DateTime $date,
-        string $bank,
+        Bank $bank,
         string $account,
-        string $type,
+        TransactionType $type,
         string $name,
         ?string $description,
         ?float $rawQuantity,
@@ -60,9 +62,14 @@ class Transaction
         return $this->date->format('Y-m-d');
     }
 
-    public function getBank(): string
+    public function getBank(): Bank
     {
         return $this->bank;
+    }
+
+    public function getBankValue(): string
+    {
+        return $this->bank->value;
     }
 
     public function getAccount(): string
@@ -70,9 +77,14 @@ class Transaction
         return $this->account;
     }
 
-    public function getType(): string
+    public function getType(): TransactionType
     {
         return $this->type;
+    }
+
+    public function getTypeValue(): string
+    {
+        return $this->type->value;
     }
 
     public function getName(): string

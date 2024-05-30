@@ -2,7 +2,7 @@
 
 namespace src\Command;
 
-class CommandDefinitions
+readonly class CommandDefinitions
 {
     public const COMMANDS = [
         'help' => [

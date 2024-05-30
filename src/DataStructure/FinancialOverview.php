@@ -4,6 +4,8 @@ namespace src\DataStructure;
 
 use Exception;
 use src\DataStructure\Transaction;
+use src\Enum\Bank;
+use src\Enum\TransactionType;
 
 // TODO: more consistent naming.
 
@@ -40,7 +42,7 @@ class FinancialOverview
 
     // TODO: think about where to put all of this shit.
 
-    public function addCashFlow(string $date, float $amount, string $name, string $type, string $account, string $bank): void
+    public function addCashFlow(string $date, float $amount, string $name, TransactionType $type, string $account, Bank $bank): void
     {
         $dateTime = date_create($date);
         if ($dateTime === false) {
