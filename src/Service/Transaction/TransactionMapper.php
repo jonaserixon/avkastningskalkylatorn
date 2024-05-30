@@ -8,7 +8,6 @@ use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
 use src\Service\Utility;
 use src\View\Logger;
-use stdClass;
 
 class TransactionMapper
 {

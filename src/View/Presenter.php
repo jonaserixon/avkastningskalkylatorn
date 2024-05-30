@@ -4,7 +4,6 @@ namespace src\View;
 
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\FinancialAsset;
-use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
 
 class Presenter

@@ -2,7 +2,6 @@
 
 namespace src\DataStructure;
 
-use Exception;
 use src\Enum\TransactionType;
 
 class FinancialAsset
