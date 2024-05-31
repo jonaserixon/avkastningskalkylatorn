@@ -20,6 +20,10 @@ readonly class CommandDefinitions
                     'description' => 'Bank(s) to calculate profit for',
                     'require-value' => true
                 ],
+                'account' => [
+                    'description' => 'Account(s) to calculate profit for',
+                    'require-value' => true
+                ],
                 'date-from' => [
                     'description' => 'Date to calculate profit from',
                     'require-value' => true
@@ -50,6 +54,11 @@ readonly class CommandDefinitions
                     'description' => 'Show investment overview report',
                     'default' => false,
                     'require-value' => false
+                ],
+                'display-log' => [
+                    'description' => 'Display logs related to how transactions are handled and more',
+                    'default' => false,
+                    'require-value' => false
                 ]
             ]
         ],
@@ -59,14 +68,27 @@ readonly class CommandDefinitions
                 'bank' => [
                     'description' => 'Bank(s) to generate ISIN list for',
                     'require-value' => false
-                ]
+                ],
+                'account' => [
+                    'description' => 'Account(s) to calculate profit for',
+                    'require-value' => true
+                ],
             ]
         ],
         'transaction' => [
             'description' => 'View transaction(s)',
             'options' => [
+                'export-csv' => [
+                    'description' => 'Generate and export CSV file',
+                    'default' => false,
+                    'require-value' => false
+                ],
                 'bank' => [
                     'description' => 'Bank to add transaction to',
+                    'require-value' => true
+                ],
+                'account' => [
+                    'description' => 'Account(s) to calculate profit for',
                     'require-value' => true
                 ],
                 'date-from' => [
@@ -102,6 +124,11 @@ readonly class CommandDefinitions
                     'description' => 'Cash flow of transactions',
                     'require-value' => false
                 ],
+                'display-log' => [
+                    'description' => 'Display logs related to how transactions are handled and more',
+                    'default' => false,
+                    'require-value' => false
+                ]
             ]
         ]
     ];

@@ -2,6 +2,7 @@
 
 namespace src\Service;
 
+use Exception;
 use src\DataStructure\AssetReturn;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
@@ -138,7 +139,7 @@ class ProfitCalculator
      * @param FinancialOverview $overview
      * @param FinancialAsset[] $assets
      */
-    protected function calculateCurrentHoldingsWeighting(FinancialOverview $overview, array $assets): void
+    private function calculateCurrentHoldingsWeighting(FinancialOverview $overview, array $assets): void
     {
         foreach ($assets as $asset) {
             if ($asset->getCurrentValueOfShares() > 0) {
@@ -148,7 +149,7 @@ class ProfitCalculator
         }
     }
 
-    protected function calculateTotalReturnForAsset(FinancialAsset $asset): ?AssetReturn
+    private function calculateTotalReturnForAsset(FinancialAsset $asset): AssetReturn
     {
         if ($asset->getCurrentValueOfShares() === null) {
             $asset->setCurrentValueOfShares(0);
@@ -169,7 +170,7 @@ class ProfitCalculator
         return $result;
     }
 
-    protected function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetReturn
+    private function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetReturn
     {
         $totalReturnInclFees = 0;
         $totalReturnInclFees += $overview->totalSellAmount;
@@ -184,6 +185,38 @@ class ProfitCalculator
 
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
+
+        // $cashFlowArray = [];
+        // foreach ($overview->cashFlows as $cashFlow) {
+        //     $amount = $cashFlow->getRawAmount();
+        //     if ($cashFlow->getTypeValue() === 'deposit') {
+        //         $amount = $amount * -1;
+        //     } elseif ($cashFlow->getTypeValue() === 'withdrawal') {
+        //         $amount = abs($amount);
+        //     }
+        //     if (!in_array($cashFlow->getType(), [
+        //         TransactionType::DEPOSIT,
+        //         TransactionType::WITHDRAWAL,
+        //         TransactionType::DIVIDEND,
+        //         TransactionType::CURRENT_HOLDING,
+        //         TransactionType::FEE,
+        //         TransactionType::FOREIGN_WITHHOLDING_TAX,
+        //         TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX
+        //     ])) {
+        //         continue;
+        //     }
+        //     $cashFlowArray[] = [
+        //         'date' => $cashFlow->getDateString(),
+        //         'amount' => $amount
+        //     ];
+        // }
+
+        $xirr = $this->calculateXIRR($overview->cashFlows, 'portfolio');
+        if ($xirr === null) {
+            Logger::getInstance()->addNotice("XIRR did not converge for holding cash flows");
+        } else {
+            $result->xirr = $xirr * 100;
+        }
 
         return $result;
     }
@@ -234,7 +267,7 @@ class ProfitCalculator
      * @param Transaction[] $transactions
      * @return stdClass
      */
-    public function calculateRealizedGains(array $transactions): stdClass
+    private function calculateRealizedGains(array $transactions): stdClass
     {
         $totalCost = '0.0';
         $totalQuantity = '0.0';
@@ -310,5 +343,110 @@ class ProfitCalculator
         $result->actualQuantity = round(floatval($actualQuantity), 3);
 
         return $result;
+    }
+
+    /**
+     * Calculate the XIRR (Internal Rate of Return) for a list of cash flows.
+     *
+     * @param Transaction[] $cashFlows
+     * @param string $method portfolio|holding
+     * @return float|null
+     */
+    protected function calculateXIRR(array $cashFlows, string $method): ?float
+    {
+        // TODO: improve this part
+        $transactions = [];
+        if ($method === 'portfolio') {
+            foreach ($cashFlows as $cashFlow) {
+                $amount = $cashFlow->getRawAmount();
+                if ($cashFlow->getTypeValue() === 'deposit') {
+                    $amount = $amount * -1;
+                } elseif ($cashFlow->getTypeValue() === 'withdrawal') {
+                    $amount = abs($amount);
+                }
+                if (!in_array($cashFlow->getType(), [
+                    TransactionType::DEPOSIT,
+                    TransactionType::WITHDRAWAL,
+                    TransactionType::DIVIDEND,
+                    TransactionType::CURRENT_HOLDING,
+                    TransactionType::FEE,
+                    TransactionType::FOREIGN_WITHHOLDING_TAX,
+                    TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX
+                ])) {
+                    continue;
+                }
+                $transactions[] = [
+                    'date' => $cashFlow->getDate(),
+                    'amount' => $amount
+                ];
+            }
+        } elseif ($method === 'holding') {
+            foreach ($cashFlows as $cashFlow) {
+                $amount = $cashFlow->getRawAmount();
+                if (!in_array($cashFlow->getType(), [
+                    TransactionType::BUY,
+                    TransactionType::SELL,
+                    TransactionType::DIVIDEND,
+                    TransactionType::CURRENT_HOLDING,
+                    TransactionType::FEE,
+                    TransactionType::FOREIGN_WITHHOLDING_TAX
+                ])) {
+                    continue;
+                }
+                $transactions[] = [
+                    'date' => $cashFlow->getDate(),
+                    'amount' => $amount
+                ];
+            }
+        } else {
+            throw new Exception('Invalid method for XIRR calculation');
+        }
+
+        usort($transactions, function ($a, $b) {
+            return $a['date'] <=> $b['date'];
+        });
+
+        $minDate = $transactions[0]['date'];
+
+        // NPV (Net Present Value) function
+        $npv = function ($rate) use ($transactions, $minDate) {
+            $sum = 0;
+            foreach ($transactions as $transaction) {
+                $amount = $transaction['amount'];
+                $date = $transaction['date'];
+                $days = $minDate->diff($date)->days;
+                $sum += $amount / pow(1 + $rate, $days / 365);
+            }
+            return $sum;
+        };
+
+        // Newton-Raphson method to find the root
+        $guess = 0.1;
+        $tolerance = 0.0001;
+        $maxIterations = 100;
+        $iteration = 0;
+
+        while ($iteration < $maxIterations) {
+            $npvValue = $npv($guess);
+            $npvDerivative = ($npv($guess + $tolerance) - $npvValue) / $tolerance;
+
+            // Hantera liten derivata
+            if (abs($npvDerivative) < $tolerance) {
+                // Justera gissningen lite för att undvika division med noll
+                $npvDerivative = $tolerance;
+            }
+
+            $newGuess = $guess - $npvValue / $npvDerivative;
+
+            if (abs($newGuess - $guess) < $tolerance) {
+                return $newGuess;
+            }
+
+            $guess = $newGuess;
+            $iteration++;
+        }
+
+        // throw new Exception("XIRR did not converge");
+        return null;
     }
 }

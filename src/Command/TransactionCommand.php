@@ -2,8 +2,11 @@
 
 namespace src\Command;
 
+use src\Enum\TransactionType;
+use src\Service\FileManager\Exporter;
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
+use src\View\Logger;
 use src\View\TextColorizer;
 use stdClass;
 
@@ -27,6 +30,7 @@ class TransactionCommand extends CommandProcessor
         $commandOptions = $this->commands['transaction']['options'];
 
         $options = new stdClass();
+        $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
         $options->bank = $this->options['bank'] ?? null;
         $options->isin = $this->options['isin'] ?? null;
         $options->asset = $this->options['asset'] ?? null;
@@ -34,6 +38,8 @@ class TransactionCommand extends CommandProcessor
         $options->dateTo = $this->options['date-to'] ?? null;
         $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
         $options->cashFlow = $this->options['cash-flow'] ?? null;
+        $options->account = $this->options['account'] ?? null;
+        $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
 
         return $options;
     }
@@ -48,7 +54,8 @@ class TransactionCommand extends CommandProcessor
             $options->asset,
             $options->dateFrom,
             $options->dateTo,
-            $options->currentHoldings
+            $options->currentHoldings,
+            $options->account
         );
 
         $transactions = $transactionLoader->getTransactions();
@@ -59,7 +66,7 @@ class TransactionCommand extends CommandProcessor
             $profitCalculator = new ProfitCalculator($options->currentHoldings);
             $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
-            foreach ((array) $result->overview->cashFlows as $cashFlow) {
+            foreach ($result->overview->cashFlows as $cashFlow) {
                 $res = $cashFlow->getDateString() . ' | ';
                 $res .= TextColorizer::colorText($cashFlow->getBankValue(), 'grey') . ' | ';
                 $res .= TextColorizer::colorText($cashFlow->getAccount(), 'green') . ' | ';
@@ -68,6 +75,39 @@ class TransactionCommand extends CommandProcessor
                 $res .= TextColorizer::colorText($this->presenter->formatNumber($cashFlow->getRawAmount()), 'cyan');
 
                 echo $res . PHP_EOL;
+            }
+
+            if ($options->exportCsv) {
+                $cashFlowArray = [];
+                foreach ($result->overview->cashFlows as $cashFlow) {
+                    $amount = $cashFlow->getRawAmount();
+                    if ($cashFlow->getTypeValue() === 'deposit') {
+                        $amount = $amount * -1;
+                    } elseif ($cashFlow->getTypeValue() === 'withdrawal') {
+                        $amount = abs($amount);
+                    }
+                    if (!in_array($cashFlow->getType(), [
+                        TransactionType::DEPOSIT,
+                        TransactionType::WITHDRAWAL,
+                        TransactionType::DIVIDEND,
+                        TransactionType::CURRENT_HOLDING,
+                        TransactionType::FEE,
+                        TransactionType::FOREIGN_WITHHOLDING_TAX,
+                        TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX
+                    ])) {
+                        continue;
+                    }
+                    $cashFlowArray[] = [
+                        $cashFlow->getDateString(),
+                        $cashFlow->getBankValue(),
+                        $cashFlow->getAccount(),
+                        $cashFlow->getName(),
+                        $cashFlow->getTypeValue(),
+                        $amount
+                    ];
+                }
+                $headers = ['Datum', 'Bank', 'Konto', 'Namn', 'Typ', 'Belopp'];
+                Exporter::exportToCsv($headers, $cashFlowArray, 'cash_flow');
             }
         } else {
             echo 'Datum | Bank | Konto | Namn | Typ | Belopp | Antal | Pris' . PHP_EOL;
@@ -83,6 +123,14 @@ class TransactionCommand extends CommandProcessor
 
                 echo $res . PHP_EOL;
             }
+        }
+
+        Logger::getInstance()->printInfos();
+
+        if ($options->displayLog) {
+            Logger::getInstance()
+                ->printNotices()
+                ->printWarnings();
         }
     }
 }

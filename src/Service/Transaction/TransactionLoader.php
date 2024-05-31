@@ -18,6 +18,7 @@ class TransactionLoader
     private ?string $filterDateFrom;
     private ?string $filterDateTo;
     private bool $filterCurrentHoldings;
+    private ?string $filterAccount;
 
     private TransactionMapper $transactionMapper;
     private StockPrice $stockPrice;
@@ -29,7 +30,8 @@ class TransactionLoader
         ?string $filterAsset,
         ?string $filterDateFrom,
         ?string $filterDateTo,
-        bool $filterCurrentHoldings
+        bool $filterCurrentHoldings,
+        ?string $filterAccount
     ) {
         $this->filterBank = $filterBank;
         $this->filterIsin = $filterIsin;
@@ -37,6 +39,7 @@ class TransactionLoader
         $this->filterDateFrom = $filterDateFrom;
         $this->filterDateTo = $filterDateTo;
         $this->filterCurrentHoldings = $filterCurrentHoldings;
+        $this->filterAccount = $filterAccount;
 
         $this->overview = new FinancialOverview();
         $this->transactionMapper = new TransactionMapper($this->overview);
@@ -84,7 +87,8 @@ class TransactionLoader
             'asset' => $this->filterAsset,
             'dateFrom' => $this->filterDateFrom,
             'dateTo' => $this->filterDateTo,
-            'currentHoldings' => $this->filterCurrentHoldings
+            'currentHoldings' => $this->filterCurrentHoldings,
+            'account' => $this->filterAccount
         ];
 
         foreach ($filters as $key => $value) {
@@ -95,6 +99,17 @@ class TransactionLoader
                         $assets = explode(',', mb_strtoupper($value));
                         foreach ($assets as $asset) {
                             if (str_contains(mb_strtoupper($transaction->getName()), trim($asset))) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    }
+                    if ($key === 'account' && is_string($value)) {
+                        // To support multiple accounts
+                        $accounts = explode(',', mb_strtoupper($value));
+                        foreach ($accounts as $account) {
+                            if (str_contains(mb_strtoupper($transaction->getAccount()), trim($account))) {
                                 return true;
                             }
                         }

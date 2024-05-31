@@ -174,8 +174,13 @@ class Presenter
         $totalReturn += $overview->totalFee;
         $totalReturn += $overview->totalTax;
         echo str_pad(" ", 30) . "Totalt avkastning (inkl. avgifter, källskatt, skatt, räntor): {$this->colorPicker($totalReturn)} SEK" . PHP_EOL;
+        
+        if ($overview->returns->xirr !== null) {
+            echo str_pad("Avkastningsberäkningar:", 30) . PHP_EOL;
+            echo str_pad(" ", 30) . "XIRR: {$this->colorPicker($overview->returns->xirr)} %" . PHP_EOL;
+        }
 
-        echo $this->formatNumber($overview->returns->totalReturnInclFees) . PHP_EOL;
+        // echo $this->formatNumber($overview->returns->totalReturnInclFees) . PHP_EOL;
 
         echo PHP_EOL . str_repeat("=", 70) . PHP_EOL;
     }
