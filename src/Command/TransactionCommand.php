@@ -2,7 +2,6 @@
 
 namespace src\Command;
 
-use DateTime;
 use src\Enum\TransactionType;
 use src\Service\FileManager\Exporter;
 use src\Service\ProfitCalculator;
