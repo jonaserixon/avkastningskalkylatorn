@@ -71,11 +71,6 @@ class CommandProcessor
                 break;
         }
 
-        Logger::getInstance()
-            ->printInfos()
-            ->printNotices()
-            ->printWarnings();
-
         $endTime = microtime(true);
         $executionTime = round($endTime - $startTime, 5);
         echo "\n=============\n" . TextColorizer::colorText("Execution time: $executionTime seconds\n", 'green');

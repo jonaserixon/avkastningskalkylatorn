@@ -38,6 +38,8 @@ class CalculateProfitCommand extends CommandProcessor
         $options->dateTo = $this->options['date-to'] ?? null;
         $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
         $options->overview = $this->options['overview'] ?? $commandOptions['overview']['default'];
+        $options->account = $this->options['account'] ?? null;
+        $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
 
         return $options;
     }
@@ -52,7 +54,8 @@ class CalculateProfitCommand extends CommandProcessor
             $options->asset,
             $options->dateFrom,
             $options->dateTo,
-            $options->currentHoldings
+            $options->currentHoldings,
+            $options->account
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
@@ -89,5 +92,13 @@ class CalculateProfitCommand extends CommandProcessor
         }
 
         $this->presenter->displayAssetNotices($result->assets);
+
+        Logger::getInstance()->printInfos();
+
+        if ($options->displayLog) {
+            Logger::getInstance()
+                ->printNotices()
+                ->printWarnings();
+        }
     }
 }

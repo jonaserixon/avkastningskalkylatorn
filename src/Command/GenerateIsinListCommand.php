@@ -33,6 +33,7 @@ class GenerateIsinListCommand extends CommandProcessor
         $options->dateFrom = $this->options['date-from'] ?? null;
         $options->dateTo = $this->options['date-to'] ?? null;
         $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
+        $options->account = $this->options['account'] ?? null;
 
         return $options;
     }
@@ -47,7 +48,8 @@ class GenerateIsinListCommand extends CommandProcessor
             $options->asset,
             $options->dateFrom,
             $options->dateTo,
-            $options->currentHoldings
+            $options->currentHoldings,
+            $options->account
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
