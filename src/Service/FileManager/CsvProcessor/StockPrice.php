@@ -72,7 +72,7 @@ class StockPrice
                     price: (float) $fields[3]
                 );
 
-                $holdings[$holding->getIsin()] = $holding;
+                $holdings[$holding->isin] = $holding;
             }
         }
 
@@ -86,8 +86,8 @@ class StockPrice
         }
 
         foreach ($this->currentHoldingsData as $holding) {
-            if ($holding->getIsin() === $isin) {
-                return $holding->getPrice();
+            if ($holding->isin === $isin) {
+                return $holding->price;
             }
         }
 
@@ -101,8 +101,8 @@ class StockPrice
         }
 
         foreach ($this->currentHoldingsData as $holding) {
-            if ($holding->getIsin() === $isin) {
-                return $holding->getName();
+            if ($holding->isin === $isin) {
+                return $holding->name;
             }
         }
 

@@ -98,7 +98,7 @@ class TransactionLoader
                         // To support multiple assets
                         $assets = explode(',', mb_strtoupper($value));
                         foreach ($assets as $asset) {
-                            if (str_contains(mb_strtoupper($transaction->getName()), trim($asset))) {
+                            if (str_contains(mb_strtoupper($transaction->name), trim($asset))) {
                                 return true;
                             }
                         }
@@ -109,7 +109,7 @@ class TransactionLoader
                         // To support multiple accounts
                         $accounts = explode(',', mb_strtoupper($value));
                         foreach ($accounts as $account) {
-                            if (str_contains(mb_strtoupper($transaction->getAccount()), trim($account))) {
+                            if (str_contains(mb_strtoupper($transaction->account), trim($account))) {
                                 return true;
                             }
                         }
@@ -126,16 +126,16 @@ class TransactionLoader
                     }
 
                     if ($key === 'currentHoldings') {
-                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->getIsin());
+                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->isin);
                         return $currentPricePerShare !== null;
                     }
 
                     if ($key === 'bank' && is_string($value)) {
-                        return mb_strtoupper($transaction->getBankValue()) === mb_strtoupper($value);
+                        return mb_strtoupper($transaction->getBankName()) === mb_strtoupper($value);
                     }
 
                     if ($key === 'isin' && is_string($value)) {
-                        return mb_strtoupper($transaction->getIsin()) === mb_strtoupper($value);
+                        return mb_strtoupper($transaction->isin) === mb_strtoupper($value);
                     }
                 });
             }
@@ -152,12 +152,12 @@ class TransactionLoader
                 return $dateComparison;
             }
 
-            $bankComparison = strcmp($a->getBankValue(), $b->getBankValue());
+            $bankComparison = strcmp($a->getBankName(), $b->getBankName());
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }
 
-            return strcmp($a->getIsin(), $b->getIsin());
+            return strcmp($a->isin, $b->isin);
         });
 
         return $transactions;

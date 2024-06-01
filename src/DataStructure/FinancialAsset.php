@@ -57,7 +57,7 @@ class FinancialAsset
     {
         $matchedTransactions = [];
         foreach ($this->transactions as $transaction) {
-            if ($transaction->getType() === $type) {
+            if ($transaction->type === $type) {
                 $matchedTransactions[] = $transaction;
             }
         }
@@ -68,7 +68,7 @@ class FinancialAsset
     public function hasTransactionOfType(TransactionType $type): bool
     {
         foreach ($this->transactions as $transaction) {
-            if ($transaction->getType() === $type) {
+            if ($transaction->type === $type) {
                 return true;
             }
         }
@@ -208,5 +208,35 @@ class FinancialAsset
     public function setLastTransactionDate(string $date): void
     {
         $this->lastTransactionDate = $date;
+    }
+
+    public function getRealizedGainLoss(): float
+    {
+        return $this->realizedGainLoss;
+    }
+
+    public function setRealizedGainLoss(float $amount): void
+    {
+        $this->realizedGainLoss = $amount;
+    }
+
+    public function getUnrealizedGainLoss(): float
+    {
+        return $this->unrealizedGainLoss;
+    }
+
+    public function setUnrealizedGainLoss(float $amount): void
+    {
+        $this->unrealizedGainLoss = $amount;
+    }
+
+    public function getCostBasis(): float
+    {
+        return $this->costBasis;
+    }
+
+    public function setCostBasis(float $amount): void
+    {
+        $this->costBasis = $amount;
     }
 }
