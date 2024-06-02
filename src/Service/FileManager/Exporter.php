@@ -25,7 +25,7 @@ class Exporter
         fputcsv($file, $headers, $delimiter);
 
         foreach ($data as $row) {
-            fputcsv($file, $row, $delimiter);
+            fputcsv($file, [$row], $delimiter);
         }
 
         fclose($file);

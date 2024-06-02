@@ -55,11 +55,12 @@ class CalculateProfitCommand extends CommandProcessor
             $options->dateFrom,
             $options->dateTo,
             $options->currentHoldings,
-            $options->account
+            $options->account,
+            true
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-        $profitCalculator = new ProfitCalculator($options->currentHoldings);
+        $profitCalculator = new ProfitCalculator($options->currentHoldings, true);
         $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
         if ($options->verbose) {

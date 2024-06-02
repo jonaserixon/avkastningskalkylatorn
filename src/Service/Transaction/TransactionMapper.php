@@ -2,10 +2,12 @@
 
 namespace src\Service\Transaction;
 
+use DateTime;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
+use src\Service\API\EodHd\EodWrapper;
 use src\Service\Utility;
 use src\View\Logger;
 
@@ -22,12 +24,16 @@ class TransactionMapper
      * @param Transaction[] $transactions
      * @return FinancialAsset[]
      */
-    public function addTransactionsToAsset(array $transactions): array
+    public function addTransactionsToAsset(array $transactions, ?DateTime $dateTo): array
     {
         // echo memory_get_usage() . PHP_EOL;
 
         $assets = [];
         foreach ($transactions as $transaction) {
+            if ($dateTo && $transaction->date > $dateTo) {
+                continue;
+            }
+
             $isin = $transaction->isin;
             if (!$isin) {
                 $this->handleNonAssetTransactionType($transaction);
@@ -98,10 +104,6 @@ class TransactionMapper
                 $this->handleDividendTransaction($asset, $transaction);
                 break;
             case TransactionType::SHARE_SPLIT:
-                if ($transaction->rawQuantity !== null) {
-                    $asset->addCurrentNumberOfShares($transaction->rawQuantity);
-                }
-                break;
             case TransactionType::SHARE_TRANSFER:
                 if ($transaction->rawQuantity !== null) {
                     $asset->addCurrentNumberOfShares($transaction->rawQuantity);

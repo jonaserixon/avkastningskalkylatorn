@@ -65,6 +65,12 @@ class CommandProcessor
             case 'transaction':
                 (new TransactionCommand($options))->execute();
                 break;
+            case 'fetch-historical-price':
+                (new FetchHistoricalPriceCommand($options))->execute();
+                break;
+            case 'analyze':
+                (new AnalyzeCommand($options))->execute();
+                break;
             default:
                 $this->unknownCommand($command);
                 $this->printAvailableCommands();

@@ -343,6 +343,9 @@ class Presenter
         }
     }
 
+    /**
+     * @param int[] $colWidths
+     */
     public function printHorizontalLine(array $colWidths): void
     {
         foreach ($colWidths as $width) {
@@ -351,6 +354,10 @@ class Presenter
         echo '+' . PHP_EOL;
     }
 
+    /**
+     * @param mixed[] $row
+     * @param int[] $colWidths
+     */
     public function printRow(array $row, array $colWidths): void
     {
         foreach ($row as $colIndex => $colValue) {

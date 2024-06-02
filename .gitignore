@@ -3,3 +3,5 @@ imports/banks/nordnet/*
 imports/stock_price/*
 exports/*
 .vscode
+.env
+tmp

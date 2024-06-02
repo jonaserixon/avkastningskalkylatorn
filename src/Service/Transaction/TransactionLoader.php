@@ -2,6 +2,7 @@
 
 namespace src\Service\Transaction;
 
+use DateTime;
 use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
@@ -19,6 +20,7 @@ class TransactionLoader
     private ?string $filterDateTo;
     private bool $filterCurrentHoldings;
     private ?string $filterAccount;
+    private bool $useHistoricalPrices;
 
     private TransactionMapper $transactionMapper;
     private StockPrice $stockPrice;
@@ -31,7 +33,8 @@ class TransactionLoader
         ?string $filterDateFrom,
         ?string $filterDateTo,
         bool $filterCurrentHoldings,
-        ?string $filterAccount
+        ?string $filterAccount,
+        bool $useHistoricalPrices = false
     ) {
         $this->filterBank = $filterBank;
         $this->filterIsin = $filterIsin;
@@ -40,6 +43,7 @@ class TransactionLoader
         $this->filterDateTo = $filterDateTo;
         $this->filterCurrentHoldings = $filterCurrentHoldings;
         $this->filterAccount = $filterAccount;
+        $this->useHistoricalPrices = $useHistoricalPrices;
 
         $this->overview = new FinancialOverview();
         $this->transactionMapper = new TransactionMapper($this->overview);
@@ -50,15 +54,16 @@ class TransactionLoader
      * @param Transaction[] $transactions
      * @return FinancialAsset[]
      */
-    public function getFinancialAssets(array $transactions): array
+    public function getFinancialAssets(array $transactions, ?DateTime $dateTo = null): array
     {
+        $this->overview->cashFlows = [];
         $this->overview->firstTransactionDate = $transactions[0]->getDateString();
         $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
 
-        $assets = $this->transactionMapper->addTransactionsToAsset($transactions);
+        $assets = $this->transactionMapper->addTransactionsToAsset($transactions, $dateTo);
 
         if (empty($assets)) {
-            throw new Exception('No transaction file in csv format in the "/imports/banks" directory.');
+            // throw new Exception('No transaction file in csv format in the "/imports/banks" directory.');
         }
 
         // Sort assets by name for readability.
