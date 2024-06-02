@@ -7,7 +7,7 @@ parameters:
     editorUrl: 'vscode://file/%%file%%:%%line%%'
     editorUrlTitle: '%%relFile%%:%%line%%'
 
-    level: 7
+    level: 8
 
     # https://phpstan.org/user-guide/ignoring-errors
     ignoreErrors:

@@ -149,6 +149,7 @@ class ProfitCalculator
         }
     }
 
+    /*
     private function calculateTotalReturnForAsset(FinancialAsset $asset): AssetReturn
     {
         if ($asset->getCurrentValueOfShares() === null) {
@@ -169,6 +170,7 @@ class ProfitCalculator
 
         return $result;
     }
+    */
 
     private function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetReturn
     {
@@ -347,6 +349,7 @@ class ProfitCalculator
         return $result;
     }
 
+    /*
     private function calculateAverageInvestedCapital(array $transactions, DateTime $endDate): float
     {
         $totalWeightedCapital = 0;
@@ -380,6 +383,7 @@ class ProfitCalculator
             return 0; // Förhindra division med noll
         }
     }
+    */
 
     /**
      * Calculate the XIRR (Internal Rate of Return) for a list of cash flows.
@@ -395,6 +399,10 @@ class ProfitCalculator
         if ($method === 'portfolio') {
             foreach ($cashFlows as $cashFlow) {
                 $amount = $cashFlow->rawAmount;
+                if ($amount === null) {
+                    Logger::getInstance()->addNotice("Null amount for cash flow on {$cashFlow->getDateString()}");
+                    continue;
+                }
                 if ($cashFlow->getTypeName() === 'deposit') {
                     $amount = $amount * -1;
                 } elseif ($cashFlow->getTypeName() === 'withdrawal') {

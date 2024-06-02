@@ -117,9 +117,9 @@ class TransactionCommand extends CommandProcessor
                 $res .= TextColorizer::colorText($transaction->account, 'green') . ' | ';
                 $res .= TextColorizer::colorText($transaction->name . " ({$transaction->isin})", 'pink') . ' | ';
                 $res .= TextColorizer::colorText($transaction->getTypeName(), 'yellow') . ' | ';
-                $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->rawAmount), 'cyan') . ' | ';
-                $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->rawQuantity), 'grey') . ' | ';
-                $res .= TextColorizer::backgroundColor($this->presenter->formatNumber($transaction->rawPrice), 'green');
+                $res .= TextColorizer::colorText($this->presenter->formatNumber((float) $transaction->rawAmount), 'cyan') . ' | ';
+                $res .= TextColorizer::colorText($this->presenter->formatNumber((float) $transaction->rawQuantity), 'grey') . ' | ';
+                $res .= TextColorizer::backgroundColor($this->presenter->formatNumber((float) $transaction->rawPrice), 'green');
 
                 echo $res . PHP_EOL;
             }
