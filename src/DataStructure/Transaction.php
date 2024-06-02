@@ -6,21 +6,21 @@ use DateTime;
 use src\Enum\Bank;
 use src\Enum\TransactionType;
 
-class Transaction
+readonly class Transaction
 {
-    private DateTime $date;
-    private Bank $bank;
-    private string $account;
-    private TransactionType $type;
-    private string $name;
-    private ?string $description;
-    private ?float $rawQuantity; // float to handle fractional shares
-    private ?float $rawPrice;
-    private ?float $pricePerShareSEK; // belopp / antal aktier
-    private ?float $rawAmount;
-    private ?float $commission; // brokerage commission
-    private string $currency;
-    private ?string $isin;
+    public DateTime $date;
+    public Bank $bank;
+    public string $account;
+    public TransactionType $type;
+    public string $name;
+    public ?string $description;
+    public ?float $rawQuantity; // float to handle fractional shares
+    public ?float $rawPrice;
+    public ?float $pricePerShareSEK; // belopp / antal aktier
+    public ?float $rawAmount;
+    public ?float $commission; // brokerage commission
+    public string $currency;
+    public ?string $isin;
 
     public function __construct(
         DateTime $date,
@@ -52,83 +52,18 @@ class Transaction
         $this->isin = $isin;
     }
 
-    public function getDate(): DateTime
-    {
-        return $this->date;
-    }
-
     public function getDateString(): string
     {
         return $this->date->format('Y-m-d');
     }
 
-    public function getBank(): Bank
-    {
-        return $this->bank;
-    }
-
-    public function getBankValue(): string
+    public function getBankName(): string
     {
         return $this->bank->value;
     }
 
-    public function getAccount(): string
-    {
-        return $this->account;
-    }
-
-    public function getType(): TransactionType
-    {
-        return $this->type;
-    }
-
-    public function getTypeValue(): string
+    public function getTypeName(): string
     {
         return $this->type->value;
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getDescription(): ?string
-    {
-        return $this->description;
-    }
-
-    public function getRawQuantity(): ?float
-    {
-        return $this->rawQuantity;
-    }
-
-    public function getRawPrice(): ?float
-    {
-        return $this->rawPrice;
-    }
-
-    public function getPricePerShareSEK(): ?float
-    {
-        return $this->pricePerShareSEK;
-    }
-
-    public function getRawAmount(): ?float
-    {
-        return $this->rawAmount;
-    }
-
-    public function getCommission(): ?float
-    {
-        return $this->commission;
-    }
-
-    public function getCurrency(): string
-    {
-        return $this->currency;
-    }
-
-    public function getIsin(): ?string
-    {
-        return $this->isin;
     }
 }

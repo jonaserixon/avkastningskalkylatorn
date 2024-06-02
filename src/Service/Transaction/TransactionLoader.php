@@ -55,7 +55,6 @@ class TransactionLoader
         $this->overview->firstTransactionDate = $transactions[0]->getDateString();
         $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
 
-        // $groupedTransactions = $this->transactionMapper->groupTransactions($transactions);
         $assets = $this->transactionMapper->addTransactionsToAsset($transactions);
 
         if (empty($assets)) {
@@ -81,65 +80,7 @@ class TransactionLoader
             (new Nordnet())->parseBankTransactions()
         );
 
-        $filters = [
-            'bank' => $this->filterBank,
-            'isin' => $this->filterIsin,
-            'asset' => $this->filterAsset,
-            'dateFrom' => $this->filterDateFrom,
-            'dateTo' => $this->filterDateTo,
-            'currentHoldings' => $this->filterCurrentHoldings,
-            'account' => $this->filterAccount
-        ];
-
-        foreach ($filters as $key => $value) {
-            if ($value) {
-                $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
-                    if ($key === 'asset' && is_string($value)) {
-                        // To support multiple assets
-                        $assets = explode(',', mb_strtoupper($value));
-                        foreach ($assets as $asset) {
-                            if (str_contains(mb_strtoupper($transaction->getName()), trim($asset))) {
-                                return true;
-                            }
-                        }
-
-                        return false;
-                    }
-                    if ($key === 'account' && is_string($value)) {
-                        // To support multiple accounts
-                        $accounts = explode(',', mb_strtoupper($value));
-                        foreach ($accounts as $account) {
-                            if (str_contains(mb_strtoupper($transaction->getAccount()), trim($account))) {
-                                return true;
-                            }
-                        }
-
-                        return false;
-                    }
-
-                    if ($key === 'dateFrom' && is_string($value)) {
-                        return strtotime($transaction->getDateString()) >= strtotime($value);
-                    }
-
-                    if ($key === 'dateTo' && is_string($value)) {
-                        return strtotime($transaction->getDateString()) <= strtotime($value);
-                    }
-
-                    if ($key === 'currentHoldings') {
-                        $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->getIsin());
-                        return $currentPricePerShare !== null;
-                    }
-
-                    if ($key === 'bank' && is_string($value)) {
-                        return mb_strtoupper($transaction->getBankValue()) === mb_strtoupper($value);
-                    }
-
-                    if ($key === 'isin' && is_string($value)) {
-                        return mb_strtoupper($transaction->getIsin()) === mb_strtoupper($value);
-                    }
-                });
-            }
-        }
+        $transactions = $this->filterTransactions($transactions);
 
         if (empty($transactions)) {
             throw new Exception('No transactions found');
@@ -152,13 +93,84 @@ class TransactionLoader
                 return $dateComparison;
             }
 
-            $bankComparison = strcmp($a->getBankValue(), $b->getBankValue());
+            $bankComparison = strcmp($a->getBankName(), $b->getBankName());
             if ($bankComparison !== 0) {
                 return $bankComparison;
             }
 
-            return strcmp($a->getIsin(), $b->getIsin());
+            return strcmp((string) $a->isin, (string) $b->isin);
         });
+
+        return $transactions;
+    }
+
+    /**
+     * @param Transaction[] $transactions
+     * @return Transaction[] filtered transactions
+     */
+    private function filterTransactions(array $transactions): array
+    {
+        $filters = [
+            'bank' => $this->filterBank,
+            'isin' => $this->filterIsin,
+            'asset' => $this->filterAsset,
+            'dateFrom' => $this->filterDateFrom,
+            'dateTo' => $this->filterDateTo,
+            'currentHoldings' => $this->filterCurrentHoldings,
+            'account' => $this->filterAccount
+        ];
+
+        foreach ($filters as $key => $value) {
+            if (!$value) {
+                continue;
+            }
+
+            $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
+                if ($key === 'asset' && is_string($value)) {
+                    // To support multiple assets
+                    $assets = explode(',', mb_strtoupper($value));
+                    foreach ($assets as $asset) {
+                        if (str_contains(mb_strtoupper($transaction->name), trim($asset))) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+                if ($key === 'account' && is_string($value)) {
+                    // To support multiple accounts
+                    $accounts = explode(',', mb_strtoupper($value));
+                    foreach ($accounts as $account) {
+                        if (str_contains(mb_strtoupper($transaction->account), trim($account))) {
+                            return true;
+                        }
+                    }
+
+                    return false;
+                }
+
+                if ($key === 'dateFrom' && is_string($value)) {
+                    return strtotime($transaction->getDateString()) >= strtotime($value);
+                }
+
+                if ($key === 'dateTo' && is_string($value)) {
+                    return strtotime($transaction->getDateString()) <= strtotime($value);
+                }
+
+                if ($key === 'currentHoldings' && $transaction->isin !== null) {
+                    $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->isin);
+                    return $currentPricePerShare !== null;
+                }
+
+                if ($key === 'bank' && is_string($value)) {
+                    return mb_strtoupper($transaction->getBankName()) === mb_strtoupper($value);
+                }
+
+                if ($key === 'isin' && is_string($value) && $transaction->isin !== null) {
+                    return mb_strtoupper($transaction->isin) === mb_strtoupper($value);
+                }
+            });
+        }
 
         return $transactions;
     }

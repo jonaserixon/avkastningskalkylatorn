@@ -40,7 +40,6 @@ class ProfitCalculator
                 continue;
             }
 
-            // Skapa en kopia av transaktionerna här, vi vill inte påverka originaldatat.
             $mergedTransactions = array_merge(
                 array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::BUY)),
                 array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::SELL)),
@@ -50,7 +49,7 @@ class ProfitCalculator
             if (!empty($mergedTransactions)) {
                 // Viktigt att sortera transaktionerna efter datum inför beräkningar.
                 usort($mergedTransactions, function ($a, $b) {
-                    return strcasecmp($a->getDateString(), $b->getDateString());
+                    return $a->date <=> $b->date;
                 });
 
                 $result = $this->calculateRealizedGains($mergedTransactions);
@@ -64,8 +63,8 @@ class ProfitCalculator
                 $shareTransferQuantity = 0;
                 $shareTransferAmount = 0;
                 foreach ($asset->getTransactionsByType(TransactionType::SHARE_TRANSFER) as $shareTransfer) {
-                    $shareTransferAmount += $shareTransfer->getRawQuantity() * $shareTransfer->getRawPrice();
-                    $shareTransferQuantity += $shareTransfer->getRawQuantity();
+                    $shareTransferAmount += $shareTransfer->rawQuantity * $shareTransfer->rawPrice;
+                    $shareTransferQuantity += $shareTransfer->rawQuantity;
                 }
 
                 if ($shareTransferQuantity != 0) {
@@ -93,7 +92,7 @@ class ProfitCalculator
 
                     $asset->setCurrentPricePerShare($currentPricePerShare);
                     $asset->setCurrentValueOfShares($currentValueOfShares);
-                    $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
+                    // $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
 
                     $asset->unrealizedGainLoss = $asset->getCurrentValueOfShares() - $asset->costBasis;
 
@@ -102,7 +101,7 @@ class ProfitCalculator
                     continue;
                 }
 
-                $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
+                // $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
 
                 $isMissingPricePerShare = (int) $asset->getCurrentNumberOfShares() > 0 && !$currentPricePerShare;
 
@@ -149,6 +148,7 @@ class ProfitCalculator
         }
     }
 
+    /*
     private function calculateTotalReturnForAsset(FinancialAsset $asset): AssetReturn
     {
         if ($asset->getCurrentValueOfShares() === null) {
@@ -169,6 +169,7 @@ class ProfitCalculator
 
         return $result;
     }
+    */
 
     private function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetReturn
     {
@@ -186,30 +187,32 @@ class ProfitCalculator
         $result = new AssetReturn();
         $result->totalReturnInclFees = $totalReturnInclFees;
 
-        // $cashFlowArray = [];
-        // foreach ($overview->cashFlows as $cashFlow) {
-        //     $amount = $cashFlow->getRawAmount();
-        //     if ($cashFlow->getTypeValue() === 'deposit') {
-        //         $amount = $amount * -1;
-        //     } elseif ($cashFlow->getTypeValue() === 'withdrawal') {
-        //         $amount = abs($amount);
-        //     }
-        //     if (!in_array($cashFlow->getType(), [
-        //         TransactionType::DEPOSIT,
-        //         TransactionType::WITHDRAWAL,
-        //         TransactionType::DIVIDEND,
-        //         TransactionType::CURRENT_HOLDING,
-        //         TransactionType::FEE,
-        //         TransactionType::FOREIGN_WITHHOLDING_TAX,
-        //         TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX
-        //     ])) {
-        //         continue;
-        //     }
-        //     $cashFlowArray[] = [
-        //         'date' => $cashFlow->getDateString(),
-        //         'amount' => $amount
-        //     ];
-        // }
+        /*
+        $cashFlowArray = [];
+        foreach ($overview->cashFlows as $cashFlow) {
+            $amount = $cashFlow->rawAmount;
+            if (!in_array($cashFlow->type, [
+                TransactionType::DEPOSIT,
+                TransactionType::WITHDRAWAL,
+                TransactionType::DIVIDEND,
+                // TransactionType::CURRENT_HOLDING,
+                TransactionType::FEE,
+                TransactionType::FOREIGN_WITHHOLDING_TAX,
+                TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX
+            ])) {
+                continue;
+            }
+            $cashFlowArray[] = [
+                'date' => $cashFlow->getDateString(),
+                'amount' => $amount,
+                'type' => $cashFlow->getTypeName()
+            ];
+        }
+
+        $averageCapital = $this->calculateAverageInvestedCapital($cashFlowArray, new DateTime());
+        echo "Average Invested Capital: " . number_format($averageCapital, 2) . PHP_EOL;
+        exit;
+        */
 
         $xirr = $this->calculateXIRR($overview->cashFlows, 'portfolio');
         if ($xirr === null) {
@@ -277,20 +280,20 @@ class ProfitCalculator
         $scale = 15;
 
         foreach ($transactions as $transaction) {
-            if ($transaction->getRawAmount() === null || $transaction->getRawQuantity() === null) {
+            if ($transaction->rawAmount === null || $transaction->rawQuantity === null) {
                 continue;
             }
 
-            $actualQuantity += $transaction->getRawQuantity();
-            $amount = Utility::bcabs($transaction->getRawAmount(), $scale);
-            $quantity = Utility::bcabs($transaction->getRawQuantity(), $scale);
+            $actualQuantity += $transaction->rawQuantity;
+            $amount = Utility::bcabs($transaction->rawAmount, $scale);
+            $quantity = Utility::bcabs($transaction->rawQuantity, $scale);
 
             // echo $transaction->type . ' = amount: ' . $amount . ', quantity: ' . $quantity . ', date: ' . $transaction->date . PHP_EOL;
 
-            if ($transaction->getTypeValue() === 'buy') {
+            if ($transaction->getTypeName() === 'buy') {
                 // "Hanterar" makulerade köptransaktioner
-                if ($transaction->getRawAmount() > 0 && $transaction->getRawQuantity() < 0) {
-                    Logger::getInstance()->addWarning("Buy transaction with negative quantity: {$transaction->getRawQuantity()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
+                if ($transaction->rawAmount > 0 && $transaction->rawQuantity < 0) {
+                    Logger::getInstance()->addWarning("Buy transaction with negative quantity: {$transaction->rawQuantity} for {$transaction->name} ({$transaction->isin}) [{$transaction->getDateString()}]");
 
                     $amount = bcsub("0", $amount, $scale); // Gör $amount negativ
                     $quantity = bcsub("0", $quantity, $scale); // Gör $quantity negativ
@@ -300,10 +303,10 @@ class ProfitCalculator
                 // Lägg till köpkostnad och öka antalet aktier
                 $totalCost = bcadd($totalCost, $amount, $scale);
                 $totalQuantity = bcadd((string) $totalQuantity, $quantity, $scale);
-            } elseif ($transaction->getTypeValue() === 'sell') {
+            } elseif ($transaction->getTypeName() === 'sell') {
                 // Leta efter makulerade säljtransaktioner
-                if ($transaction->getRawAmount() < 0 && $transaction->getRawQuantity() > 0) {
-                    Logger::getInstance()->addWarning("Sell transaction with negative amount: {$transaction->getRawAmount()} for {$transaction->getName()} ({$transaction->getIsin()}) [{$transaction->getDateString()}]");
+                if ($transaction->rawAmount < 0 && $transaction->rawQuantity > 0) {
+                    Logger::getInstance()->addWarning("Sell transaction with negative amount: {$transaction->rawAmount} for {$transaction->name} ({$transaction->isin}) [{$transaction->getDateString()}]");
                 }
 
                 // Endast räkna kapitalvinst om det finns köpta aktier att sälja
@@ -319,9 +322,9 @@ class ProfitCalculator
                     $totalCost = bcsub($totalCost, $sellCost, $scale);
                     $totalQuantity = bcsub((string) $totalQuantity, $quantity, $scale);
                 }
-            } elseif ($transaction->getTypeValue() === 'share_split') {
+            } elseif ($transaction->getTypeName() === 'share_split') {
                 if ($totalQuantity != 0) {
-                    $totalQuantity += $transaction->getRawQuantity();
+                    $totalQuantity += $transaction->rawQuantity;
                 }
             }
         }
@@ -332,7 +335,7 @@ class ProfitCalculator
 
         // Om det inte finns några aktier kvar så kan vi anta att det inte finns något anskaffningsvärde kvar.
         if ($totalCost != 0 && ($actualQuantity == 0 || Utility::isNearlyZero($totalQuantity))) {
-            Logger::getInstance()->addNotice("No shares left for {$transactions[0]->getName()} ({$transactions[0]->getIsin()}) " . $totalCost);
+            Logger::getInstance()->addNotice("No shares left for {$transactions[0]->name} ({$transactions[0]->isin}) " . $totalCost);
             $totalCost = '0.0';
         }
 
@@ -344,6 +347,42 @@ class ProfitCalculator
 
         return $result;
     }
+
+    /*
+    private function calculateAverageInvestedCapital(array $transactions, DateTime $endDate): float
+    {
+        $totalWeightedCapital = 0;
+        $previousDate = null;
+        $currentCapital = 0;
+    
+        foreach ($transactions as $transaction) {
+            $transactionDate = new DateTime($transaction['date']);
+            if ($previousDate !== null) {
+                $daysInvested = $previousDate->diff($transactionDate)->days;
+                $totalWeightedCapital += $currentCapital * $daysInvested;
+            }
+            // Uppdatera kapitalet med nuvarande transaktion
+            $currentCapital += $transaction['amount'];
+            $previousDate = $transactionDate;
+        }
+    
+        // Hantera perioden från sista transaktionen till slutdatumet
+        if ($previousDate !== null) {
+            $daysInvested = $previousDate->diff($endDate)->days;
+            $totalWeightedCapital += $currentCapital * $daysInvested;
+        }
+    
+        // Totala antal dagar från första transaktionsdatum till slutdatumet
+        $firstTransactionDate = new DateTime($transactions[0]['date']);
+        $totalDays = $firstTransactionDate->diff($endDate)->days;
+    
+        if ($totalDays > 0) {
+            return $totalWeightedCapital / $totalDays;
+        } else {
+            return 0; // Förhindra division med noll
+        }
+    }
+    */
 
     /**
      * Calculate the XIRR (Internal Rate of Return) for a list of cash flows.
@@ -358,13 +397,17 @@ class ProfitCalculator
         $transactions = [];
         if ($method === 'portfolio') {
             foreach ($cashFlows as $cashFlow) {
-                $amount = $cashFlow->getRawAmount();
-                if ($cashFlow->getTypeValue() === 'deposit') {
+                $amount = $cashFlow->rawAmount;
+                if ($amount === null) {
+                    Logger::getInstance()->addNotice("Null amount for cash flow on {$cashFlow->getDateString()}");
+                    continue;
+                }
+                if ($cashFlow->getTypeName() === 'deposit') {
                     $amount = $amount * -1;
-                } elseif ($cashFlow->getTypeValue() === 'withdrawal') {
+                } elseif ($cashFlow->getTypeName() === 'withdrawal') {
                     $amount = abs($amount);
                 }
-                if (!in_array($cashFlow->getType(), [
+                if (!in_array($cashFlow->type, [
                     TransactionType::DEPOSIT,
                     TransactionType::WITHDRAWAL,
                     TransactionType::DIVIDEND,
@@ -376,14 +419,14 @@ class ProfitCalculator
                     continue;
                 }
                 $transactions[] = [
-                    'date' => $cashFlow->getDate(),
+                    'date' => $cashFlow->date,
                     'amount' => $amount
                 ];
             }
         } elseif ($method === 'holding') {
             foreach ($cashFlows as $cashFlow) {
-                $amount = $cashFlow->getRawAmount();
-                if (!in_array($cashFlow->getType(), [
+                $amount = $cashFlow->rawAmount;
+                if (!in_array($cashFlow->type, [
                     TransactionType::BUY,
                     TransactionType::SELL,
                     TransactionType::DIVIDEND,
@@ -394,7 +437,7 @@ class ProfitCalculator
                     continue;
                 }
                 $transactions[] = [
-                    'date' => $cashFlow->getDate(),
+                    'date' => $cashFlow->date,
                     'amount' => $amount
                 ];
             }

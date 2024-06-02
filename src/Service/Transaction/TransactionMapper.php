@@ -18,38 +18,6 @@ class TransactionMapper
         $this->overview = $overview;
     }
 
-    private function handleNonAssetTransactionType(Transaction $transaction): void
-    {
-        switch ($transaction->getType()) {
-            case TransactionType::DEPOSIT:
-                $this->handleDepositTransaction($transaction);
-                break;
-            case TransactionType::WITHDRAWAL:
-                $this->handleWithdrawalTransaction($transaction);
-                break;
-            case TransactionType::INTEREST:
-                $this->handleInterestTransaction($transaction);
-                break;
-            case TransactionType::TAX:
-                $this->handleTaxTransaction($transaction);
-                break;
-            case TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX:
-                $this->handleReturnedForeignWithholdingTaxTransaction($transaction);
-                break;
-            case TransactionType::FEE:
-                $this->handleFeeTransaction(null, $transaction);
-                break;
-            case TransactionType::SHARE_LOAN_PAYOUT:
-                $this->handleShareLoanPayoutTransaction($transaction);
-                break;
-            case TransactionType::OTHER: // TODO: handle this based on the cashflow but give a notice.
-            default:
-                Logger::getInstance()->addWarning("Unhandled transaction type: '{$transaction->getTypeValue()}' in '{$transaction->getName()}' ({$transaction->getIsin()}) [{$transaction->getDateString()}] from bank: {$transaction->getBankValue()}");
-                break;
-
-        }
-    }
-
     /**
      * @param Transaction[] $transactions
      * @return FinancialAsset[]
@@ -60,7 +28,7 @@ class TransactionMapper
 
         $assets = [];
         foreach ($transactions as $transaction) {
-            $isin = $transaction->getIsin();
+            $isin = $transaction->isin;
             if (!$isin) {
                 $this->handleNonAssetTransactionType($transaction);
                 continue;
@@ -76,19 +44,19 @@ class TransactionMapper
             // $this->processTransactionType($asset, $transactions);
             $this->updateAssetBasedOnTransactionType($asset, $transaction);
 
-            if (!in_array($transaction->getBankValue(), array_keys($asset->bankAccounts))) {
-                $asset->bankAccounts[$transaction->getBankValue()] = [];
+            if (!in_array($transaction->getBankName(), array_keys($asset->bankAccounts))) {
+                $asset->bankAccounts[$transaction->getBankName()] = [];
             }
-            if (!in_array($transaction->getAccount(), $asset->bankAccounts[$transaction->getBankValue()])) {
-                $asset->bankAccounts[$transaction->getBankValue()][] = $transaction->getAccount();
+            if (!in_array($transaction->account, $asset->bankAccounts[$transaction->getBankName()])) {
+                $asset->bankAccounts[$transaction->getBankName()][] = $transaction->account;
             }
-            if (!in_array($transaction->getName(), $asset->transactionNames)) {
-                $asset->transactionNames[] = $transaction->getName();
+            if (!in_array($transaction->name, $asset->transactionNames)) {
+                $asset->transactionNames[] = $transaction->name;
             }
 
             // Only add actual assets.
             if (!$asset->name) {
-                $asset->name = $transaction->getName();
+                $asset->name = $transaction->name;
             }
 
             $asset->addTransaction($transaction);
@@ -119,7 +87,7 @@ class TransactionMapper
 
     private function updateAssetBasedOnTransactionType(FinancialAsset &$asset, Transaction $transaction): void
     {
-        switch ($transaction->getType()) {
+        switch ($transaction->type) {
             case TransactionType::BUY:
                 $this->handleBuyTransaction($asset, $transaction);
                 break;
@@ -130,10 +98,14 @@ class TransactionMapper
                 $this->handleDividendTransaction($asset, $transaction);
                 break;
             case TransactionType::SHARE_SPLIT:
-                $asset->addCurrentNumberOfShares($transaction->getRawQuantity());
+                if ($transaction->rawQuantity !== null) {
+                    $asset->addCurrentNumberOfShares($transaction->rawQuantity);
+                }
                 break;
             case TransactionType::SHARE_TRANSFER:
-                $asset->addCurrentNumberOfShares($transaction->getRawQuantity());
+                if ($transaction->rawQuantity !== null) {
+                    $asset->addCurrentNumberOfShares($transaction->rawQuantity);
+                }
                 break;
             case TransactionType::FOREIGN_WITHHOLDING_TAX:
                 $this->handleForeignWithholdingTaxTransaction($asset, $transaction);
@@ -143,101 +115,153 @@ class TransactionMapper
                 break;
             case TransactionType::OTHER: // TODO: handle this based on the cashflow but give a notice.
             default:
-                Logger::getInstance()->addWarning("Unhandled transaction type: '{$transaction->getTypeValue()}' in '{$transaction->getName()}' ({$transaction->getIsin()}) [{$transaction->getDateString()}] from bank: {$transaction->getBankValue()}");
+                Logger::getInstance()->addWarning("Unhandled transaction type: '{$transaction->getTypeName()}' in '{$transaction->name}' ({$transaction->isin}) [{$transaction->getDateString()}] from bank: {$transaction->getBankName()}");
+                break;
+        }
+    }
+
+    private function handleNonAssetTransactionType(Transaction $transaction): void
+    {
+        switch ($transaction->type) {
+            case TransactionType::DEPOSIT:
+                $this->handleDepositTransaction($transaction);
+                break;
+            case TransactionType::WITHDRAWAL:
+                $this->handleWithdrawalTransaction($transaction);
+                break;
+            case TransactionType::INTEREST:
+                $this->handleInterestTransaction($transaction);
+                break;
+            case TransactionType::TAX:
+                $this->handleTaxTransaction($transaction);
+                break;
+            case TransactionType::RETURNED_FOREIGN_WITHHOLDING_TAX:
+                $this->handleReturnedForeignWithholdingTaxTransaction($transaction);
+                break;
+            case TransactionType::FEE:
+                $this->handleFeeTransaction(null, $transaction);
+                break;
+            case TransactionType::SHARE_LOAN_PAYOUT:
+                $this->handleShareLoanPayoutTransaction($transaction);
+                break;
+            case TransactionType::OTHER: // TODO: handle this based on the cashflow but give a notice.
+            default:
+                Logger::getInstance()->addWarning("Unhandled transaction type: '{$transaction->getTypeName()}' in '{$transaction->name}' ({$transaction->isin}) [{$transaction->getDateString()}] from bank: {$transaction->getBankName()}");
                 break;
         }
     }
 
     private function handleBuyTransaction(FinancialAsset &$asset, Transaction $transaction): void
     {
-        $asset->addBuy($transaction->getRawAmount());
-        $asset->addCurrentNumberOfShares($transaction->getRawQuantity());
-        $asset->addCommissionBuy($transaction->getCommission());
-
-        $this->overview->totalBuyAmount += $transaction->getRawAmount();
-        $this->overview->totalBuyCommission += $transaction->getCommission();
-
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $asset->addBuy($transaction->rawAmount);
+            $this->overview->totalBuyAmount += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
+        if ($transaction->rawQuantity !== null) {
+            $asset->addCurrentNumberOfShares($transaction->rawQuantity);
+        }
+        if ($transaction->commission !== null) {
+            $asset->addCommissionBuy($transaction->commission);
+            $this->overview->totalBuyCommission += $transaction->commission;
+        }
     }
 
     private function handleSellTransaction(FinancialAsset &$asset, Transaction $transaction): void
     {
-        $asset->addSell($transaction->getRawAmount());
-        $asset->addCurrentNumberOfShares($transaction->getRawQuantity());
-        $asset->addCommissionSell($transaction->getCommission());
-
-        $this->overview->totalSellAmount += $transaction->getRawAmount();
-        $this->overview->totalSellCommission += $transaction->getCommission();
-
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $asset->addSell($transaction->rawAmount);
+            $this->overview->totalSellAmount += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
+        if ($transaction->rawQuantity !== null) {
+            $asset->addCurrentNumberOfShares($transaction->rawQuantity);
+        }
+        if ($transaction->commission !== null) {
+            $asset->addCommissionSell($transaction->commission);
+            $this->overview->totalSellCommission += $transaction->commission;
+        }
     }
 
     private function handleDividendTransaction(FinancialAsset &$asset, Transaction $transaction): void
     {
-        $asset->addDividend($transaction->getRawAmount());
-
-        $this->overview->totalDividend += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $asset->addDividend($transaction->rawAmount);
+            $this->overview->totalDividend += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
     }
 
     private function handleDepositTransaction(Transaction $transaction): void
     {
-        $this->overview->depositAmountTotal += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $this->overview->depositAmountTotal += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
     }
 
     private function handleWithdrawalTransaction(Transaction $transaction): void
     {
-        $this->overview->withdrawalAmountTotal += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $this->overview->withdrawalAmountTotal += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
     }
 
     private function handleInterestTransaction(Transaction $transaction): void
     {
-        if ($transaction->getRawAmount() === null) {
-            print_r($transaction);
-            exit;
+        if ($transaction->rawAmount !== null) {
+            $this->overview->totalInterest += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
         }
-        $this->overview->totalInterest += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
     }
 
     private function handleTaxTransaction(Transaction $transaction): void
     {
-        $this->overview->totalTax += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $this->overview->totalTax += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
     }
 
     private function handleForeignWithholdingTaxTransaction(FinancialAsset &$asset, Transaction $transaction): void
     {
-        if (!empty($asset->isin)) {
-            $asset->addForeignWithholdingTax($transaction->getRawAmount());
+        if ($transaction->rawAmount !== null) {
+            if (!empty($asset->isin)) {
+                $asset->addForeignWithholdingTax($transaction->rawAmount);
+            }
+    
+            $this->overview->totalForeignWithholdingTax += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
         }
-
-        $this->overview->totalForeignWithholdingTax += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
     }
 
     private function handleReturnedForeignWithholdingTaxTransaction(Transaction $transaction): void
     {
-        $this->overview->totalReturnedForeignWithholdingTax += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $this->overview->totalReturnedForeignWithholdingTax += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
     }
 
     private function handleFeeTransaction(?FinancialAsset $asset, Transaction $transaction): void
     {
-        if ($asset !== null) {
-            $asset->addFee($transaction->getRawAmount());
+        if ($transaction->rawAmount !== null) {
+            if ($asset !== null) {
+                $asset->addFee($transaction->rawAmount);
+            }
+    
+            $this->overview->totalFee += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
         }
-
-        $this->overview->totalFee += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
     }
     
     private function handleShareLoanPayoutTransaction(Transaction $transaction): void
     {
-        $this->overview->totalShareLoanPayout += $transaction->getRawAmount();
-        $this->overview->addCashFlow($transaction->getDateString(), $transaction->getRawAmount(), $transaction->getName(), $transaction->getType(), $transaction->getAccount(), $transaction->getBank());
+        if ($transaction->rawAmount !== null) {
+            $this->overview->totalShareLoanPayout += $transaction->rawAmount;
+            $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
+        }
     }
 
     protected function isNonSwedishIsin(string $isin): bool
@@ -253,7 +277,7 @@ class TransactionMapper
     // private function getInitialAndLastTransactionDate(array $transactions, ?string $firstTransactionDate, ?string $lastTransactionDate): stdClass
     // {
     //     foreach ($transactions as $transaction) {
-    //         if (!in_array($transaction->getType(), [TransactionType::BUY, TransactionType::SELL])) {
+    //         if (!in_array($transaction->type, [TransactionType::BUY, TransactionType::SELL])) {
     //             continue;
     //         }
 

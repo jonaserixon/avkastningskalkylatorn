@@ -49,7 +49,7 @@ class Presenter
             if ((int) $asset->getCurrentNumberOfShares() > 0) {
                 echo $this->addTabs('Nuvarande antal aktier:', 50) . number_format($asset->getCurrentNumberOfShares(), 2, '.', ' ') . ' st' . PHP_EOL;
 
-                if ($asset->getCurrentValueOfShares()) {
+                if ($asset->getCurrentValueOfShares() && $asset->getCurrentPricePerShare()) {
                     echo $this->addTabs('Nuvarande pris/aktie') . number_format($asset->getCurrentPricePerShare(), 2, '.', ' ') . ' SEK' . PHP_EOL;
                     echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($asset->getCurrentValueOfShares(), 2, '.', ' ') . ' SEK ' . PHP_EOL;
                 } else {
@@ -81,19 +81,19 @@ class Presenter
         $numberOfWithdrawals = 0;
         $numberOfDividends = 0;
         foreach ($overview->cashFlows as $cashFlow) {
-            if ($cashFlow->getType() === TransactionType::BUY) {
+            if ($cashFlow->type === TransactionType::BUY) {
                 $numberOfBuys++;
             }
-            if ($cashFlow->getType() === TransactionType::SELL) {
+            if ($cashFlow->type === TransactionType::SELL) {
                 $numberOfSells++;
             }
-            if ($cashFlow->getType() === TransactionType::DEPOSIT) {
+            if ($cashFlow->type === TransactionType::DEPOSIT) {
                 $numberOfDeposits++;
             }
-            if ($cashFlow->getType() === TransactionType::WITHDRAWAL) {
+            if ($cashFlow->type === TransactionType::WITHDRAWAL) {
                 $numberOfWithdrawals++;
             }
-            if ($cashFlow->getType() === TransactionType::DIVIDEND) {
+            if ($cashFlow->type === TransactionType::DIVIDEND) {
                 $numberOfDividends++;
             }
         }
@@ -242,7 +242,7 @@ class Presenter
 
         foreach ($assets as $asset) {
             if (!$asset->assetReturn) {
-                continue;
+                // continue;
             }
 
             $name = $asset->name;
@@ -251,13 +251,13 @@ class Presenter
             }
 
             $colWidths[0] = max($colWidths[0], mb_strlen($name));
-            $colWidths[1] = max($colWidths[1], mb_strlen($asset->isin));
+            $colWidths[1] = max($colWidths[1], mb_strlen((string) $asset->isin));
             $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($asset->costBasis)));
             $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->realizedGainLoss)));
             $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($asset->unrealizedGainLoss)));
             $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($asset->getDividendAmount())));
             $colWidths[6] = max($colWidths[6], mb_strlen($this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount())));
-            $colWidths[7] = max($colWidths[7], mb_strlen($this->formatNumber($asset->getCurrentValueOfShares())));
+            $colWidths[7] = max($colWidths[7], mb_strlen($this->formatNumber((float) $asset->getCurrentValueOfShares())));
         }
 
         // TODO: calculate this elsewhere
@@ -283,7 +283,7 @@ class Presenter
 
         foreach ($assets as $asset) {
             if (!$asset->assetReturn) {
-                continue;
+                // continue;
             }
             $name = $asset->name;
             if (mb_strlen($name) > $nameMaxLength) {
@@ -297,7 +297,7 @@ class Presenter
                 $this->formatNumber($asset->unrealizedGainLoss),
                 $this->formatNumber($asset->getDividendAmount()),
                 $this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()),
-                $this->formatNumber($asset->getCurrentValueOfShares()),
+                $this->formatNumber((float) $asset->getCurrentValueOfShares()),
                 // $this->formatNumber($asset->getCurrentNumberOfShares())
             ], $colWidths);
             $this->printHorizontalLine($colWidths);

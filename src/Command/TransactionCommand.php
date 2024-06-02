@@ -68,11 +68,11 @@ class TransactionCommand extends CommandProcessor
 
             foreach ($result->overview->cashFlows as $cashFlow) {
                 $res = $cashFlow->getDateString() . ' | ';
-                $res .= TextColorizer::colorText($cashFlow->getBankValue(), 'grey') . ' | ';
-                $res .= TextColorizer::colorText($cashFlow->getAccount(), 'green') . ' | ';
-                $res .= TextColorizer::colorText($cashFlow->getName(), 'pink') . ' | ';
-                $res .= TextColorizer::colorText($cashFlow->getTypeValue(), 'yellow') . ' | ';
-                $res .= TextColorizer::colorText($this->presenter->formatNumber($cashFlow->getRawAmount()), 'cyan');
+                $res .= TextColorizer::colorText($cashFlow->getBankName(), 'grey') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->account, 'green') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->name, 'pink') . ' | ';
+                $res .= TextColorizer::colorText($cashFlow->getTypeName(), 'yellow') . ' | ';
+                $res .= TextColorizer::colorText($this->presenter->formatNumber($cashFlow->rawAmount), 'cyan');
 
                 echo $res . PHP_EOL;
             }
@@ -80,13 +80,13 @@ class TransactionCommand extends CommandProcessor
             if ($options->exportCsv) {
                 $cashFlowArray = [];
                 foreach ($result->overview->cashFlows as $cashFlow) {
-                    $amount = $cashFlow->getRawAmount();
-                    if ($cashFlow->getTypeValue() === 'deposit') {
+                    $amount = $cashFlow->rawAmount;
+                    if ($cashFlow->getTypeName() === 'deposit') {
                         $amount = $amount * -1;
-                    } elseif ($cashFlow->getTypeValue() === 'withdrawal') {
+                    } elseif ($cashFlow->getTypeName() === 'withdrawal') {
                         $amount = abs($amount);
                     }
-                    if (!in_array($cashFlow->getType(), [
+                    if (!in_array($cashFlow->type, [
                         TransactionType::DEPOSIT,
                         TransactionType::WITHDRAWAL,
                         TransactionType::DIVIDEND,
@@ -99,10 +99,10 @@ class TransactionCommand extends CommandProcessor
                     }
                     $cashFlowArray[] = [
                         $cashFlow->getDateString(),
-                        $cashFlow->getBankValue(),
-                        $cashFlow->getAccount(),
-                        $cashFlow->getName(),
-                        $cashFlow->getTypeValue(),
+                        $cashFlow->getBankName(),
+                        $cashFlow->account,
+                        $cashFlow->name,
+                        $cashFlow->getTypeName(),
                         $amount
                     ];
                 }
@@ -113,13 +113,13 @@ class TransactionCommand extends CommandProcessor
             echo 'Datum | Bank | Konto | Namn | Typ | Belopp | Antal | Pris' . PHP_EOL;
             foreach ($transactions as $transaction) {
                 $res = $transaction->getDateString() . ' | ';
-                $res .= TextColorizer::colorText($transaction->getBankValue(), 'grey') . ' | ';
-                $res .= TextColorizer::colorText($transaction->getAccount(), 'green') . ' | ';
-                $res .= TextColorizer::colorText($transaction->getName() . " ({$transaction->getIsin()})", 'pink') . ' | ';
-                $res .= TextColorizer::colorText($transaction->getTypeValue(), 'yellow') . ' | ';
-                $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->getRawAmount()), 'cyan') . ' | ';
-                $res .= TextColorizer::colorText($this->presenter->formatNumber($transaction->getRawQuantity()), 'grey') . ' | ';
-                $res .= TextColorizer::backgroundColor($this->presenter->formatNumber($transaction->getRawPrice()), 'green');
+                $res .= TextColorizer::colorText($transaction->getBankName(), 'grey') . ' | ';
+                $res .= TextColorizer::colorText($transaction->account, 'green') . ' | ';
+                $res .= TextColorizer::colorText($transaction->name . " ({$transaction->isin})", 'pink') . ' | ';
+                $res .= TextColorizer::colorText($transaction->getTypeName(), 'yellow') . ' | ';
+                $res .= TextColorizer::colorText($this->presenter->formatNumber((float) $transaction->rawAmount), 'cyan') . ' | ';
+                $res .= TextColorizer::colorText($this->presenter->formatNumber((float) $transaction->rawQuantity), 'grey') . ' | ';
+                $res .= TextColorizer::backgroundColor($this->presenter->formatNumber((float) $transaction->rawPrice), 'green');
 
                 echo $res . PHP_EOL;
             }
