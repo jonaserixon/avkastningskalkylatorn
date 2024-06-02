@@ -18,8 +18,9 @@ class ProfitCalculator
     private bool $filterCurrentHoldings;
     private StockPrice $stockPrice;
 
-    public function __construct(bool $currentHoldings)
+    public function __construct(bool $currentHoldings, bool $useHistoricalPrices = false)
     {
+
         $this->filterCurrentHoldings = $currentHoldings;
         $this->stockPrice = new StockPrice();
     }
@@ -74,7 +75,12 @@ class ProfitCalculator
 
             if (!empty($asset->isin)) {
                 $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($asset->isin);
+                // $currentPricePerShare = $this->stockPrice->getPriceByIsinAndDate($asset->isin, '2024-05-13');
 
+                if ($asset->getCurrentNumberOfShares() > 0 && $currentPricePerShare === null) {
+                    $currentPricePerShare = $asset->getTransactions()[count($asset->getTransactions()) - 1]->rawPrice;
+                    Logger::getInstance()->addNotice("Missing price per share for {$asset->name} ({$asset->isin})");
+                }
                 if ($currentPricePerShare && (int) $asset->getCurrentNumberOfShares() > 0) {
                     // $asset->name = $this->stockPrice->getNameByIsin($asset->isin);
                     $currentValueOfShares = $asset->getCurrentNumberOfShares() * $currentPricePerShare;
