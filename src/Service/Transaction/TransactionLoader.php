@@ -98,14 +98,15 @@ class TransactionLoader
                 return $bankComparison;
             }
 
-            return strcmp($a->isin, $b->isin);
+            return strcmp((string) $a->isin, (string) $b->isin);
         });
 
         return $transactions;
     }
 
     /**
-     * @return Transaction[]
+     * @param Transaction[] $transactions
+     * @return Transaction[] filtered transactions
      */
     private function filterTransactions(array $transactions): array
     {
@@ -156,7 +157,7 @@ class TransactionLoader
                     return strtotime($transaction->getDateString()) <= strtotime($value);
                 }
 
-                if ($key === 'currentHoldings') {
+                if ($key === 'currentHoldings' && $transaction->isin !== null) {
                     $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($transaction->isin);
                     return $currentPricePerShare !== null;
                 }
@@ -165,7 +166,7 @@ class TransactionLoader
                     return mb_strtoupper($transaction->getBankName()) === mb_strtoupper($value);
                 }
 
-                if ($key === 'isin' && is_string($value)) {
+                if ($key === 'isin' && is_string($value) && $transaction->isin !== null) {
                     return mb_strtoupper($transaction->isin) === mb_strtoupper($value);
                 }
             });
