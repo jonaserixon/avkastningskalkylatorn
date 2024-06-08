@@ -75,7 +75,7 @@ class Nordnet extends CsvProcessor
             $pricePerShareSEK = null;
             $rawAmount = static::convertNumericToFloat($row[14]);
             $commission = static::convertNumericToFloat($row[12]);
-            $currency = $row[17];
+            $currency = $row[13];
             $isin = $row[8];
 
             if ($rawQuantity && $rawPrice && $rawAmount) {
