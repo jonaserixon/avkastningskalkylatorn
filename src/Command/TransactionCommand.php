@@ -5,6 +5,7 @@ namespace src\Command;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
 use src\Service\FileManager\Exporter;
+use src\Service\PPExporter;
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
 use src\View\Logger;
@@ -66,7 +67,21 @@ class TransactionCommand extends CommandProcessor
         // $this->exportFeesToPP($transactions, $options->exportCsv);
         // $this->exportAccountTransactionsToPP($transactions, $options->exportCsv);
         // $this->exportPortfolioTransactionsToPP($transactions, $options->exportCsv);
-        $this->exportDividendsToPP($transactions, $options->exportCsv);
+        // $this->exportDividendsToPP($transactions, $options->exportCsv);
+
+        $ppExporter = new PPExporter($assets, $transactions, $options->exportCsv);
+
+        $ppExporter->exportNordnetDividends();
+        $ppExporter->exportNordnetAccountTransactions();
+        $ppExporter->exportNordnetPortfolioTransactions();
+        $ppExporter->exportNordnetFees();
+
+        /*
+        $ppExporter->exportAvanzaPortfolioTransactions();
+        $ppExporter->exportAvanzaAccountTransactions();
+        $ppExporter->exportAvanzaDividends();
+        $ppExporter->exportAvanzaFees();
+        */
 
         return;
 
@@ -279,10 +294,7 @@ class TransactionCommand extends CommandProcessor
             if (empty($transaction->isin)) {
                 continue;
             }
-            // Dessa får jag nog tyvärr lägga in manuellt pga avanza skickar inte med originalvalutan
-            if (!$transaction->rawPrice) {
-                continue;
-            }
+          
 
             $currencies = $isinGroupedTickers[$transaction->isin];
 
@@ -292,8 +304,8 @@ class TransactionCommand extends CommandProcessor
 
                 $exchangeRate = 1;
                 if ($currency['currency'] !== 'SEK') {
-                    $exchangeRate = abs($transaction->rawAmount) / (abs($transaction->rawQuantity) * abs($transaction->rawPrice));
-                    $grossAmount = (abs($transaction->rawQuantity) * abs($transaction->rawPrice));
+                    // $exchangeRate = abs($transaction->rawAmount) / (abs($transaction->rawQuantity) * abs($transaction->rawPrice));
+                    // $grossAmount = (abs($transaction->rawQuantity) * abs($transaction->rawPrice));
                 }
 
                 $transactionArray[] = [
@@ -314,6 +326,8 @@ class TransactionCommand extends CommandProcessor
                 ];
             }
         }
+
+        // exit;
 
         if ($exportCsv) {
             Exporter::exportToCsv(
@@ -481,6 +495,7 @@ class TransactionCommand extends CommandProcessor
             $isinGroupedTickers[$ticker['isin']][] = $ticker;
         }
 
+        $skippedTransactions = [];
         $transactionArray = [];
         foreach ($transactions as $transaction) {
             if (!in_array($transaction->type, [
@@ -497,23 +512,35 @@ class TransactionCommand extends CommandProcessor
 
                 $exchangeRate = 1;
                 if ($currency['currency'] !== 'SEK') {
-                    // $exchangeRate = abs($transaction->rawAmount) / (abs($transaction->rawQuantity) * abs($transaction->rawPrice));
-                    // $grossAmount = (abs($transaction->rawQuantity) * abs($transaction->rawPrice));
+                    $exchangeRate = ($value - abs($transaction->commission)) / (abs($transaction->rawQuantity) * abs($transaction->rawPrice));
+
+                    if (in_array($currency['currency'], ['USD', 'CAD', 'EUR']) && $exchangeRate < 2) {
+                        $skippedTransactions[$transaction->isin][] = [
+                            $transaction->getDateString(),
+                            $transaction->name,
+                            $transaction->isin
+                        ];
+                        continue;
+                    }
                 }
+
+                $cashAccount = ucfirst(strtolower($transaction->getBankName())) . ' SEK';
+                $securitiesAccount = ucfirst(strtolower($transaction->getBankName()));
+                $transactionCurrency = 'SEK';
+                $currencyGrossAmount = $currency['currency'];
 
                 $transactionArray[] = [
                     $transaction->getDateString(),
-                    ucfirst(strtolower($transaction->getBankName())) . ' SEK',
-                    ucfirst(strtolower($transaction->getBankName())),
+                    $cashAccount,
+                    $securitiesAccount,
                     $transaction->name,
                     $transaction->isin,
                     ucfirst($transaction->getTypeName()),
                     $value,
                     $grossAmount,
                     abs($transaction->rawQuantity),
-                    'SEK', // Transaction Currency
-                    // $currency['currency'], // Currency Gross Amount
-                    'SEK',
+                    $transactionCurrency,
+                    $currencyGrossAmount,
                     $exchangeRate,
                     abs($transaction->commission)
                 ];
@@ -524,6 +551,9 @@ class TransactionCommand extends CommandProcessor
         // exit;
 
         if ($exportCsv) {
+            echo 'Skipped transactions (please enter manually):' . PHP_EOL;
+            print_r($skippedTransactions);
+
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -532,8 +562,8 @@ class TransactionCommand extends CommandProcessor
                     'Security Name',
                     'ISIN',
                     'Type',
-                    'Value', // det faktiska beloppet ("Belopp" hos avanza då courtage redan är inbakat)
-                    'Gross Amount', // Originalbeloppet i ursprungsvalutan
+                    'Value',
+                    'Gross Amount',
                     'Shares',
                     'Transaction Currency',
                     'Currency Gross Amount',
@@ -584,15 +614,15 @@ class TransactionCommand extends CommandProcessor
 
                     // TODO: dessa måste jag lägga in manuellt pga avanza skickar inte med originalvalutan
                     if (in_array($currency['currency'], ['USD', 'CAD', 'EUR']) && $exchangeRate < 3) {
-                        $manualTransactions[$transaction->isin][] = [
-                            $transaction->getDateString(),
-                            $transaction->name,
-                            $transaction->isin,
-                            abs($transaction->rawAmount) . ' SEK',
-                            abs($transaction->rawQuantity) . ' st',
-                            $currency['ticker']
-                        ];
-                        continue;
+                        // $manualTransactions[$transaction->isin][] = [
+                        //     $transaction->getDateString(),
+                        //     $transaction->name,
+                        //     $transaction->isin,
+                        //     abs($transaction->rawAmount) . ' SEK',
+                        //     abs($transaction->rawQuantity) . ' st',
+                        //     $currency['ticker']
+                        // ];
+                        // continue;
                     }
                 }
 
@@ -613,11 +643,13 @@ class TransactionCommand extends CommandProcessor
             }
         }
 
-        print_r($manualTransactions);
-        print_r(count($manualTransactions));
-        exit;
+        // print_r($manualTransactions);
+        // print_r(count($manualTransactions));
+        // exit;
 
         if ($exportCsv) {
+            echo 'Manual transactions (please enter manually):' . PHP_EOL;
+            print_r($manualTransactions);
             Exporter::exportToCsv(
                 [
                     'Date',

@@ -101,7 +101,8 @@ class Avanza extends CsvProcessor
                 rawAmount: $rawAmount,
                 commission: $commission,
                 currency: $currency,
-                isin: $isin
+                isin: $isin,
+                exchangeRate: null
             );
 
             $result[] = $transaction;
