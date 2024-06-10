@@ -15,6 +15,11 @@ parameters:
             identifier: missingType.iterableValue
             paths: 
                 - ../src/View/Presenter.php
+                - ../src/Service/PPExporter.php
+        - 
+            identifier: argument.type
+            paths: 
+                - ../src/Service/PPExporter.php
 
     # https://phpstan.org/config-reference#stricter-analysis
     # https://phpstan.org/config-reference#analysed-files

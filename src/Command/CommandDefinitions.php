@@ -130,6 +130,49 @@ readonly class CommandDefinitions
                     'require-value' => false
                 ]
             ]
+        ],
+        'pp-export' => [
+            'description' => 'Export transactions to Portfolio Performance format',
+            'options' => [
+                'export-csv' => [
+                    'description' => 'Generate and export CSV file',
+                    'default' => false,
+                    'require-value' => false
+                ],
+                'bank' => [
+                    'description' => 'Bank',
+                    'require-value' => true
+                ],
+                'account' => [
+                    'description' => 'Account',
+                    'require-value' => true
+                ],
+                'date-from' => [
+                    'description' => 'Date from',
+                    'require-value' => true
+                ],
+                'date-to' => [
+                    'description' => 'Date to',
+                    'require-value' => true
+                ],
+                'type' => [
+                    'description' => 'Type of transaction',
+                    'require-value' => true
+                ],
+                'isin' => [
+                    'description' => 'ISIN of asset',
+                    'require-value' => true
+                ],
+                'asset' => [
+                    'description' => 'Name of asset',
+                    'require-value' => true
+                ],
+                'display-log' => [
+                    'description' => 'Display logs related to how transactions are handled and more',
+                    'default' => false,
+                    'require-value' => false
+                ]
+            ]
         ]
     ];
 }
