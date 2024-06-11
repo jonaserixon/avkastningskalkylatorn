@@ -5,3 +5,4 @@ exports/*
 .vscode
 data/*
 .env
+tmp

@@ -1,9 +1,10 @@
 <?php
 
 namespace src\Service\API\Frankfurter;
+use Exception;
 use stdClass;
 
-class FrankfurtWrapper
+class FrankfurterWrapper
 {
     private const API_URL = 'https://api.frankfurter.app';
 
@@ -27,6 +28,10 @@ class FrankfurtWrapper
 
         $response = curl_exec($curl);
         // $info = curl_getinfo($curl);
+
+        if (is_bool($response)) {
+            throw new Exception("Curl error: " . curl_error($curl));
+        }
 
         curl_close($curl);
 

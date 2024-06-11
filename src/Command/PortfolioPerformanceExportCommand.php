@@ -53,9 +53,9 @@ class PortfolioPerformanceExportCommand extends CommandProcessor
         );
 
         $transactions = $transactionLoader->getTransactions();
-        $assets = $transactionLoader->getFinancialAssets($transactions);
+        // $assets = $transactionLoader->getFinancialAssets($transactions);
 
-        $ppExporter = new PPExporter($assets, $transactions, $options->exportCsv);
+        $ppExporter = new PPExporter($transactions, $options->exportCsv);
 
         // $ppExporter->exportNordnetDividends();
         // $ppExporter->exportNordnetAccountTransactions();

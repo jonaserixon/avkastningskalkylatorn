@@ -15,9 +15,8 @@ parameters:
             identifier: missingType.iterableValue
             paths: 
                 - ../src/View/Presenter.php
-                - ../src/Service/PPExporter.php
         - 
-            identifier: argument.type
+            identifier: constant.notFound
             paths: 
                 - ../src/Service/PPExporter.php
 
