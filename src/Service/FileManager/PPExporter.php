@@ -1,9 +1,8 @@
 <?php
 
-namespace src\Service;
+namespace src\Service\FileManager;
 
 use Exception;
-use src\DataStructure\FinancialAsset;
 use src\DataStructure\TickerInfo;
 use src\DataStructure\Transaction;
 use src\Enum\TransactionType;

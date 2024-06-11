@@ -2,7 +2,7 @@
 
 namespace src\Command;
 
-use src\Service\PPExporter;
+use src\Service\FileManager\PPExporter;
 use src\Service\Transaction\TransactionLoader;
 use stdClass;
 

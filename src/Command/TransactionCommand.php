@@ -2,10 +2,8 @@
 
 namespace src\Command;
 
-use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
 use src\Service\FileManager\Exporter;
-use src\Service\PPExporter;
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
 use src\View\Logger;
