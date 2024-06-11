@@ -21,6 +21,7 @@ readonly class Transaction
     public ?float $commission; // brokerage commission
     public string $currency;
     public ?string $isin;
+    public ?float $exchangeRate;
 
     public function __construct(
         DateTime $date,
@@ -35,7 +36,8 @@ readonly class Transaction
         ?float $rawAmount,
         ?float $commission,
         string $currency,
-        ?string $isin
+        ?string $isin,
+        ?float $exchangeRate
     ) {
         $this->date = $date;
         $this->bank = $bank;
@@ -50,6 +52,7 @@ readonly class Transaction
         $this->commission = $commission;
         $this->currency = $currency;
         $this->isin = $isin;
+        $this->exchangeRate = $exchangeRate;
     }
 
     public function getDateString(): string

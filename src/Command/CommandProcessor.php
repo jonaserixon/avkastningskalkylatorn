@@ -65,6 +65,9 @@ class CommandProcessor
             case 'transaction':
                 (new TransactionCommand($options))->execute();
                 break;
+            case 'pp-export':
+                (new PortfolioPerformanceExportCommand($options))->execute();
+                break;
             default:
                 $this->unknownCommand($command);
                 $this->printAvailableCommands();

@@ -4,6 +4,8 @@ COPY . /usr/src/avkastningskalkylatorn
 
 WORKDIR /usr/src/avkastningskalkylatorn
 
+RUN echo "memory_limit = 512M" >> $PHP_INI_DIR/php.ini
+
 RUN echo "alias avk='php /usr/src/avkastningskalkylatorn/src/index.php'" >> /root/.bashrc
 RUN ln -sf /usr/src/avkastningskalkylatorn/src/index.php /usr/local/bin/avk
 

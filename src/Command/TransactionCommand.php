@@ -59,6 +59,7 @@ class TransactionCommand extends CommandProcessor
         );
 
         $transactions = $transactionLoader->getTransactions();
+        $assets = $transactionLoader->getFinancialAssets($transactions);
 
         if ($options->cashFlow) {
             $assets = $transactionLoader->getFinancialAssets($transactions);

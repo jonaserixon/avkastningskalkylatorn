@@ -1,8 +1,10 @@
 services:
   avkastningskalkylatorn:
+    environment:
+      - EOD_API_TOKEN=${EOD_API_TOKEN}
     container_name: avkastningskalkylatorn
     build: .
     volumes:
-      - ./exports:/exports
+      - ./data:/data
       - ./imports:/imports
       - .:/usr/src/avkastningskalkylatorn

@@ -62,6 +62,7 @@ class FinancialOverview
             $amount,
             null,
             'SEK',
+            null,
             null
         );
 

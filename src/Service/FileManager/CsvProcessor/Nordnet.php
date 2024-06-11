@@ -66,17 +66,25 @@ class Nordnet extends CsvProcessor
                 continue;
             }
 
+            // TODO: check the actual name for the header instead of using index.
+
             $account = $row[4];
             $type = $transactionType->value;
             $name = trim($row[6]);
-            $description = trim($row[23]);
-            $rawQuantity = static::convertNumericToFloat($row[9]);
-            $rawPrice = static::convertNumericToFloat($row[10]);
+            $description = trim($row[22]);
+            $rawQuantity = static::convertNumericToFloat($row[8]);
+            $rawPrice = static::convertNumericToFloat($row[9]);
             $pricePerShareSEK = null;
-            $rawAmount = static::convertNumericToFloat($row[14]);
-            $commission = static::convertNumericToFloat($row[12]);
-            $currency = $row[17];
-            $isin = $row[8];
+            $rawAmount = static::convertNumericToFloat($row[13]);
+            $commission = static::convertNumericToFloat($row[11]);
+            $currency = $row[12];
+            $isin = $row[7];
+
+            if (empty($currency)) {
+                $currency = $row[14];
+            }
+
+            $exchangeRate = static::convertNumericToFloat($row[21]);
 
             if ($rawQuantity && $rawPrice && $rawAmount) {
                 $pricePerShareSEK = abs($rawAmount) / abs($rawQuantity);
@@ -100,7 +108,8 @@ class Nordnet extends CsvProcessor
                 rawAmount: $rawAmount,
                 commission: $commission,
                 currency: $currency,
-                isin: $isin
+                isin: $isin,
+                exchangeRate: $exchangeRate
             );
 
             $result[] = $transaction;
@@ -131,11 +140,11 @@ class Nordnet extends CsvProcessor
             'kap. deb ränta' => 'interest',
             'kap ränta' => 'interest',
 
-            'källskatt' => 'tax', // TODO: verkar vara kopplat till sparkonto av någon anledning. kolla med nordnet.
+            'preliminärskatt' => 'tax', // TODO: verkar vara kopplat till sparkonto av någon anledning. kolla med nordnet.
             'avkastningsskatt' => 'tax',
 
-            'utl kupskatt' => 'foreign_withholding_tax',
-            'mak utl kupskatt' => 'foreign_withholding_tax', // makulerad källskatt
+            'utl källskatt' => 'foreign_withholding_tax',
+            'mak utl källskatt' => 'foreign_withholding_tax', // makulerad källskatt
 
             'avgift' => 'fee', // ADR etc.
             'riskkostnad' => 'fee',
