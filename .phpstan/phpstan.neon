@@ -18,7 +18,7 @@ parameters:
         - 
             identifier: constant.notFound
             paths: 
-                - ../src/Service/PPExporter.php
+                - ../src/Service/FileManager/PPExporter.php
 
     # https://phpstan.org/config-reference#stricter-analysis
     # https://phpstan.org/config-reference#analysed-files
