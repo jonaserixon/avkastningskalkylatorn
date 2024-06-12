@@ -2,6 +2,7 @@
 
 namespace src\Command;
 
+use src\Enum\Bank;
 use src\Service\FileManager\PPExporter;
 use src\Service\Transaction\TransactionLoader;
 use stdClass;
@@ -57,14 +58,27 @@ class PortfolioPerformanceExportCommand extends CommandProcessor
 
         $ppExporter = new PPExporter($transactions, $options->exportCsv);
 
-        // $ppExporter->exportNordnetDividends();
-        // $ppExporter->exportNordnetAccountTransactions();
-        // $ppExporter->exportNordnetPortfolioTransactions();
-        // $ppExporter->exportNordnetFees();
+        $bank = Bank::tryFrom(mb_strtoupper($options->bank));
+        if ($bank === Bank::NORDNET) {
+            $ppExporter->exportNordnetDividends();
+            $ppExporter->exportNordnetAccountTransactions();
+            $ppExporter->exportNordnetPortfolioTransactions();
+            $ppExporter->exportNordnetFees();
+        } elseif ($bank === Bank::AVANZA) {
+            $ppExporter->exportAvanzaPortfolioTransactions();
+            $ppExporter->exportAvanzaAccountTransactions();
+            $ppExporter->exportAvanzaDividends();
+            $ppExporter->exportAvanzaFees();
+        } else {
+            $ppExporter->exportNordnetDividends();
+            $ppExporter->exportNordnetAccountTransactions();
+            $ppExporter->exportNordnetPortfolioTransactions();
+            $ppExporter->exportNordnetFees();
 
-        $ppExporter->exportAvanzaPortfolioTransactions();
-        $ppExporter->exportAvanzaAccountTransactions();
-        $ppExporter->exportAvanzaDividends();
-        $ppExporter->exportAvanzaFees();
+            $ppExporter->exportAvanzaPortfolioTransactions();
+            $ppExporter->exportAvanzaAccountTransactions();
+            $ppExporter->exportAvanzaDividends();
+            $ppExporter->exportAvanzaFees();
+        }
     }
 }
