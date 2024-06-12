@@ -69,7 +69,7 @@ class PPExporter
         //     ];
         // }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($assetList)) {
             Exporter::exportToCsv(
                 [
                     'Security Name',
@@ -127,7 +127,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -239,7 +239,7 @@ class PPExporter
         }
         */
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -339,7 +339,7 @@ class PPExporter
             ];
         }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -431,7 +431,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -505,7 +505,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -610,7 +610,7 @@ class PPExporter
             print_r($skippedTransactions);
         }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -710,7 +710,7 @@ class PPExporter
             ];
         }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -801,7 +801,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv) {
+        if ($this->exportCsv && !empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',

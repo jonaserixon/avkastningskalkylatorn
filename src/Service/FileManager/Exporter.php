@@ -16,7 +16,7 @@ class Exporter
             return;
         }
 
-        $filePath = '/exports/' . $fileName . '_' . date('Y-m-d_His') . '.csv';
+        $filePath = ROOT_PATH . '/exports/' . $fileName . '_' . date('Y-m-d_His') . '.csv';
 
         $file = fopen($filePath, 'w');
         if ($file === false) {
