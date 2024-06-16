@@ -20,6 +20,45 @@ class TransactionMapper
 
     /**
      * @param Transaction[] $transactions
+     * @return FinancialAsset
+     */
+    public function _addTransactionsToAsset(string $isin, string $name, array $transactions): FinancialAsset
+    {
+        $asset = new FinancialAsset();
+        $asset->isin = $isin;
+        $asset->name = $name;
+        foreach ($transactions as $transaction) {
+            $isin = $transaction->isin;
+
+            $this->updateAssetBasedOnTransactionType($asset, $transaction);
+
+            if (!in_array($transaction->getBankName(), array_keys($asset->bankAccounts))) {
+                $asset->bankAccounts[$transaction->getBankName()] = [];
+            }
+            if (!in_array($transaction->account, $asset->bankAccounts[$transaction->getBankName()])) {
+                $asset->bankAccounts[$transaction->getBankName()][] = $transaction->account;
+            }
+            if (!in_array($transaction->name, $asset->transactionNames)) {
+                $asset->transactionNames[] = $transaction->name;
+            }
+
+            // Only add actual assets.
+            if (!$asset->name) {
+                $asset->name = $transaction->name;
+            }
+
+            $asset->addTransaction($transaction);
+        }
+
+        if (Utility::isNearlyZero($asset->getCurrentNumberOfShares())) {
+            $asset->resetCurrentNumberOfShares();
+        }
+
+        return $asset;
+    }
+
+    /**
+     * @param Transaction[] $transactions
      * @return FinancialAsset[]
      */
     public function addTransactionsToAsset(array $transactions): array
@@ -120,7 +159,7 @@ class TransactionMapper
         }
     }
 
-    private function handleNonAssetTransactionType(Transaction $transaction): void
+    public function handleNonAssetTransactionType(Transaction $transaction): void
     {
         switch ($transaction->type) {
             case TransactionType::DEPOSIT:

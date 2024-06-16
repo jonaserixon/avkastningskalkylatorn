@@ -2,9 +2,17 @@
 
 namespace src\Command;
 
+use DateTime;
+use Exception;
 use src\Command\CommandProcessor;
+use src\DataStructure\FinancialOverview;
+use src\DataStructure\Transaction;
+use src\Enum\Bank;
+use src\Enum\TransactionType;
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
+use src\Service\Transaction\TransactionMapper;
+use src\Service\Utility;
 use src\View\Logger;
 use src\View\TextColorizer;
 use stdClass;
@@ -58,7 +66,71 @@ class CalculateProfitCommand extends CommandProcessor
             $options->account
         );
 
+        $transactionLoader->overview->firstTransactionDate = '';
+        $transactionLoader->overview->lastTransactionDate = '';
+        $transactionMapper = new TransactionMapper($transactionLoader->overview);
+
+        $portfolioFile = Utility::getLatestModifiedFile(ROOT_PATH . '/resources/portfolio', 'json');
+        $portfolio = file_get_contents($portfolioFile);
+        $portfolio = json_decode($portfolio);
+
+        $assets = [];
+        foreach ($portfolio->portfolioTransactions as $row) {
+            foreach ($row->transactions as &$transactionRow) {
+                $transaction = new Transaction(
+                    new DateTime($transactionRow->date->date),
+                    Bank::from($transactionRow->bank),
+                    $transactionRow->account,
+                    TransactionType::from($transactionRow->type),
+                    $transactionRow->name,
+                    $transactionRow->description,
+                    $transactionRow->rawQuantity,
+                    $transactionRow->rawPrice,
+                    $transactionRow->pricePerShareSEK,
+                    $transactionRow->rawAmount,
+                    $transactionRow->commission,
+                    $transactionRow->currency,
+                    $transactionRow->isin,
+                    $transactionRow->exchangeRate
+                );
+
+                $transactionRow = $transaction;
+            }
+            $transactions = $transactionLoader->filterTransactions($row->transactions);
+            $asset = $transactionMapper->_addTransactionsToAsset($row->isin, $row->name, $transactions);
+            $assets[] = $asset;
+        }
+
+        foreach ($portfolio->accountTransactions as $row) {
+            $transaction = new Transaction(
+                new DateTime($row->date->date),
+                Bank::from($row->bank),
+                $row->account,
+                TransactionType::from($row->type),
+                $row->name,
+                $row->description,
+                $row->rawQuantity,
+                $row->rawPrice,
+                $row->pricePerShareSEK,
+                $row->rawAmount,
+                $row->commission,
+                $row->currency,
+                $row->isin,
+                $row->exchangeRate
+            );
+            $transactions = $transactionLoader->filterTransactions([$transaction]);
+
+            if (empty($transactions)) {
+                continue;
+            }
+
+            $transactionMapper->handleNonAssetTransactionType($transactions[0]);
+        }
+        
+        /*
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
+        */
+
         $profitCalculator = new ProfitCalculator($options->currentHoldings);
         $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 

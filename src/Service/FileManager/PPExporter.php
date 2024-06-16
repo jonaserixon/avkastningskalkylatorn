@@ -34,7 +34,7 @@ class PPExporter
 
     private function parseTickerInfo(): void
     {
-        $tickers = file_get_contents(ROOT_PATH . '/data/tmp/tickers.json');
+        $tickers = file_get_contents(ROOT_PATH . '/resources/tmp/tickers.json');
         if ($tickers === false) {
             throw new Exception('Could not read tickers.json');
         }

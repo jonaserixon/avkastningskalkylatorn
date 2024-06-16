@@ -40,7 +40,7 @@ class Nordnet extends CsvProcessor
      */
     protected function parseTransactions(string $fileName): array
     {
-        $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
+        $csvData = $this->readCsvFileWithHeaders($fileName, static::CSV_SEPARATOR);
 
         $file = fopen($fileName, 'r');
         if ($file === false) {
@@ -49,42 +49,40 @@ class Nordnet extends CsvProcessor
         fgetcsv($file); // Skip headers
 
         usort($csvData, function ($a, $b) {
-            return strtotime($a[1]) <=> strtotime($b[1]);
+            return strtotime($a['Bokföringsdag']) <=> strtotime($b['Bokföringsdag']);
         });
 
         $result = [];
         foreach ($csvData as $row) {
-            $transactionType = static::mapToTransactionType($row[5] ?? null);
+            $transactionType = static::mapToTransactionType($row['Transaktionstyp'] ?? null);
             if (!$transactionType) {
-                echo "***** Could not handle transaction: {$row[5]} {$row[6]} {$row[1]}! *****" . PHP_EOL;
+                echo "***** Could not handle transaction: {$row['Transaktionstyp']} {$row['Värdepapper']} {$row['Bokföringsdag']}! *****" . PHP_EOL;
                 continue;
             }
 
-            $date = date_create($row[1]);
+            $date = date_create($row['Bokföringsdag']);
             if ($date === false) {
-                echo "***** Could not parse date: {$row[1]}! *****" . PHP_EOL;
+                echo "***** Could not parse date: {$row['Bokföringsdag']}! *****" . PHP_EOL;
                 continue;
             }
 
-            // TODO: check the actual name for the header instead of using index.
-
-            $account = $row[4];
+            $account = $row['Depå'];
             $type = $transactionType->value;
-            $name = trim($row[6]);
-            $description = trim($row[22]);
-            $rawQuantity = static::convertNumericToFloat($row[8]);
-            $rawPrice = static::convertNumericToFloat($row[9]);
+            $name = trim($row['Värdepapper']);
+            $description = trim($row['Transaktionstext']);
+            $rawQuantity = static::convertNumericToFloat($row['Antal']);
+            $rawPrice = static::convertNumericToFloat($row['Kurs']);
             $pricePerShareSEK = null;
-            $rawAmount = static::convertNumericToFloat($row[13]);
-            $commission = static::convertNumericToFloat($row[11]);
-            $currency = $row[12];
-            $isin = $row[7];
+            $rawAmount = static::convertNumericToFloat($row['Belopp']);
+            $commission = static::convertNumericToFloat($row['Total Avgift']);
+            $currency = $row['Valuta_1'];
+            $isin = $row['ISIN'];
 
             if (empty($currency)) {
-                $currency = $row[14];
+                $currency = $row['Valuta_2'];
             }
 
-            $exchangeRate = static::convertNumericToFloat($row[21]);
+            $exchangeRate = static::convertNumericToFloat($row['Växlingskurs']);
 
             if ($rawQuantity && $rawPrice && $rawAmount) {
                 $pricePerShareSEK = abs($rawAmount) / abs($rawQuantity);

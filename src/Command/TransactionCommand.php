@@ -2,10 +2,17 @@
 
 namespace src\Command;
 
+use DateTime;
+use Exception;
+use src\DataStructure\FinancialOverview;
+use src\DataStructure\Transaction;
+use src\Enum\Bank;
 use src\Enum\TransactionType;
 use src\Service\FileManager\Exporter;
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
+use src\Service\Transaction\TransactionMapper;
+use src\Service\Utility;
 use src\View\Logger;
 use src\View\TextColorizer;
 use stdClass;
@@ -60,6 +67,10 @@ class TransactionCommand extends CommandProcessor
 
         $transactions = $transactionLoader->getTransactions();
         $assets = $transactionLoader->getFinancialAssets($transactions);
+
+        $this->generatePortfolio($assets, $transactions);
+
+        return;
 
         if ($options->cashFlow) {
             $assets = $transactionLoader->getFinancialAssets($transactions);
@@ -132,6 +143,59 @@ class TransactionCommand extends CommandProcessor
             Logger::getInstance()
                 ->printNotices()
                 ->printWarnings();
+        }
+    }
+
+    public function generatePortfolio(array $assets, array $transactions): void
+    {
+        // $avanzaFiles = glob(IMPORT_DIR . '/banks/avanza/*.csv');
+        // $nordnetFiles = glob(IMPORT_DIR . '/banks/nordnet/*.csv');
+        $avanzaFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/avanza');
+        $nordnetFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/nordnet');
+
+        $files = [$avanzaFile, $nordnetFile];
+
+        $string = '';
+        foreach ($files as $file) {
+            $string .= filemtime($file) . ' ' . $file;
+        }
+
+        $hash = md5($string);
+        if (file_exists(ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json")) {
+            return;
+        }
+
+        $assetsWithTransactions = [];
+        foreach ($assets as $asset) {
+            $assetsWithTransactions[] = $asset->toArray();
+        }
+        $nonAssetTransactions = [];
+        foreach ($transactions as $transaction) {
+            if (empty($transaction->isin)) {
+                $nonAssetTransactions[] = $transaction;
+            }
+        }
+
+        $tmpFile = ROOT_PATH . '/resources/portfolio/tmp_portfolio.json';
+        $file = ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json";
+
+        // Skriv till en temporär fil först
+        $result = file_put_contents(
+            $tmpFile,
+            json_encode([
+                    'portfolioTransactions' => $assetsWithTransactions,
+                    'accountTransactions' => $nonAssetTransactions
+                ],
+                JSON_PRETTY_PRINT
+            )
+        );
+        if ($result === false) {
+            throw new Exception('Failed to write to temp file');
+        }
+
+        // Ersätt den gamla filen med den nya datan
+        if (!rename($tmpFile, $file)) {
+            throw new Exception('Failed to move new file over old file');
         }
     }
 }

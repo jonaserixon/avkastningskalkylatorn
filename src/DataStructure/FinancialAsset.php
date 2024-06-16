@@ -239,4 +239,16 @@ class FinancialAsset
     {
         $this->costBasis = $amount;
     }
+
+    /**
+     * @return mixed[]
+     */
+    public function toArray(): array
+    {
+        return [
+            'name' => $this->name,
+            'isin' => $this->isin,
+            'transactions' => $this->transactions
+        ];
+    }
 }

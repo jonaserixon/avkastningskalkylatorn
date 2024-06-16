@@ -5,6 +5,5 @@ services:
     container_name: avkastningskalkylatorn
     build: .
     volumes:
-      - ./data:/data
-      - ./imports:/imports
+      - ./resources:/resources
       - .:/usr/src/avkastningskalkylatorn
