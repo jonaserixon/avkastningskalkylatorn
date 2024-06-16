@@ -4,6 +4,7 @@ namespace src\Service\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Holding;
+use src\Service\Utility;
 
 class StockPrice
 {
@@ -42,26 +43,13 @@ class StockPrice
      */
     protected function parseTransactions(): array
     {
-        $files = glob(STOCK_PRICE_DIR . '/*.csv');
-        if (empty($files)) {
+        $file = Utility::getLatestModifiedFile(static::$DIR, 'csv');
+        if (empty($file)) {
             return [];
         }
 
-        $latestFile = '';
-        $latestTime = 0;
-        foreach ($files as $file) {
-            $filePath = $file;
-
-            $fileTime = filemtime($filePath);
-
-            if ($fileTime > $latestTime) {
-                $latestTime = $fileTime;
-                $latestFile = $filePath;
-            }
-        }
-
         $holdings = [];
-        $file = fopen($latestFile, 'r');
+        $file = fopen($file, 'r');
         if ($file !== false) {
             fgetcsv($file);
 

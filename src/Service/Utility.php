@@ -2,6 +2,8 @@
 
 namespace src\Service;
 
+use Exception;
+
 class Utility
 {
     public static function bcabs(float|string $value, int $scale = 15): string
@@ -29,5 +31,31 @@ class Utility
         $needle = mb_strtolower($needle);
 
         return str_contains($haystack, $needle);
+    }
+
+    public static function getLatestModifiedFile(string $directory, string $fileType = 'csv'): ?string
+    {
+        if (!is_dir($directory) || !is_readable($directory)) {
+            throw new Exception('Directory does not exist or is not readable.');
+        }
+    
+        $latestFile = null;
+        $latestTime = 0;
+        $files = glob($directory . '/*.' . $fileType);
+        if ($files === false) {
+            throw new Exception('Failed to read directory.');
+        }
+    
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                $modificationTime = filemtime($file);
+                if ($modificationTime > $latestTime) {
+                    $latestTime = $modificationTime;
+                    $latestFile = $file;
+                }
+            }
+        }
+    
+        return $latestFile;
     }
 }

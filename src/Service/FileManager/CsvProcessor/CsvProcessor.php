@@ -4,6 +4,7 @@ namespace src\Service\FileManager\CsvProcessor;
 
 use Exception;
 use src\DataStructure\Transaction;
+use src\Service\Utility;
 
 abstract class CsvProcessor
 {
@@ -25,19 +26,15 @@ abstract class CsvProcessor
             mkdir(static::$DIR, 0777, true);
         }
 
-        // TODO: plocka alltid ut den senast modifierade filen här
-        $files = glob(static::$DIR . '/*.csv');
-        if (empty($files)) {
+        $transactionFile = Utility::getLatestModifiedFile(static::$DIR, 'csv');
+        if ($transactionFile === null) {
             return $result;
         }
 
-        foreach ($files as $filepath) {
-            $validatedBank = $this->validateImportFile($filepath);
+        $validatedBank = $this->validateImportFile($transactionFile);
 
-            if ($validatedBank) {
-                $result = static::parseTransactions($filepath);
-                break;
-            }
+        if ($validatedBank) {
+            $result = static::parseTransactions($transactionFile);
         }
 
         return $result;
@@ -64,6 +61,73 @@ abstract class CsvProcessor
         fclose($file);
 
         return $result;
+    }
+
+    /**
+     * @return mixed[]
+     */
+    protected function readCsvFileWithHeaders(string $fileName, string $separator): array
+    {
+        $this->convertToUTF8($fileName);
+
+        $file = fopen($fileName, 'r');
+        if ($file === false) {
+            throw new Exception('Failed to open file: ' . basename($fileName));
+        }
+    
+        $rawHeaders = fgetcsv($file, 0, $separator);
+        if ($rawHeaders === false) {
+            throw new Exception('Failed to read headers from file: ' . basename($fileName));
+        }
+        $headers = array_map([$this, 'cleanHeader'], $rawHeaders);
+
+        $headerCount = array_count_values($headers);
+        $headerIndexes = array_fill_keys($headers, 0);
+
+        foreach ($headers as $key => $header) {
+            $header = $this->removeUtf8Bom($header);
+            $header = trim($header);
+
+            if ($headerCount[$header] > 1) {
+                $headers[$key] = $header . '_' . (++$headerIndexes[$header]);
+            }
+        }
+
+        $data = [];
+        while (($row = fgetcsv($file, 0, $separator)) !== false) {
+            $data[] = array_combine($headers, $row);
+        }
+    
+        fclose($file);
+
+        return $data;
+    }
+
+    private function removeUtf8Bom(string $text): string
+    {
+        $bom = pack('H*','EFBBBF');
+        // Kontrollera om texten börjar med BOM
+        if (substr($text, 0, strlen($bom)) === $bom) {
+            // Ta bort BOM genom att klippa bort de första tre byten
+            $text = substr($text, strlen($bom));
+        }
+        return $text;
+    }
+    
+    private function cleanHeader(string $header): string
+    {
+        // Ta bort UTF-8 BOM
+        $header = $this->removeUtf8Bom($header);
+    
+        // Ta bort icke utskrivbara tecken och whitespace
+        $header = preg_replace('/[\x00-\x1F\x7F]/u', '', $header);
+        if ($header === null) {
+            throw new Exception('Failed to clean header: ' . $header);
+        }
+
+        $header = trim($header);
+    
+        return $header;
     }
 
     protected static function normalizeInput(string $input): string

@@ -108,7 +108,7 @@ class TransactionLoader
      * @param Transaction[] $transactions
      * @return Transaction[] filtered transactions
      */
-    private function filterTransactions(array $transactions): array
+    public function filterTransactions(array $transactions): array
     {
         $filters = [
             'bank' => $this->filterBank,

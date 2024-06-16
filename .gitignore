@@ -1,8 +1,4 @@
-imports/banks/avanza/*
-imports/banks/nordnet/*
-imports/stock_price/*
-exports/*
 .vscode
-data/*
+# /resources/*
 .env
 tmp

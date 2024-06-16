@@ -19,6 +19,8 @@ parameters:
             identifier: constant.notFound
             paths: 
                 - ../src/Service/FileManager/PPExporter.php
+                - ../src/Command/TransactionCommand.php
+                - ../src/Command/CalculateProfitCommand.php
 
     # https://phpstan.org/config-reference#stricter-analysis
     # https://phpstan.org/config-reference#analysed-files

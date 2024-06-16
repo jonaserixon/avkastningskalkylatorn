@@ -41,39 +41,39 @@ class Avanza extends CsvProcessor
      */
     protected function parseTransactions(string $fileName): array
     {
-        $csvData = $this->readCsvFile($fileName, static::CSV_SEPARATOR);
+        $csvData = $this->readCsvFileWithHeaders($fileName, static::CSV_SEPARATOR);
 
         usort($csvData, function ($a, $b) {
-            return strtotime($a[0]) <=> strtotime($b[0]);
+            return strtotime($a['Datum']) <=> strtotime($b['Datum']);
         });
 
         $result = [];
         foreach ($csvData as $row) {
-            $transactionType = static::mapToTransactionTypeByType($row[2]);
+            $transactionType = static::mapToTransactionTypeByType($row['Typ av transaktion']);
             if (!$transactionType) {
-                Logger::getInstance()->addWarning("Could not handle transaction: {$row[3]} {$row[0]} when importing Avanza transactions.");
+                Logger::getInstance()->addWarning("Could not handle transaction: {$row['Värdepapper/beskrivning']} {$row['Datum']} when importing Avanza transactions.");
                 continue;
             }
 
-            $date = date_create($row[0]);
+            $date = date_create($row['Datum']);
             if ($date === false) {
-                Logger::getInstance()->addWarning("Could not parse date: {$row[0]} when importing Avaanza transactions.");
+                Logger::getInstance()->addWarning("Could not parse date: {$row['Datum']} when importing Avaanza transactions.");
                 continue;
             }
 
-            $account = $row[1];
-            $name = trim($row[3]);
-            $rawQuantity = static::convertNumericToFloat($row[4], 5);
-            $rawPrice = static::convertNumericToFloat($row[5]);
+            $account = $row['Konto'];
+            $name = trim($row['Värdepapper/beskrivning']);
+            $rawQuantity = static::convertNumericToFloat($row['Antal'], 5);
+            $rawPrice = static::convertNumericToFloat($row['Kurs']);
             $pricePerShareSEK = null;
-            $rawAmount = static::convertNumericToFloat($row[6], 5);
-            $commission = static::convertNumericToFloat($row[7]);
-            $currency = $row[8];
-            $isin = $row[9];
+            $rawAmount = static::convertNumericToFloat($row['Belopp'], 5);
+            $commission = static::convertNumericToFloat($row['Courtage']);
+            $currency = $row['Valuta'];
+            $isin = $row['ISIN'];
             $type = $transactionType;
 
             // TODO: implement support for new isin codes (such as when share splits occur)
-            $isin = $row[9];
+            $isin = $row['ISIN'];
             if ($isin === 'SE0000310336') {
                 $isin = 'SE0015812219';
             }
