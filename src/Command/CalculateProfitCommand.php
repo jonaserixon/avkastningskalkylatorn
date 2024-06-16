@@ -5,7 +5,6 @@ namespace src\Command;
 use DateTime;
 use Exception;
 use src\Command\CommandProcessor;
-use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
 use src\Enum\Bank;
 use src\Enum\TransactionType;
@@ -71,7 +70,15 @@ class CalculateProfitCommand extends CommandProcessor
         $transactionMapper = new TransactionMapper($transactionLoader->overview);
 
         $portfolioFile = Utility::getLatestModifiedFile(ROOT_PATH . '/resources/portfolio', 'json');
+        if ($portfolioFile === null) {
+            throw new Exception('No portfolio file found.');
+        }
+
         $portfolio = file_get_contents($portfolioFile);
+        if ($portfolio === false) {
+            throw new Exception('Failed to read portfolio file.');
+        }
+
         $portfolio = json_decode($portfolio);
 
         $assets = [];

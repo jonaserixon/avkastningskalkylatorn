@@ -2,19 +2,12 @@
 
 namespace src\Command;
 
-use DateTime;
 use Exception;
-use src\DataStructure\FinancialOverview;
+use src\DataStructure\FinancialAsset;
 use src\DataStructure\Transaction;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
-use src\Service\FileManager\Exporter;
-use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
-use src\Service\Transaction\TransactionMapper;
 use src\Service\Utility;
 use src\View\Logger;
-use src\View\TextColorizer;
 use stdClass;
 
 class TransactionCommand extends CommandProcessor
@@ -70,6 +63,7 @@ class TransactionCommand extends CommandProcessor
 
         $this->generatePortfolio($assets, $transactions);
 
+        /*
         return;
 
         if ($options->cashFlow) {
@@ -136,6 +130,7 @@ class TransactionCommand extends CommandProcessor
                 echo $res . PHP_EOL;
             }
         }
+        */
 
         Logger::getInstance()->printInfos();
 
@@ -146,6 +141,10 @@ class TransactionCommand extends CommandProcessor
         }
     }
 
+    /**
+     * @param FinancialAsset[] $assets
+     * @param Transaction[] $transactions
+     */
     public function generatePortfolio(array $assets, array $transactions): void
     {
         // $avanzaFiles = glob(IMPORT_DIR . '/banks/avanza/*.csv');
@@ -157,6 +156,10 @@ class TransactionCommand extends CommandProcessor
 
         $string = '';
         foreach ($files as $file) {
+            if ($file === null) {
+                continue;
+            }
+
             $string .= filemtime($file) . ' ' . $file;
         }
 

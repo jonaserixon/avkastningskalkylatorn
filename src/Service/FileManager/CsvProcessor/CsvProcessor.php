@@ -27,6 +27,10 @@ abstract class CsvProcessor
         }
 
         $transactionFile = Utility::getLatestModifiedFile(static::$DIR, 'csv');
+        if ($transactionFile === null) {
+            return $result;
+        }
+
         $validatedBank = $this->validateImportFile($transactionFile);
 
         if ($validatedBank) {
@@ -72,6 +76,9 @@ abstract class CsvProcessor
         }
     
         $rawHeaders = fgetcsv($file, 0, $separator);
+        if ($rawHeaders === false) {
+            throw new Exception('Failed to read headers from file: ' . basename($fileName));
+        }
         $headers = array_map([$this, 'cleanHeader'], $rawHeaders);
 
         $headerCount = array_count_values($headers);
@@ -96,7 +103,8 @@ abstract class CsvProcessor
         return $data;
     }
 
-    private function removeUtf8Bom($text) {
+    private function removeUtf8Bom(string $text): string
+    {
         $bom = pack('H*','EFBBBF');
         // Kontrollera om texten börjar med BOM
         if (substr($text, 0, strlen($bom)) === $bom) {
@@ -106,12 +114,17 @@ abstract class CsvProcessor
         return $text;
     }
     
-    private function cleanHeader($header) {
+    private function cleanHeader(string $header): string
+    {
         // Ta bort UTF-8 BOM
         $header = $this->removeUtf8Bom($header);
     
         // Ta bort icke utskrivbara tecken och whitespace
         $header = preg_replace('/[\x00-\x1F\x7F]/u', '', $header);
+        if ($header === null) {
+            throw new Exception('Failed to clean header: ' . $header);
+        }
+
         $header = trim($header);
     
         return $header;

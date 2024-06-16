@@ -70,22 +70,7 @@ $config = [
     'enable_include_path_checks' => true,
 
     'suppress_issue_types' => [
-        'PhanTypeArraySuspiciousNullable',
-        'PhanTypePossiblyInvalidDimOffset',
-        'PhanPossiblyNullTypeMismatchProperty',
-        'PhanPossiblyUndeclaredVariable',
-        'PhanTypeInvalidDimOffset',
 
-        'PhanTypeSuspiciousStringExpression',
-        'PhanTypeMismatchDimFetch',
-
-        'PhanSuspiciousTruthyString',
-        'PhanSuspiciousTruthyCondition',
-        'PhanSuspiciousValueComparison',
-        'PhanCoalescingNeverNull',
-        'PhanTypeComparisonFromArray',
-
-        'PhanTypeSuspiciousNonTraversableForeach', // TODO: enable this in the future.
     ],
     'whitelist_issue_types' => [],
 

@@ -42,6 +42,9 @@ class Utility
         $latestFile = null;
         $latestTime = 0;
         $files = glob($directory . '/*.' . $fileType);
+        if ($files === false) {
+            throw new Exception('Failed to read directory.');
+        }
     
         foreach ($files as $file) {
             if (is_file($file)) {
