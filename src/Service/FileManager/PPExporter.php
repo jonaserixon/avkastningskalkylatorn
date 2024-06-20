@@ -8,6 +8,7 @@ use src\DataStructure\Transaction;
 use src\Enum\TransactionType;
 use src\Service\API\Frankfurter\FrankfurterWrapper;
 use src\Service\FileManager\Exporter;
+use src\View\Logger;
 
 class PPExporter
 {
@@ -29,10 +30,13 @@ class PPExporter
         $this->exportCsv = $exportCsv;
         $this->transactions = $transactions;
 
-        $this->parseTickerInfo();
+        $this->tickers = $this->parseTickerInfo();
     }
 
-    private function parseTickerInfo(): void
+    /**
+     * @return TickerInfo[]
+     */
+    private function parseTickerInfo(): array
     {
         $tickers = file_get_contents(ROOT_PATH . '/resources/tmp/tickers.json');
         if ($tickers === false) {
@@ -40,7 +44,11 @@ class PPExporter
         }
 
         $tickers = json_decode($tickers);
+        if ($tickers === null) {
+            throw new Exception('Could not decode tickers.json');
+        }
 
+        $tickerInfos = [];
         foreach ($tickers as $ticker) {
             $tickerInfo = new TickerInfo(
                 $ticker->ticker,
@@ -49,8 +57,10 @@ class PPExporter
                 $ticker->currency
             );
 
-            $this->tickers[] = $tickerInfo;
+            $tickerInfos[] = $tickerInfo;
         }
+
+        return $tickerInfos;
     }
 
     public function exportSecurities(): void
@@ -98,7 +108,7 @@ class PPExporter
             }
 
             if ($transaction->rawQuantity === null || $transaction->rawAmount === null) {
-                // TODO: logger
+                Logger::getInstance()->addWarning('Missing quantity or amount for dividend transaction for ' . $transaction->getDateString() . ' ' . $transaction->name . ' ' . $transaction->isin);
                 continue;
             }
 
@@ -168,12 +178,12 @@ class PPExporter
             }
 
             if ($transaction->rawQuantity === null) {
-                // TODO: logger
+                Logger::getInstance()->addWarning('Missing quantity for transaction for ' . $transaction->getDateString() . ' ' . $transaction->name . ' ' . $transaction->isin);
                 continue;
             }
 
             if ($transaction->rawPrice === null || $transaction->rawAmount === null) {
-                // TODO: logger
+                Logger::getInstance()->addWarning('Missing price or amount for transaction for ' . $transaction->getDateString() . ' ' . $transaction->name . ' ' . $transaction->isin);
                 continue;
             }
 
@@ -195,7 +205,7 @@ class PPExporter
                     if (in_array($currency['currency'], ['USD', 'CAD', 'EUR']) && $exchangeRate < 2) {
                         $frankfurter = new FrankfurterWrapper();
                         $exchangeRate = $frankfurter->getExchangeRateByCurrencyAndDate($currency['currency'], $transaction->getDateString());
-                        
+
                         echo 'Using Frankfurter API to fetch exchange rate for transaction ' . $transaction->getDateString() . ' ' . $transaction->name . ' ' . $transaction->isin . PHP_EOL;
                         /*
                         $skippedTransactions[$transaction->isin][] = [
@@ -284,7 +294,7 @@ class PPExporter
             }
 
             if ($transaction->rawAmount === null) {
-                // TODO: logger
+                Logger::getInstance()->addWarning('Missing amount for transaction for ' . $transaction->getDateString() . ' ' . $transaction->name . ' ' . $transaction->isin);
                 continue;
             }
 
@@ -545,6 +555,11 @@ class PPExporter
                 continue;
             }
 
+            if ($transaction->isin === null) {
+                // TODO: logger
+                continue;
+            }
+
             if ($transaction->rawQuantity === null) {
                 // TODO: logger
                 continue;
@@ -766,7 +781,7 @@ class PPExporter
                 continue;
             }
 
-            $currencies = $isinGroupedTickers[$transaction->isin];
+            $currencies = $isinGroupedTickers[$transaction->isin] ?? [];
             foreach ($currencies as $currency) {
                 if (empty($transaction->rawAmount)) {
                     $note = 'Suspicious fee: ' . $transaction->getDateString() . ' ' . $transaction->name . ' ' . $transaction->isin . PHP_EOL;

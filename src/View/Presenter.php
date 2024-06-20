@@ -175,7 +175,7 @@ class Presenter
         $totalReturn += $overview->totalTax;
         echo str_pad(" ", 30) . "Totalt avkastning (inkl. avgifter, källskatt, skatt, räntor): {$this->colorPicker($totalReturn)} SEK" . PHP_EOL;
         
-        if ($overview->returns->xirr !== null) {
+        if (isset($overview->returns->xirr)) {
             echo str_pad("Avkastningsberäkningar:", 30) . PHP_EOL;
             echo str_pad(" ", 30) . "XIRR: {$this->colorPicker($overview->returns->xirr)} %" . PHP_EOL;
         }
@@ -297,8 +297,7 @@ class Presenter
                 $this->formatNumber($asset->unrealizedGainLoss),
                 $this->formatNumber($asset->getDividendAmount()),
                 $this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()),
-                $this->formatNumber((float) $asset->getCurrentValueOfShares()),
-                // $this->formatNumber($asset->getCurrentNumberOfShares())
+                $this->formatNumber((float) $asset->getCurrentValueOfShares())
             ], $colWidths);
             $this->printHorizontalLine($colWidths);
         }
@@ -313,22 +312,9 @@ class Presenter
             $this->formatNumber($totalUnrealizedCapitalGainLoss),
             $this->formatNumber($overview->totalDividend),
             $this->formatNumber(($overview->totalBuyCommission + $overview->totalSellCommission)),
-            $this->formatNumber($overview->totalCurrentHoldings),
-            // ''
+            $this->formatNumber($overview->totalCurrentHoldings)
         ], $colWidths);
         $this->printHorizontalLine($colWidths);
-
-        /*
-        $this->printRow([
-            'Saldo:',
-            '-',
-            '-',
-            '-',
-            '-',
-            '-'
-        ], $colWidths);
-        $this->printHorizontalLine($colWidths);
-        */
     }
 
     /**
@@ -343,20 +329,28 @@ class Presenter
         }
     }
 
+    /**
+     * @param mixed[] $colWidths
+     */
     public function printHorizontalLine(array $colWidths): void
     {
         foreach ($colWidths as $width) {
-            echo '+' . str_repeat('-', $width + 2);
+            echo '+' . str_repeat('-', intval($width) + 2);
         }
         echo '+' . PHP_EOL;
     }
 
+
+    /**
+     * @param mixed[] $row
+     * @param mixed[] $colWidths
+     */
     public function printRow(array $row, array $colWidths): void
     {
         foreach ($row as $colIndex => $colValue) {
             $visibleLength = mb_strlen($colValue);
             $padding = $colWidths[$colIndex] - $visibleLength;
-            printf("| %s%s ", $colValue, str_repeat(' ', $padding));
+            printf("| %s%s ", $colValue, str_repeat(' ', intval($padding)));
         }
         echo '|' . PHP_EOL;
     }

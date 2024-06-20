@@ -48,7 +48,7 @@ class Nordnet extends CsvProcessor
         }
         fgetcsv($file); // Skip headers
 
-        usort($csvData, function ($a, $b) {
+        usort($csvData, function (array $a, array $b): int {
             return strtotime($a['Bokföringsdag']) <=> strtotime($b['Bokföringsdag']);
         });
 

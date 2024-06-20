@@ -1,6 +1,7 @@
 <?php
 
-spl_autoload_register(function ($className) {
+spl_autoload_register(function (string $className): void
+{
     $baseDir = __DIR__ . '/../';
 
     $className = str_replace("\\", DIRECTORY_SEPARATOR, $className);
