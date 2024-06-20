@@ -20,7 +20,6 @@ class TransactionMapper
 
     /**
      * @param Transaction[] $transactions
-     * @return FinancialAsset
      */
     public function _addTransactionsToAsset(string $isin, string $name, array $transactions): FinancialAsset
     {

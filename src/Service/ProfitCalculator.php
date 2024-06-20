@@ -29,7 +29,6 @@ class ProfitCalculator
      *
      * @param FinancialAsset[] $assets
      * @param FinancialOverview $overview
-     * @return stdClass
      */
     public function calculate(array $assets, FinancialOverview $overview): stdClass
     {
@@ -41,14 +40,14 @@ class ProfitCalculator
             }
 
             $mergedTransactions = array_merge(
-                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::BUY)),
-                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::SELL)),
-                array_map(function ($item) { return clone $item; }, $asset->getTransactionsByType(TransactionType::SHARE_SPLIT))
+                array_map(function (Transaction $item): Transaction { return clone $item; }, $asset->getTransactionsByType(TransactionType::BUY)),
+                array_map(function (Transaction $item): Transaction { return clone $item; }, $asset->getTransactionsByType(TransactionType::SELL)),
+                array_map(function (Transaction $item): Transaction { return clone $item; }, $asset->getTransactionsByType(TransactionType::SHARE_SPLIT))
             );
 
             if (!empty($mergedTransactions)) {
                 // Viktigt att sortera transaktionerna efter datum inför beräkningar.
-                usort($mergedTransactions, function ($a, $b) {
+                usort($mergedTransactions, function (Transaction $a, Transaction $b): int {
                     return $a->date <=> $b->date;
                 });
 
@@ -112,7 +111,7 @@ class ProfitCalculator
         }
 
         // Important for calculations etc.
-        usort($overview->cashFlows, function ($a, $b) {
+        usort($overview->cashFlows, function (Transaction $a, Transaction $b): int {
             return strtotime($a->getDateString()) <=> strtotime($b->getDateString());
         });
 
@@ -268,7 +267,6 @@ class ProfitCalculator
      * Calculate realized gains and cost basis for a list of transactions.
      *
      * @param Transaction[] $transactions
-     * @return stdClass
      */
     private function calculateRealizedGains(array $transactions): stdClass
     {
@@ -389,7 +387,6 @@ class ProfitCalculator
      *
      * @param Transaction[] $cashFlows
      * @param string $method portfolio|holding
-     * @return float|null
      */
     protected function calculateXIRR(array $cashFlows, string $method): ?float
     {
@@ -403,7 +400,7 @@ class ProfitCalculator
                     continue;
                 }
                 if ($cashFlow->getTypeName() === 'deposit') {
-                    $amount = $amount * -1;
+                    $amount *= -1;
                 } elseif ($cashFlow->getTypeName() === 'withdrawal') {
                     $amount = abs($amount);
                 }
@@ -445,14 +442,14 @@ class ProfitCalculator
             throw new Exception('Invalid method for XIRR calculation');
         }
 
-        usort($transactions, function ($a, $b) {
+        usort($transactions, function (array $a, array $b): int {
             return $a['date'] <=> $b['date'];
         });
 
         $minDate = $transactions[0]['date'];
 
         // NPV (Net Present Value) function
-        $npv = function ($rate) use ($transactions, $minDate) {
+        $npv = function (float $rate) use ($transactions, $minDate): float {
             $sum = 0;
             foreach ($transactions as $transaction) {
                 $amount = $transaction['amount'];

@@ -43,7 +43,7 @@ class Avanza extends CsvProcessor
     {
         $csvData = $this->readCsvFileWithHeaders($fileName, static::CSV_SEPARATOR);
 
-        usort($csvData, function ($a, $b) {
+        usort($csvData, function (array $a, array $b): int {
             return strtotime($a['Datum']) <=> strtotime($b['Datum']);
         });
 
@@ -154,7 +154,7 @@ class Avanza extends CsvProcessor
         }
 
         // Check if this can be considered a share split.
-        if ($type === TransactionType::OTHER && $rawQuantity != 0 && $commission == 0 && empty($rawAmount)) {
+        if ($type === TransactionType::OTHER && !empty($rawQuantity) && empty($commission) && empty($rawAmount)) {
             return TransactionType::SHARE_SPLIT;
         }
 

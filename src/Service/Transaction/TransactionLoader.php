@@ -62,7 +62,7 @@ class TransactionLoader
         }
 
         // Sort assets by name for readability.
-        usort($assets, function ($a, $b) {
+        usort($assets, function (FinancialAsset $a, FinancialAsset $b): int {
             return strcasecmp($a->name, $b->name);
         });
 
@@ -87,7 +87,7 @@ class TransactionLoader
         }
 
         // Sort transactions by date, bank and ISIN. (important for calculations and handling of transactions)
-        usort($transactions, function ($a, $b) {
+        usort($transactions, function (Transaction $a, Transaction $b): int {
             $dateComparison = strtotime($a->getDateString()) <=> strtotime($b->getDateString());
             if ($dateComparison !== 0) {
                 return $dateComparison;
@@ -125,7 +125,7 @@ class TransactionLoader
                 continue;
             }
 
-            $transactions = array_filter($transactions, function ($transaction) use ($key, $value) {
+            $transactions = array_filter($transactions, function (Transaction $transaction) use ($key, $value): bool {
                 if ($key === 'asset' && is_string($value)) {
                     // To support multiple assets
                     $assets = explode(',', mb_strtoupper($value));
@@ -169,6 +169,8 @@ class TransactionLoader
                 if ($key === 'isin' && is_string($value) && $transaction->isin !== null) {
                     return mb_strtoupper($transaction->isin) === mb_strtoupper($value);
                 }
+
+                return true;
             });
         }
 

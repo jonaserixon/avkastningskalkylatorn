@@ -4,77 +4,55 @@ declare(strict_types=1);
 
 // See more phan config options at: https://github.com/phan/phan/blob/v5/.phan/config.php and https://github.com/phan/phan/wiki/Incrementally-Strengthening-Analysis
 
-/**
- * This configuration will be read and overlaid on top of the
- * default configuration. Command-line arguments will be applied
- * after this file is read.
- */
 $config = [
-    // Supported values: `'5.6'`, `'7.0'`, `'7.1'`, `'7.2'`, `'7.3'`,
-    // `'7.4'`, `'8.0'`, `'8.1'`, `null`.
-    // If this is set to `null`,
-    // then Phan assumes the PHP version which is closest to the minor version
-    // of the php executable used to execute Phan.
-    //
-    // Note that the **only** effect of choosing `'5.6'` is to infer
-    // that functions removed in php 7.0 exist.
-    // (See `backward_compatibility_checks` for additional options)
-    'target_php_version' => null, // '8.0',
+    'target_php_version' => null,
     'analyzed_file_extensions' => ['php'],
-
-    // A list of directories that should be parsed for class and
-    // method information. After excluding the directories
-    // defined in exclude_analysis_directory_list, the remaining
-    // files will be statically analyzed for errors.
-    //
-    // Thus, both first-party and third-party code being used by
-    // your application should be included in this list.
-    'directory_list' => [],
-
-    // A list of plugin files to execute.
-    // Plugins which are bundled with Phan can be added here by providing their name
-    // (e.g. 'AlwaysReturnPlugin')
-    //
-    // Documentation about available bundled plugins can be found
-    // at https://github.com/phan/phan/tree/v5/.phan/plugins
-    //
-    // Alternately, you can pass in the full path to a PHP file
-    // with the plugin's implementation.
-    // (e.g. 'vendor/phan/phan/.phan/plugins/AlwaysReturnPlugin.php')
     'plugins' => [
-        // 'AlwaysReturnPlugin',
+        'AlwaysReturnPlugin',
         'DollarDollarPlugin',
         'UnreachableCodePlugin',
         'DuplicateArrayKeyPlugin',
         'PregRegexCheckerPlugin',
-        // 'UseReturnValuePlugin',
-        // 'UnknownElementTypePlugin',
-        // 'DuplicateExpressionPlugin',
-        // 'WhitespacePlugin',
+        'DuplicateExpressionPlugin',
         'EmptyStatementListPlugin',
         'LoopVariableReusePlugin',
+        'PHPDocToRealTypesPlugin',
+        'PHPDocRedundantPlugin',
+        'PreferNamespaceUsePlugin',
+        'RedundantAssignmentPlugin',
+        'ShortArrayPlugin',
+        'SimplifyExpressionPlugin',
+        // 'StrictLiteralComparisonPlugin',
+        'UnknownElementTypePlugin',
+        // 'WhitespacePlugin',
+        // 'PossiblyStaticMethodPlugin',
+        'UseReturnValuePlugin',
     ],
-    // A directory list that defines files that will be excluded
-    // from static analysis, but whose class and method
-    // information should be included.
-    //
-    // Generally, you'll want to include the directories for
-    // third-party code (such as "vendor/") in this list.
-    //
-    // n.b.: If you'd like to parse but not analyze 3rd
-    //       party code, directories containing that code
-    //       should be added to both the `directory_list`
-    //       and `exclude_analysis_directory_list` arrays.
+    'directory_list' => [],
     'exclude_analysis_directory_list' => [],
     'exclude_file_list' => [],
     'enable_include_path_checks' => true,
-
     'suppress_issue_types' => [
-
+        'PhanRedundantConditionInLoop',
+        'PhanTypeMismatchArgumentNullable',
+        'PhanTypeMismatchArgumentInternalProbablyReal',
+        'PhanTypeMismatchDimFetchNullable',
+        'PhanTypeMismatchArgumentNullableInternal',
+        'PhanTypeMismatchDimAssignment',
+        'PhanPluginUseReturnValueInternalKnown',
+        'PhanPluginUnknownArrayClosureParamType',
     ],
     'whitelist_issue_types' => [],
+    'force_tracking_references' => true,
+    'redundant_condition_detection' => true,
+    'simplify_ast' => true,
+    'analyze_signature_compatibility' => true,
+    'null_casts_as_any_type' => false,
+    'null_casts_as_array' => false,
+    'array_casts_as_null' => false,
 
-    'null_casts_as_any_type' => true, // TODO: set as false if we want stricter checks
+    // 'dead_code_detection' => true,
+    // 'error_prone_truthy_condition_detection' => true,
 ];
 
 function getDirectoriesWithPhpFiles($rootDir, &$subdirs = [], $baseDir = '')

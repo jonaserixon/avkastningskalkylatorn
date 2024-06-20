@@ -12,10 +12,6 @@ parameters:
     # https://phpstan.org/user-guide/ignoring-errors
     ignoreErrors:
         - 
-            identifier: missingType.iterableValue
-            paths: 
-                - ../src/View/Presenter.php
-        - 
             identifier: constant.notFound
             paths: 
                 - ../src/Service/FileManager/PPExporter.php
@@ -27,10 +23,11 @@ parameters:
     paths:
         - ../src
 
+    checkUninitializedProperties: true
+    checkBenevolentUnionTypes: true
     checkDynamicProperties: true
     checkFunctionNameCase: true
     checkTooWideReturnTypesInProtectedAndPublicMethods: true
-    # checkUninitializedProperties: true
     reportAnyTypeWideningInVarTag: true
     checkMissingOverrideMethodAttribute: true
     checkAlwaysTrueCheckTypeFunctionCall: true
@@ -38,16 +35,14 @@ parameters:
     reportStaticMethodSignatures: true
     reportAlwaysTrueInLastCondition: true
     reportWrongPhpDocTypeInVarTag: true
-
-    # polluteScopeWithLoopInitialAssignments: true
-    # polluteScopeWithAlwaysIterableForeach: true
-    # checkAlwaysTrueInstanceof: true
-    # checkAlwaysTrueStrictComparison: true
-    # checkExplicitMixedMissingReturn: true
-    # reportMaybesInMethodSignatures: true
-    # reportMaybesInPropertyPhpDocTypes: true
-    # rememberPossiblyImpureFunctionValues: true
-    # checkImplicitMixed: true
-    # checkBenevolentUnionTypes: true
+    polluteScopeWithLoopInitialAssignments: true
+    polluteScopeWithAlwaysIterableForeach: true
+    checkAlwaysTrueInstanceof: true
+    checkAlwaysTrueStrictComparison: true
+    checkExplicitMixedMissingReturn: true
+    reportMaybesInMethodSignatures: true
+    reportMaybesInPropertyPhpDocTypes: true
+    rememberPossiblyImpureFunctionValues: true
+    reportPossiblyNonexistentConstantArrayOffset: true
     # reportPossiblyNonexistentGeneralArrayOffset: true
-    # reportPossiblyNonexistentConstantArrayOffset: true
+    # checkImplicitMixed: true

@@ -2,14 +2,12 @@
 
 namespace src\Command;
 
-use src\View\Logger;
 use src\View\Presenter;
 use src\View\TextColorizer;
 
 class CommandProcessor
 {
     protected Presenter $presenter;
-    protected Logger $logger;
 
     /** @var mixed[] */
     protected array $commands;
@@ -42,7 +40,7 @@ class CommandProcessor
             }
         }
 
-        if (!array_key_exists($command, $this->commands)) {
+        if (is_numeric($command) || !array_key_exists($command, $this->commands)) {
             $this->unknownCommand($command);
             $this->printAvailableCommands();
             exit(1);
@@ -106,7 +104,7 @@ class CommandProcessor
         }
     }
 
-    protected function unknownCommand(string $command): void
+    protected function unknownCommand(mixed $command): void
     {
         echo TextColorizer::colorText("Unknown command: $command\n\n", 'red');
     }

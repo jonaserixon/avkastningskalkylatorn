@@ -3,6 +3,7 @@
 namespace src\Service\FileManager;
 
 use Exception;
+use src\View\Logger;
 
 class Exporter
 {
@@ -13,10 +14,11 @@ class Exporter
     public static function exportToCsv(array $headers, array $data, string $fileName = 'export', string $delimiter = ','): void
     {
         if (empty($headers) || empty($data)) {
+            Logger::getInstance()->addWarning('No data to export');
             return;
         }
 
-        $filePath = ROOT_PATH . '/exports/' . $fileName . '_' . date('Y-m-d_His') . '.csv'; // @phpstan-ignore-line
+        $filePath = ROOT_PATH . '/resources/exports/' . $fileName . '_' . date('Y-m-d_His') . '.csv'; // @phpstan-ignore-line
 
         $file = fopen($filePath, 'w');
         if ($file === false) {

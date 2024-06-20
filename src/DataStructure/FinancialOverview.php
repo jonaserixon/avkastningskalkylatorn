@@ -28,9 +28,9 @@ class FinancialOverview
     public array $currentHoldingsWeighting = [];
     public float $depositAmountTotal = 0;
     public float $withdrawalAmountTotal = 0;
-    public string $firstTransactionDate;
-    public string $lastTransactionDate;
-    public AssetReturn $returns;
+    public string $firstTransactionDate = '';
+    public string $lastTransactionDate = '';
+    public ?AssetReturn $returns = null;
     // public float $totalProfitInclFees = 0;
 
     /**

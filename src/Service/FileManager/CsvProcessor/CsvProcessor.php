@@ -122,7 +122,7 @@ abstract class CsvProcessor
         // Ta bort icke utskrivbara tecken och whitespace
         $header = preg_replace('/[\x00-\x1F\x7F]/u', '', $header);
         if ($header === null) {
-            throw new Exception('Failed to clean header: ' . $header);
+            throw new Exception('Failed to clean header');
         }
 
         $header = trim($header);
