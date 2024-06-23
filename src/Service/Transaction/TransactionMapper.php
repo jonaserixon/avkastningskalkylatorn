@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\Service\Transaction;
 
@@ -54,6 +54,32 @@ class TransactionMapper
         }
 
         return $asset;
+    }
+
+    public function addTransactionsToExistingAsset(FinancialAsset &$asset, Transaction $transaction): void
+    {
+        $this->updateAssetBasedOnTransactionType($asset, $transaction);
+
+        if (!in_array($transaction->getBankName(), array_keys($asset->bankAccounts))) {
+            $asset->bankAccounts[$transaction->getBankName()] = [];
+        }
+        if (!in_array($transaction->account, $asset->bankAccounts[$transaction->getBankName()])) {
+            $asset->bankAccounts[$transaction->getBankName()][] = $transaction->account;
+        }
+        if (!in_array($transaction->name, $asset->transactionNames)) {
+            $asset->transactionNames[] = $transaction->name;
+        }
+
+        // Only add actual assets.
+        if (!$asset->name) {
+            $asset->name = $transaction->name;
+        }
+
+        $asset->addTransaction($transaction);
+
+        if (Utility::isNearlyZero($asset->getCurrentNumberOfShares())) {
+            $asset->resetCurrentNumberOfShares();
+        }
     }
 
     /**

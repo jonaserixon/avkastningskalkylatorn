@@ -1,8 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\DataStructure;
 
-class AssetReturn
+class AssetPerformance
 {
     public float $totalReturnInclFees = 0;
     public ?float $xirr = null;

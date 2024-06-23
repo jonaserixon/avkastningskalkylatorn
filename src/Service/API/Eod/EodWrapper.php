@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\Service\API\Eod;
 
@@ -46,6 +46,8 @@ class EodWrapper
 
         return $data;
     }
+
+    // TODO: enable multiple http parallel requests
 
     /**
      * @return stdClass[]

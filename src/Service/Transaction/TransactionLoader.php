@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\Service\Transaction;
 
@@ -6,6 +6,7 @@ use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\FinancialOverview;
 use src\DataStructure\Transaction;
+use src\Service\API\Eod\EodWrapper;
 use src\Service\FileManager\CsvProcessor\Avanza;
 use src\Service\FileManager\CsvProcessor\Nordnet;
 use src\Service\FileManager\CsvProcessor\StockPrice;
@@ -175,5 +176,19 @@ class TransactionLoader
         }
 
         return $transactions;
+    }
+
+    public function getHistoricalPrices(string $ticker, ?string $dateFrom = null, ?string $dateTo = null): array
+    {
+        $eod = new EodWrapper();
+
+        $prices = $eod->getHistoricalPricesByTicker($ticker, $dateFrom, $dateTo);
+
+        $historicalPrices = [];
+        foreach ($prices as $price) {
+            $historicalPrices[$price->date] = $price->close;
+        }
+
+        return $historicalPrices;
     }
 }

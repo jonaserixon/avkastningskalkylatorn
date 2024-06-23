@@ -1,13 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\Command;
 
+use DateTime;
 use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\Transaction;
+use src\Enum\TransactionType;
+use src\Service\FileManager\Exporter;
+use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
 use src\Service\Utility;
 use src\View\Logger;
+use src\View\TextColorizer;
 use stdClass;
 
 class TransactionCommand extends CommandProcessor
@@ -63,7 +68,51 @@ class TransactionCommand extends CommandProcessor
 
         $this->generatePortfolio($assets, $transactions);
 
-        /*
+        if (!file_exists(ROOT_PATH . '/resources/tmp/historical_prices')) {
+            mkdir(ROOT_PATH . '/resources/tmp/historical_prices', 0777, true);
+        }
+
+        $tickers = file_get_contents(ROOT_PATH . '/resources/tmp/tickers.json');
+        $tickers = json_decode($tickers);
+
+        foreach ($tickers as $tickerInfo) {
+            if ($options->isin !== null && $options->isin !== $tickerInfo->isin) {
+                continue;
+            }
+
+            if ($tickerInfo->ticker === null) {
+                echo "No ticker for {$tickerInfo->name}" . PHP_EOL;
+                continue;
+            }
+
+            $historicalPricesFile = ROOT_PATH . '/resources/tmp/historical_prices/' . $tickerInfo->isin . '.json';
+            if (!file_exists($historicalPricesFile) || filesize($historicalPricesFile) === 0) {
+                echo "Fetching historical prices for {$tickerInfo->name}" . PHP_EOL;
+                $historicalPrices = $transactionLoader->getHistoricalPrices($tickerInfo->ticker, $transactions[0]->getDateString(), date('Y-m-d'));
+                file_put_contents($historicalPricesFile, json_encode($historicalPrices, JSON_PRETTY_PRINT));
+            } else {
+                $existingHistoricalPrices = json_decode(file_get_contents($historicalPricesFile), true);
+                if (empty($existingHistoricalPrices)) {
+                    continue;
+                }
+
+                $lastDate = array_keys($existingHistoricalPrices)[count($existingHistoricalPrices) - 1];
+                $dateFrom = new DateTime($lastDate);
+                $dateFrom->modify('+1 day');
+
+                if ($dateFrom > date_create() || $dateFrom->diff(date_create())->days > 30) {
+                    continue;
+                }
+
+                echo "Updating historical prices for {$tickerInfo->name}" . PHP_EOL;
+
+                $historicalPrices = $transactionLoader->getHistoricalPrices($tickerInfo->ticker, $dateFrom->format('Y-m-d'), date('Y-m-d'));
+
+                $updatedHistoricalPrices = array_merge($existingHistoricalPrices, $historicalPrices);
+                file_put_contents($historicalPricesFile, json_encode($updatedHistoricalPrices, JSON_PRETTY_PRINT));
+            }
+        }
+
         return;
 
         if ($options->cashFlow) {
@@ -130,7 +179,6 @@ class TransactionCommand extends CommandProcessor
                 echo $res . PHP_EOL;
             }
         }
-        */
 
         Logger::getInstance()->printInfos();
 
@@ -185,7 +233,8 @@ class TransactionCommand extends CommandProcessor
         // Skriv till en temporär fil först
         $result = file_put_contents(
             $tmpFile,
-            json_encode([
+            json_encode(
+                [
                     'portfolioTransactions' => $assetsWithTransactions,
                     'accountTransactions' => $nonAssetTransactions
                 ],
