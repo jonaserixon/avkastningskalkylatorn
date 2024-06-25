@@ -48,6 +48,7 @@ class CalculateProfitCommand extends CommandProcessor
         $options->overview = $this->options['overview'] ?? $commandOptions['overview']['default'];
         $options->account = $this->options['account'] ?? null;
         $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
+        $options->TWR = $this->options['twr'] ?? null;
 
         return $options;
     }
@@ -82,98 +83,100 @@ class CalculateProfitCommand extends CommandProcessor
 
         $portfolio = json_decode($portfolio);
 
-        $this->doThingsAndStuff($portfolio, $transactionMapper);
-
-        $assets = [];
-        foreach ($portfolio->portfolioTransactions as $row) {
-            foreach ($row->transactions as &$transactionRow) {
-                $transaction = new Transaction(
-                    new DateTime($transactionRow->date->date),
-                    Bank::from($transactionRow->bank),
-                    $transactionRow->account,
-                    TransactionType::from($transactionRow->type),
-                    $transactionRow->name,
-                    $transactionRow->description,
-                    $transactionRow->rawQuantity,
-                    $transactionRow->rawPrice,
-                    $transactionRow->pricePerShareSEK,
-                    $transactionRow->rawAmount,
-                    $transactionRow->commission,
-                    $transactionRow->currency,
-                    $transactionRow->isin,
-                    $transactionRow->exchangeRate
-                );
-
-                $transactionRow = $transaction;
-            }
-            $transactions = $transactionLoader->filterTransactions($row->transactions);
-            $asset = $transactionMapper->_addTransactionsToAsset($row->isin, $row->name, $transactions);
-            $assets[] = $asset;
-        }
-
-        foreach ($portfolio->accountTransactions as $row) {
-            $transaction = new Transaction(
-                new DateTime($row->date->date),
-                Bank::from($row->bank),
-                $row->account,
-                TransactionType::from($row->type),
-                $row->name,
-                $row->description,
-                $row->rawQuantity,
-                $row->rawPrice,
-                $row->pricePerShareSEK,
-                $row->rawAmount,
-                $row->commission,
-                $row->currency,
-                $row->isin,
-                $row->exchangeRate
-            );
-            $transactions = $transactionLoader->filterTransactions([$transaction]);
-
-            if (empty($transactions)) {
-                continue;
-            }
-
-            $transactionMapper->handleNonAssetTransactionType($transactions[0]);
-        }
-        
-        /*
-        $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-        */
-
-        $profitCalculator = new ProfitCalculator($options->currentHoldings);
-        $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
-
-        if ($options->verbose) {
-            $this->presenter->displayDetailedAssets($result->assets);
+        if ($options->TWR) {
+            $this->calculateTWR($portfolio, $transactionMapper, $options->dateFrom, $options->dateTo);
         } else {
-            $this->presenter->generateAssetTable($result->overview, $result->assets);
-        }
-
-        // $this->presenter->displayFinancialOverview($result->overview);
-
-        if (!empty($result->overview->currentHoldingsWeighting)) {
-            $weightings = array_values($result->overview->currentHoldingsWeighting);
-
-            if (!empty($weightings)) {
-                echo PHP_EOL . TextColorizer::backgroundColor('Portföljviktning: ', 'pink', 'black') . PHP_EOL. PHP_EOL;
-
-                $maxValue = max($weightings);
-                foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
-                    $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+            $assets = [];
+            foreach ($portfolio->portfolioTransactions as $row) {
+                foreach ($row->transactions as &$transactionRow) {
+                    $transaction = new Transaction(
+                        new DateTime($transactionRow->date->date),
+                        Bank::from($transactionRow->bank),
+                        $transactionRow->account,
+                        TransactionType::from($transactionRow->type),
+                        $transactionRow->name,
+                        $transactionRow->description,
+                        $transactionRow->rawQuantity,
+                        $transactionRow->rawPrice,
+                        $transactionRow->pricePerShareSEK,
+                        $transactionRow->rawAmount,
+                        $transactionRow->commission,
+                        $transactionRow->currency,
+                        $transactionRow->isin,
+                        $transactionRow->exchangeRate
+                    );
+    
+                    $transactionRow = $transaction;
+                }
+                $transactions = $transactionLoader->filterTransactions($row->transactions);
+                $asset = $transactionMapper->_addTransactionsToAsset($row->isin, $row->name, $transactions);
+                $assets[] = $asset;
+            }
+    
+            foreach ($portfolio->accountTransactions as $row) {
+                $transaction = new Transaction(
+                    new DateTime($row->date->date),
+                    Bank::from($row->bank),
+                    $row->account,
+                    TransactionType::from($row->type),
+                    $row->name,
+                    $row->description,
+                    $row->rawQuantity,
+                    $row->rawPrice,
+                    $row->pricePerShareSEK,
+                    $row->rawAmount,
+                    $row->commission,
+                    $row->currency,
+                    $row->isin,
+                    $row->exchangeRate
+                );
+                $transactions = $transactionLoader->filterTransactions([$transaction]);
+    
+                if (empty($transactions)) {
+                    continue;
+                }
+    
+                $transactionMapper->handleNonAssetTransactionType($transactions[0]);
+            }
+            
+            /*
+            $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
+            */
+    
+            $profitCalculator = new ProfitCalculator($options->currentHoldings);
+            $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
+    
+            if ($options->verbose) {
+                $this->presenter->displayDetailedAssets($result->assets);
+            } else {
+                $this->presenter->generateAssetTable($result->overview, $result->assets);
+            }
+    
+            // $this->presenter->displayFinancialOverview($result->overview);
+    
+            if (!empty($result->overview->currentHoldingsWeighting)) {
+                $weightings = array_values($result->overview->currentHoldingsWeighting);
+    
+                if (!empty($weightings)) {
+                    echo PHP_EOL . TextColorizer::backgroundColor('Portföljviktning: ', 'pink', 'black') . PHP_EOL. PHP_EOL;
+    
+                    $maxValue = max($weightings);
+                    foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
+                        $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+                    }
                 }
             }
+    
+            if ($options->overview) {
+                $this->presenter->displayInvestmentReport($result->overview, $result->assets);
+            }
+    
+            foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
+                Logger::getInstance()->addInfo('Kurspris saknas för ' . $companyMissingPrice);
+            }
+    
+            $this->presenter->displayAssetNotices($result->assets);
         }
-
-        if ($options->overview) {
-            $this->presenter->displayInvestmentReport($result->overview, $result->assets);
-        }
-
-        foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
-            Logger::getInstance()->addInfo('Kurspris saknas för ' . $companyMissingPrice);
-        }
-
-        $this->presenter->displayAssetNotices($result->assets);
 
         Logger::getInstance()->printInfos();
 
@@ -184,17 +187,31 @@ class CalculateProfitCommand extends CommandProcessor
         }
     }
 
-    private function doThingsAndStuff(stdClass $portfolio, TransactionMapper $transactionMapper): void
+    private function calculateTWR(
+        stdClass $portfolio,
+        TransactionMapper $transactionMapper,
+        ?string $filterDateFrom = null,
+        ?string $filterDateTo = null
+    ): void
     {
+        echo 'Calculating TWR...' . PHP_EOL;
+
         $subPeriodDates = [];
-        $index = 0;
+        $subPeriodIndex = 0;
         $previousDate = null;
+
+        $dateFrom = ($filterDateFrom ? new DateTime($filterDateFrom) : null);
+        $dateTo = ($filterDateTo ? new DateTime($filterDateFrom) : null);
         
         $accountTransactions = [];
         foreach ($portfolio->accountTransactions as $row) {
             $transactionType = TransactionType::from($row->type);
 
             if (!in_array($transactionType, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL])) {
+                continue;
+            }
+
+            if (($dateFrom !== null && new DateTime($row->date->date) < $dateFrom) || ($dateTo !== null && new DateTime($row->date->date) > $dateTo)){
                 continue;
             }
 
@@ -215,23 +232,23 @@ class CalculateProfitCommand extends CommandProcessor
                 $row->exchangeRate
             );
 
-            if (!isset($subPeriodDates[$index])) {
-                $subPeriodDates[$index] = [];
+            if (!isset($subPeriodDates[$subPeriodIndex])) {
+                $subPeriodDates[$subPeriodIndex] = [];
             }
 
-            if (count($subPeriodDates[$index]) === 2) {
-                $previousDate = $subPeriodDates[$index][1];
-                $index++;
+            if (count($subPeriodDates[$subPeriodIndex]) === 2) {
+                $previousDate = $subPeriodDates[$subPeriodIndex][1];
+                $subPeriodIndex++;
 
-                $subPeriodDates[$index][] = $previousDate;
+                $subPeriodDates[$subPeriodIndex][] = $previousDate;
 
-                if (!isset($subPeriodDates[$index])) {
-                    $subPeriodDates[$index] = [];
+                if (!isset($subPeriodDates[$subPeriodIndex])) {
+                    $subPeriodDates[$subPeriodIndex] = [];
                 }
             }
 
-            if (!in_array($transaction->getDateString(), $subPeriodDates[$index])) {
-                $subPeriodDates[$index][] = $transaction->getDateString();
+            if (!in_array($transaction->getDateString(), $subPeriodDates[$subPeriodIndex])) {
+                $subPeriodDates[$subPeriodIndex][] = $transaction->getDateString();
             }
 
             $accountTransactions[] = $transaction;
@@ -272,7 +289,7 @@ class CalculateProfitCommand extends CommandProcessor
             ];
             $subPeriodDates[] = $currentSubPeriod;
         } else {
-            // Sista subperioden har inte någon slutperiod.
+            // If the last subperiod does not have an end date.
             $subPeriodDates[count($subPeriodDates) - 1][] = date('Y-m-d');
         }
 
@@ -283,42 +300,37 @@ class CalculateProfitCommand extends CommandProcessor
         $historicalCurrencyExchangeRates = $this->getHistoricalExchangeRates($historicalCurrencyExchangeRateFile);
 
         $previousEndValue = 0;
-        $previousCashBalance = 0;
-        $assets = [];
         $index = 0;
+        $twr = 1;
+        $assets = [];
+        $returns = [];
         foreach ($subPeriodDates as $subPeriod) {
             $startDateString = $subPeriod[0];
             $endDateString = $subPeriod[1];
             $startDate = new DateTime($subPeriod[0]);
             $endDate = new DateTime($subPeriod[1]);
+            $dividendSum = 0;
+            $startValue = $previousEndValue;
 
             $accountTransactionsInSubPeriod = array_filter($accountTransactions, function (Transaction $transaction) use ($startDate, $endDate, $index) {
                 $transactionDate = $transaction->date;
-                if ($index === 0) {
-                    return $transactionDate >= $startDate && $transactionDate <= $endDate;
-                } else {
-                    return $transactionDate > $startDate && $transactionDate <= $endDate;
-                }
+                return $transactionDate >= $startDate && $transactionDate < $endDate;
             });
+
+            $portfolioTransactionsInSubPeriod = array_filter($portfolioTransactions, function ($transaction) use ($startDate, $endDate, $index) {
+                $transactionDate = $transaction->date;
+                return $transactionDate >= $startDate && $transactionDate < $endDate;
+            });
+
             $accountTransactionsInSubPeriod = array_values($accountTransactionsInSubPeriod);
             usort($accountTransactionsInSubPeriod, function (Transaction $a, Transaction $b): int {
                 return strtotime($a->getDateString()) <=> strtotime($b->getDateString());
             });
 
-            $portfolioTransactionsInSubPeriod = array_filter($portfolioTransactions, function ($transaction) use ($startDate, $endDate, $index) {
-                $transactionDate = $transaction->date;
-                if ($index === 0) {
-                    return $transactionDate >= $startDate && $transactionDate <= $endDate;
-                } else {
-                    return $transactionDate > $startDate && $transactionDate <= $endDate;
-                }
-            });
             $portfolioTransactionsInSubPeriod = array_values($portfolioTransactionsInSubPeriod);
             usort($portfolioTransactionsInSubPeriod, function (Transaction $a, Transaction $b): int {
                 return strtotime($a->getDateString()) <=> strtotime($b->getDateString());
             });
-
-            $startValue = $previousEndValue;
 
             // PORTFOLIO TRANSACTIONS
             foreach ($portfolioTransactionsInSubPeriod as $transaction) {
@@ -331,6 +343,9 @@ class CalculateProfitCommand extends CommandProcessor
                 }
 
                 $transactionMapper->addTransactionsToExistingAsset($assets[$transaction->isin], $transaction);
+                if ($transaction->type === TransactionType::DIVIDEND) {
+                    $dividendSum += $transaction->rawAmount;
+                }
             }
 
             // ACCOUNT TRANSACTIONS
@@ -340,11 +355,16 @@ class CalculateProfitCommand extends CommandProcessor
                     $startValue += $transaction->rawAmount;
                 }
                 $transactionMapper->handleNonAssetTransactionType($transaction);
+
                 $accountTransactionsSum += $transaction->rawAmount;
             }
 
             $portfolioValue = 0;
             foreach ($assets as $asset) {
+                if ($asset->getCurrentNumberOfShares() <= 0) {
+                    continue;
+                }
+
                 $fileName = ROOT_PATH . '/resources/tmp/historical_prices/' . $asset->isin . '.json';
 
                 // Cache historical prices
@@ -358,12 +378,25 @@ class CalculateProfitCommand extends CommandProcessor
                 $historicalPrices = $historicalPricesCache[$asset->isin];
 
                 $sharePrice = 0;
-                // Handle case when there are no historical prices. Use the last known price instead.
                 if (empty($historicalPrices)) {
-                    // echo 'Historical prices file not found for ' . $asset->name . ' (' . $asset->isin . ')' . ' on ' . $endDate . PHP_EOL;
+                    // Handle case when there are no historical prices. Use the last known price instead.
+
                     $assetTransactions = $asset->getTransactions();
-                    $lastTransaction = end($assetTransactions);
-                    $sharePrice = $lastTransaction->rawAmount / $lastTransaction->rawQuantity;
+                    $lastTransaction = null;
+                    foreach (array_reverse($assetTransactions) as $transaction) {
+                        if (in_array($transaction->type, [TransactionType::BUY, TransactionType::SELL])){
+                            $lastTransaction = $transaction;
+                            break;
+                        }
+                    }
+
+                    if ($lastTransaction === null) {
+                        throw new Exception('Missing price for ' . $asset->name . ' (' . $asset->isin . ') on ' . $endDateString);
+                    }
+
+                    $sharePrice = abs($lastTransaction->rawAmount) / $lastTransaction->rawQuantity;
+
+                    Logger::getInstance()->addNotice('Missing price for: ' . $asset->name . ' (' . $asset->isin . ')' . ' on ' . $endDateString . ', using last known price ' . $lastTransaction->getDateString() . ' (' . $sharePrice . ')');
                 }
 
                 // Kolla direkt på propertyn om datumet finns, annras börja loopa igenom
@@ -386,11 +419,13 @@ class CalculateProfitCommand extends CommandProcessor
                     }
                 }
 
-                // $tickerIndex = array_search($asset->isin, array_column($tickers, 'isin'));
-                // if ($tickerIndex === false) {
-                //     throw new Exception('Currency not found for ' . $asset->isin);
-                // }
-                // $currency = $tickers[$tickerIndex]->currency;
+                /*
+                $tickerIndex = array_search($asset->isin, array_column($tickers, 'isin'));
+                if ($tickerIndex === false) {
+                    throw new Exception('Currency not found for ' . $asset->isin);
+                }
+                $currency = $tickers[$tickerIndex]->currency;
+                */
 
                 $currency = null;
                 foreach ($tickers as $tickerInfo) {
@@ -405,23 +440,24 @@ class CalculateProfitCommand extends CommandProcessor
                 }
 
                 if ($currency !== 'SEK') {
+                    $exchangeRateNotFound = true;
                     foreach ($historicalCurrencyExchangeRates as $exchangeRateRow) {
                         if ($exchangeRateRow['Date'] === $endDateString) {
                             $sharePrice *= $exchangeRateRow[$currency];
+                            $exchangeRateNotFound = false;
                             break;
                         }
                     }
+
+                    if ($exchangeRateNotFound) {
+                        throw new Exception('Exchange rate not found for ' . $currency . ' on ' . $endDateString);
+                    }
                 }
 
-                // echo 'Asset ' . $asset->name . ' (' . $asset->isin . ') has a price of ' . $sharePrice . ' on ' . $endDate . ', num. of shares: ' . $asset->getCurrentNumberOfShares() . ', total value of ' . $sharePrice * $asset->getCurrentNumberOfShares() . PHP_EOL;
+                // echo 'Asset ' . $asset->name . ' (' . $asset->isin . ') has a price of ' . $sharePrice . ' on ' . $endDateString . ', num. of shares: ' . $asset->getCurrentNumberOfShares() . ', total value of ' . $sharePrice * $asset->getCurrentNumberOfShares() . PHP_EOL;
 
-                if ($asset->getCurrentNumberOfShares() > 0) {
-                    $portfolioValue += $sharePrice * $asset->getCurrentNumberOfShares();
-                }
+                $portfolioValue += $sharePrice * $asset->getCurrentNumberOfShares();
             }
-
-            // echo 'Total portfolio balance: ' . $portfolioValue . PHP_EOL;
-            // echo '--------------------------------------------------' . PHP_EOL;
 
             usort($transactionMapper->overview->cashFlows, function (Transaction $a, Transaction $b): int {
                 return strtotime($a->getDateString()) <=> strtotime($b->getDateString());
@@ -429,33 +465,55 @@ class CalculateProfitCommand extends CommandProcessor
             $cashBalance = $transactionMapper->overview->calculateBalance($transactionMapper->overview->cashFlows);
 
             $index++;
-            $previousEndValue = $portfolioValue + $cashBalance;
 
-            if ($startValue === 0) {
+            $endValue = $portfolioValue + $cashBalance + $dividendSum;
+            $previousEndValue = $endValue;
+
+            if ($index === 1) {
                 $startValue = $accountTransactionsSum;
+                $return = ($previousEndValue - $startValue) / $startValue;
+            } else {
+                $return = ($endValue - $startValue + $accountTransactionsSum) / $startValue;
             }
 
             // TODO: hur ska man hantera subperioder som inte innehåller några portföljtransaktioner?
 
+            $twr *= (1 + $return);
+            $returns[] = $return;
+
+            
             print_r([
                 'startDate' => $startDateString,
                 'endDate' => $endDateString,
                 'startValue' => $startValue,
-                'endValue' => $previousEndValue,
+                'endValue' => $endValue,
                 'portfolioValue' => $portfolioValue,
                 'accountTransactionsSum' => $accountTransactionsSum,
-                // 'portfolioTransactionSum' => $portfolioTransactionSum,
                 'cashBalance' => $cashBalance,
+                'dividendSum' => $dividendSum,
+                'test' => ($previousEndValue - $startValue - $accountTransactionsSum),
+                'return' => $return,
+                'TWR' => $twr
             ]);
+            
+            
 
-            // echo 'Sub period ' . $index . ' of ' . count($subPeriodDates) . PHP_EOL;
+            if ($index === 3) {
+
+            }
+
+            // echo "\r\033[K";
+            // echo "Processing sub-period " . $index . ' / ' . count($subPeriodDates);
         }
 
-        // print_r($assets);
-        // exit;
+        $twr -= 1;
 
-        // print_r($subPeriodDates);
-        // exit;
+        echo "\nSubperiod Returns:\n";
+        foreach ($returns as $index => $return) {
+            echo 'Subperiod ' . ($index + 1) . ': ' . ($return * 100) . "%\n";
+        }
+
+        echo 'Total TWR: ' . ($twr * 100) . '%';
     }
 
     private function getHistoricalExchangeRates(string $filename): array
