@@ -21,29 +21,11 @@ class TimeWeightedReturn
         $this->transactionMapper = $transactionMapper;
     }
 
-    /**
-     * @param Transaction[] $transactions
-     * @return Transaction[]
-     */
-    private function filterAndSortTransactions(array $transactions, DateTime $startDate, DateTime $endDate): array
-    {
-        $subPeriodTransactions = array_filter($transactions, function (Transaction $transaction) use ($startDate, $endDate): bool {
-            return $transaction->date >= $startDate && $transaction->date < $endDate;
-        });
-
-        $subPeriodTransactions = array_values($subPeriodTransactions);
-        usort($subPeriodTransactions, function (Transaction $a, Transaction $b): int {
-            return strtotime($a->getDateString()) <=> strtotime($b->getDateString());
-        });
-
-        return $subPeriodTransactions;
-    }
-
-    public function calculate(stdClass $portfolio, ?string $filterDateFrom = null, ?string $filterDateTo = null): void
+    public function calculate(stdClass $portfolio, ?string $filterDateFrom = null, ?string $filterDateTo = null, ?string $filterBank = null): stdClass
     {
         echo 'Calculating TWR...' . PHP_EOL;
 
-        $subPeriods = $this->createSubPeriods($portfolio, $filterDateFrom, $filterDateTo);
+        $subPeriods = $this->createSubPeriods($portfolio, $filterDateFrom, $filterDateTo, $filterBank);
         $subPeriodDates = $subPeriods->subPeriodDates;
         $accountTransactions = $subPeriods->accountTransactions;
         $portfolioTransactions = $subPeriods->portfolioTransactions;
@@ -54,8 +36,7 @@ class TimeWeightedReturn
         }
         $tickers = json_decode($tickers);
 
-        $historicalCurrencyExchangeRateFile = ROOT_PATH . '/resources/tmp/historical_currency.csv';
-        $historicalCurrencyExchangeRates = $this->getHistoricalExchangeRates($historicalCurrencyExchangeRateFile);
+        $historicalCurrencyExchangeRates = $this->getHistoricalExchangeRates(ROOT_PATH . '/resources/tmp/historical_currency.csv');
 
         $previousEndValue = 0;
         $index = 0;
@@ -121,78 +102,10 @@ class TimeWeightedReturn
                 }
                 $historicalPrices = $historicalPricesCache[$isin];
 
-                $sharePrice = 0;
-                // Handle case when there are no historical prices. Use the last known price instead.
-                if (empty($historicalPrices)) { 
-                    $assetTransactions = $asset->getTransactions();
-                    $lastTransaction = null;
-                    foreach (array_reverse($assetTransactions) as $transaction) {
-                        if (in_array($transaction->type, [TransactionType::BUY, TransactionType::SELL])){
-                            $lastTransaction = $transaction;
-                            break;
-                        }
-                    }
+                $sharePrice = $this->getSharePrice($asset, $historicalPrices, $endDateString);
 
-                    if ($lastTransaction === null) {
-                        throw new Exception('Missing price for ' . $asset->name . ' (' . $asset->isin . ') on ' . $endDateString);
-                    }
-
-                    $sharePrice = abs(floatval($lastTransaction->rawAmount)) / $lastTransaction->rawQuantity;
-
-                    Logger::getInstance()->addNotice('Missing price for: ' . $asset->name . ' (' . $asset->isin . ')' . ' on ' . $endDateString . ', using last known price ' . $lastTransaction->getDateString() . ' (' . $sharePrice . ')');
-                } else {
-                    if (isset($historicalPrices[$endDateString])) {
-                        $sharePrice = $historicalPrices[$endDateString];
-                    } else {
-                        foreach ($historicalPrices as $date => $historicalPrice) {
-                            if ($date > $endDateString) {
-                                $sharePrice = $historicalPrice;
-                                break;
-                            }
-                        }
-
-                        // Handle cases when there are no historical prices for the end date.
-                        if ($sharePrice === 0) {
-                            $tmpHistoricalPrices = $historicalPrices;
-                            $sharePrice = end($tmpHistoricalPrices);
-                        }
-                    }
-                }
-
-                /*
-                $tickerIndex = array_search($asset->isin, array_column($tickers, 'isin'));
-                if ($tickerIndex === false) {
-                    throw new Exception('Currency not found for ' . $asset->isin);
-                }
-                $currency = $tickers[$tickerIndex]->currency;
-                */
-
-                $currency = null;
-                foreach ($tickers as $tickerInfo) {
-                    if ($tickerInfo->isin === $asset->isin) {
-                        $currency = $tickerInfo->currency;
-                        break;
-                    }
-                }
-
-                if ($currency === null) {
-                    throw new Exception('Currency not found for ' . $asset->isin);
-                }
-
-                if ($currency !== 'SEK') {
-                    $exchangeRateNotFound = true;
-                    foreach ($historicalCurrencyExchangeRates as $exchangeRateRow) {
-                        if ($exchangeRateRow['Date'] === $endDateString) {
-                            $sharePrice *= $exchangeRateRow[$currency];
-                            $exchangeRateNotFound = false;
-                            break;
-                        }
-                    }
-
-                    if ($exchangeRateNotFound) {
-                        throw new Exception('Exchange rate not found for ' . $currency . ' on ' . $endDateString);
-                    }
-                }
+                $exchangeRate = $this->getExchangeRate($tickers, $isin, $historicalCurrencyExchangeRates, $endDateString);
+                $sharePrice *= $exchangeRate;
 
                 // echo 'Asset ' . $asset->name . ' (' . $asset->isin . ') has a price of ' . $sharePrice . ' on ' . $endDateString . ', num. of shares: ' . $asset->getCurrentNumberOfShares() . ', total value of ' . $sharePrice * $asset->getCurrentNumberOfShares() . PHP_EOL;
 
@@ -204,21 +117,19 @@ class TimeWeightedReturn
             });
             $cashBalance = $this->transactionMapper->overview->calculateBalance($this->transactionMapper->overview->cashFlows);
 
-            $index++;
-
             $endValue = $portfolioValue + $cashBalance + $dividendSum;
             $previousEndValue = $endValue;
 
-            if ($index === 1) {
+            if ($index === 0) {
                 $startValue = $netCashFlow;
-                $return = ($previousEndValue - $startValue) / $startValue;
+                $return = ($endValue - $startValue) / $startValue;
             } else {
                 $return = ($endValue - $startValue - $netCashFlow) / $startValue;
             }
 
             $twr *= (1 + $return);
             $returns[] = $return;
-            
+
             /*
             print_r([
                 'startDate' => $startDateString,
@@ -234,21 +145,22 @@ class TimeWeightedReturn
             ]);
             */
 
-            // echo "\r\033[K";
-            // echo "Processing sub-period " . $index . ' / ' . count($subPeriodDates);
+            $index++;
+
+            echo "\r\033[K";
+            echo "Processing sub-period " . $index . ' / ' . count($subPeriodDates);
         }
 
         $twr -= 1;
 
-        echo "\nSubperiod Returns:\n";
-        foreach ($returns as $index => $return) {
-            echo 'Subperiod ' . ($index + 1) . ': ' . ($return * 100) . "%\n";
-        }
+        $result = new stdClass();
+        $result->twr = $twr;
+        $result->returns = $returns;
 
-        echo 'Total TWR: ' . ($twr * 100) . '%';
+        return $result;
     }
-    
-    private function createSubPeriods(stdClass $portfolio, ?string $filterDateFrom, ?string $filterDateTo): stdClass
+
+    private function createSubPeriods(stdClass $portfolio, ?string $filterDateFrom, ?string $filterDateTo, ?string $filterBank): stdClass
     {
         $subPeriodDates = [];
         $subPeriodIndex = 0;
@@ -259,13 +171,17 @@ class TimeWeightedReturn
 
         $cashFlowTransactions = [];
         foreach ($portfolio->accountTransactions as $row) {
+            if ($filterBank && mb_strtoupper($filterBank) !== $row->bank) {
+                continue;
+            }
+
             $transactionType = TransactionType::from($row->type);
 
             if (!in_array($transactionType, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL])) {
                 continue;
             }
 
-            if (($dateFrom !== null && new DateTime($row->date->date) < $dateFrom) || ($dateTo !== null && new DateTime($row->date->date) > $dateTo)){
+            if (($dateFrom !== null && new DateTime($row->date->date) < $dateFrom) || ($dateTo !== null && new DateTime($row->date->date) > $dateTo)) {
                 continue;
             }
 
@@ -310,6 +226,9 @@ class TimeWeightedReturn
         $portfolioTransactions = [];
         foreach ($portfolio->portfolioTransactions as $row) {
             foreach ($row->transactions as &$transactionRow) {
+                if ($filterBank && mb_strtoupper($filterBank) !== $transactionRow->bank) {
+                    continue;
+                }
                 $transaction = new Transaction(
                     new DateTime($transactionRow->date->date),
                     Bank::from($transactionRow->bank),
@@ -351,6 +270,117 @@ class TimeWeightedReturn
         $result->portfolioTransactions = $portfolioTransactions;
 
         return $result;
+    }
+
+    /**
+     * @param stdClass[] $tickers
+     * @param mixed[] $historicalCurrencyExchangeRates
+     */
+    private function getExchangeRate(array $tickers, string $isin, array $historicalCurrencyExchangeRates, string $endDateString): float|int
+    {
+        $exchangeRate = 1;
+
+        $currency = null;
+        foreach ($tickers as $tickerInfo) {
+            if ($tickerInfo->isin === $isin) {
+                $currency = $tickerInfo->currency;
+                break;
+            }
+        }
+
+        /*
+        $tickerIndex = array_search($asset->isin, array_column($tickers, 'isin'));
+        if ($tickerIndex === false) {
+            throw new Exception('Currency not found for ' . $asset->isin);
+        }
+        $currency = $tickers[$tickerIndex]->currency;
+        */
+
+        if ($currency === null) {
+            throw new Exception('Currency not found for ' . $isin);
+        }
+
+        if ($currency !== 'SEK') {
+            $exchangeRateNotFound = true;
+            foreach ($historicalCurrencyExchangeRates as $exchangeRateRow) {
+                if ($exchangeRateRow['Date'] === $endDateString) {
+                    $exchangeRate = $exchangeRateRow[$currency];
+                    $exchangeRateNotFound = false;
+                    break;
+                }
+            }
+
+            if ($exchangeRateNotFound) {
+                throw new Exception('Exchange rate not found for ' . $currency . ' on ' . $endDateString);
+            }
+        }
+
+        return $exchangeRate;
+    }
+
+    /**
+     * @param Transaction[] $transactions
+     * @return Transaction[]
+     */
+    private function filterAndSortTransactions(array $transactions, DateTime $startDate, DateTime $endDate): array
+    {
+        $subPeriodTransactions = array_filter($transactions, function (Transaction $transaction) use ($startDate, $endDate): bool {
+            return $transaction->date >= $startDate && $transaction->date < $endDate;
+        });
+
+        $subPeriodTransactions = array_values($subPeriodTransactions);
+        usort($subPeriodTransactions, function (Transaction $a, Transaction $b): int {
+            return strtotime($a->getDateString()) <=> strtotime($b->getDateString());
+        });
+
+        return $subPeriodTransactions;
+    }
+
+    /**
+     * @param mixed[] $historicalPrices
+     */
+    private function getSharePrice(FinancialAsset $asset, array $historicalPrices, string $endDateString): float
+    {
+        $sharePrice = 0;
+
+        // Handle case when there are no historical prices. Use the last known price instead.
+        if (empty($historicalPrices)) {
+            $assetTransactions = $asset->getTransactions();
+            $lastTransaction = null;
+            foreach (array_reverse($assetTransactions) as $transaction) {
+                if (in_array($transaction->type, [TransactionType::BUY, TransactionType::SELL])) {
+                    $lastTransaction = $transaction;
+                    break;
+                }
+            }
+
+            if ($lastTransaction === null) {
+                throw new Exception('Missing price for ' . $asset->name . ' (' . $asset->isin . ') on ' . $endDateString);
+            }
+
+            $sharePrice = abs(floatval($lastTransaction->rawAmount)) / $lastTransaction->rawQuantity;
+
+            Logger::getInstance()->addNotice('Missing price for: ' . $asset->name . ' (' . $asset->isin . ')' . ' on ' . $endDateString . ', using last known price ' . $lastTransaction->getDateString() . ' (' . $sharePrice . ')');
+        } else {
+            if (isset($historicalPrices[$endDateString])) {
+                $sharePrice = $historicalPrices[$endDateString];
+            } else {
+                foreach ($historicalPrices as $date => $historicalPrice) {
+                    if ($date > $endDateString) {
+                        $sharePrice = $historicalPrice;
+                        break;
+                    }
+                }
+
+                // Handle cases when there are no historical prices for the end date.
+                if ($sharePrice === 0) {
+                    $tmpHistoricalPrices = $historicalPrices;
+                    $sharePrice = end($tmpHistoricalPrices);
+                }
+            }
+        }
+
+        return $sharePrice;
     }
 
     /**

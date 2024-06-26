@@ -85,7 +85,14 @@ class CalculateProfitCommand extends CommandProcessor
 
         if ($options->TWR) {
             $profitCalculator = new TimeWeightedReturn($transactionMapper);
-            $profitCalculator->calculate($portfolio, $options->dateFrom, $options->dateTo);
+            $twrResult = $profitCalculator->calculate($portfolio, $options->dateFrom, $options->dateTo, $options->bank);
+
+            echo "\nSubperiod Returns:\n";
+            foreach ($twrResult->returns as $index => $return) {
+                echo 'Subperiod ' . ($index + 1) . ': ' . ($return * 100) . "%\n";
+            }
+
+            echo 'Total TWR: ' . ($twrResult->twr * 100) . '%';
         } else {
             $assets = [];
             foreach ($portfolio->portfolioTransactions as $row) {
