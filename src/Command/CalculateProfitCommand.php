@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\Command;
 
@@ -8,6 +8,7 @@ use src\Command\CommandProcessor;
 use src\DataStructure\Transaction;
 use src\Enum\Bank;
 use src\Enum\TransactionType;
+use src\Service\Performance\TimeWeightedReturn;
 use src\Service\ProfitCalculator;
 use src\Service\Transaction\TransactionLoader;
 use src\Service\Transaction\TransactionMapper;
@@ -47,6 +48,7 @@ class CalculateProfitCommand extends CommandProcessor
         $options->overview = $this->options['overview'] ?? $commandOptions['overview']['default'];
         $options->account = $this->options['account'] ?? null;
         $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
+        $options->TWR = $this->options['twr'] ?? null;
 
         return $options;
     }
@@ -81,96 +83,108 @@ class CalculateProfitCommand extends CommandProcessor
 
         $portfolio = json_decode($portfolio);
 
-        $assets = [];
-        foreach ($portfolio->portfolioTransactions as $row) {
-            foreach ($row->transactions as &$transactionRow) {
-                $transaction = new Transaction(
-                    new DateTime($transactionRow->date->date),
-                    Bank::from($transactionRow->bank),
-                    $transactionRow->account,
-                    TransactionType::from($transactionRow->type),
-                    $transactionRow->name,
-                    $transactionRow->description,
-                    $transactionRow->rawQuantity,
-                    $transactionRow->rawPrice,
-                    $transactionRow->pricePerShareSEK,
-                    $transactionRow->rawAmount,
-                    $transactionRow->commission,
-                    $transactionRow->currency,
-                    $transactionRow->isin,
-                    $transactionRow->exchangeRate
-                );
+        if ($options->TWR) {
+            $profitCalculator = new TimeWeightedReturn($transactionMapper);
+            $twrResult = $profitCalculator->calculate($portfolio, $options->dateFrom, $options->dateTo, $options->bank);
 
-                $transactionRow = $transaction;
-            }
-            $transactions = $transactionLoader->filterTransactions($row->transactions);
-            $asset = $transactionMapper->_addTransactionsToAsset($row->isin, $row->name, $transactions);
-            $assets[] = $asset;
-        }
-
-        foreach ($portfolio->accountTransactions as $row) {
-            $transaction = new Transaction(
-                new DateTime($row->date->date),
-                Bank::from($row->bank),
-                $row->account,
-                TransactionType::from($row->type),
-                $row->name,
-                $row->description,
-                $row->rawQuantity,
-                $row->rawPrice,
-                $row->pricePerShareSEK,
-                $row->rawAmount,
-                $row->commission,
-                $row->currency,
-                $row->isin,
-                $row->exchangeRate
-            );
-            $transactions = $transactionLoader->filterTransactions([$transaction]);
-
-            if (empty($transactions)) {
-                continue;
+            echo "\nSubperiod Returns:\n";
+            foreach ($twrResult->returns as $index => $return) {
+                echo 'Subperiod ' . ($index + 1) . ': ' . ($return * 100) . "%\n";
             }
 
-            $transactionMapper->handleNonAssetTransactionType($transactions[0]);
-        }
-        
-        /*
-        $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-        */
-
-        $profitCalculator = new ProfitCalculator($options->currentHoldings);
-        $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
-
-        if ($options->verbose) {
-            $this->presenter->displayDetailedAssets($result->assets);
+            echo 'Total TWR: ' . ($twrResult->twr * 100) . '%';
         } else {
-            $this->presenter->generateAssetTable($result->overview, $result->assets);
-        }
-
-        // $this->presenter->displayFinancialOverview($result->overview);
-
-        if (!empty($result->overview->currentHoldingsWeighting)) {
-            $weightings = array_values($result->overview->currentHoldingsWeighting);
-
-            if (!empty($weightings)) {
-                echo PHP_EOL . TextColorizer::backgroundColor('Portföljviktning: ', 'pink', 'black') . PHP_EOL. PHP_EOL;
-
-                $maxValue = max($weightings);
-                foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
-                    $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+            $assets = [];
+            foreach ($portfolio->portfolioTransactions as $row) {
+                foreach ($row->transactions as &$transactionRow) {
+                    $transaction = new Transaction(
+                        new DateTime($transactionRow->date->date),
+                        Bank::from($transactionRow->bank),
+                        $transactionRow->account,
+                        TransactionType::from($transactionRow->type),
+                        $transactionRow->name,
+                        $transactionRow->description,
+                        $transactionRow->rawQuantity,
+                        $transactionRow->rawPrice,
+                        $transactionRow->pricePerShareSEK,
+                        $transactionRow->rawAmount,
+                        $transactionRow->commission,
+                        $transactionRow->currency,
+                        $transactionRow->isin,
+                        $transactionRow->exchangeRate
+                    );
+    
+                    $transactionRow = $transaction;
+                }
+                $transactions = $transactionLoader->filterTransactions($row->transactions);
+                $asset = $transactionMapper->_addTransactionsToAsset($row->isin, $row->name, $transactions);
+                $assets[] = $asset;
+            }
+    
+            foreach ($portfolio->accountTransactions as $row) {
+                $transaction = new Transaction(
+                    new DateTime($row->date->date),
+                    Bank::from($row->bank),
+                    $row->account,
+                    TransactionType::from($row->type),
+                    $row->name,
+                    $row->description,
+                    $row->rawQuantity,
+                    $row->rawPrice,
+                    $row->pricePerShareSEK,
+                    $row->rawAmount,
+                    $row->commission,
+                    $row->currency,
+                    $row->isin,
+                    $row->exchangeRate
+                );
+                $transactions = $transactionLoader->filterTransactions([$transaction]);
+    
+                if (empty($transactions)) {
+                    continue;
+                }
+    
+                $transactionMapper->handleNonAssetTransactionType($transactions[0]);
+            }
+            
+            /*
+            $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
+            */
+    
+            $profitCalculator = new ProfitCalculator($options->currentHoldings);
+            $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
+    
+            if ($options->verbose) {
+                $this->presenter->displayDetailedAssets($result->assets);
+            } else {
+                $this->presenter->generateAssetTable($result->overview, $result->assets);
+            }
+    
+            // $this->presenter->displayFinancialOverview($result->overview);
+    
+            if (!empty($result->overview->currentHoldingsWeighting)) {
+                $weightings = array_values($result->overview->currentHoldingsWeighting);
+    
+                if (!empty($weightings)) {
+                    echo PHP_EOL . TextColorizer::backgroundColor('Portföljviktning: ', 'pink', 'black') . PHP_EOL. PHP_EOL;
+    
+                    $maxValue = max($weightings);
+                    foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
+                        $this->presenter->printRelativeProgressBar($isin, $weight, $maxValue);
+                    }
                 }
             }
+    
+            if ($options->overview) {
+                $this->presenter->displayInvestmentReport($result->overview, $result->assets);
+            }
+    
+            foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
+                Logger::getInstance()->addInfo('Kurspris saknas för ' . $companyMissingPrice);
+            }
+    
+            $this->presenter->displayAssetNotices($result->assets);
         }
-
-        if ($options->overview) {
-            $this->presenter->displayInvestmentReport($result->overview, $result->assets);
-        }
-
-        foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
-            Logger::getInstance()->addInfo('Kurspris saknas för ' . $companyMissingPrice);
-        }
-
-        $this->presenter->displayAssetNotices($result->assets);
 
         Logger::getInstance()->printInfos();
 

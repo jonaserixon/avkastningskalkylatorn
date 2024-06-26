@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\DataStructure;
 
@@ -30,7 +30,7 @@ class FinancialOverview
     public float $withdrawalAmountTotal = 0;
     public string $firstTransactionDate = '';
     public string $lastTransactionDate = '';
-    public ?AssetReturn $returns = null;
+    public ?AssetPerformance $performance = null;
     // public float $totalProfitInclFees = 0;
 
     /**

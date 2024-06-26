@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\View;
 
@@ -119,5 +119,10 @@ class Logger
         }
 
         return $this;
+    }
+
+    public function printMessage(string $message): void
+    {
+        echo $message . PHP_EOL;
     }
 }

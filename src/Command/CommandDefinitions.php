@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace src\Command;
 
@@ -59,7 +59,11 @@ readonly class CommandDefinitions
                     'description' => 'Display logs related to how transactions are handled and more',
                     'default' => false,
                     'require-value' => false
-                ]
+                ],
+                'twr' => [
+                    'description' => 'Calculate TWR (Time-Weighted Rate of Return)',
+                    'require-value' => false
+                ],
             ]
         ],
         'generate-isin-list' => [
