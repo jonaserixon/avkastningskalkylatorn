@@ -178,6 +178,9 @@ class TransactionLoader
         return $transactions;
     }
 
+    /**
+     * @return mixed[]
+     */
     public function getHistoricalPrices(string $ticker, ?string $dateFrom = null, ?string $dateTo = null): array
     {
         $eod = new EodWrapper();

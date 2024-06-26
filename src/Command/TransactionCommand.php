@@ -2,7 +2,6 @@
 
 namespace src\Command;
 
-use DateTime;
 use Exception;
 use src\DataStructure\FinancialAsset;
 use src\DataStructure\Transaction;
@@ -68,6 +67,7 @@ class TransactionCommand extends CommandProcessor
 
         $this->generatePortfolio($assets, $transactions);
 
+        /*
         if (!file_exists(ROOT_PATH . '/resources/tmp/historical_prices')) {
             mkdir(ROOT_PATH . '/resources/tmp/historical_prices', 0777, true);
         }
@@ -114,6 +114,7 @@ class TransactionCommand extends CommandProcessor
         }
 
         return;
+        */
 
         if ($options->cashFlow) {
             $assets = $transactionLoader->getFinancialAssets($transactions);
@@ -137,7 +138,7 @@ class TransactionCommand extends CommandProcessor
                 foreach ($result->overview->cashFlows as $cashFlow) {
                     $amount = $cashFlow->rawAmount;
                     if ($cashFlow->getTypeName() === 'deposit') {
-                        $amount = $amount * -1;
+                        $amount *= -1;
                     } elseif ($cashFlow->getTypeName() === 'withdrawal') {
                         $amount = abs($amount);
                     }

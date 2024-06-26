@@ -38,9 +38,17 @@ class EodWrapper
     /**
      * @return stdClass[]
      */
-    public function getHistoricalPricesByTicker(string $ticker, string $dateFrom, string $dateTo): array
+    public function getHistoricalPricesByTicker(string $ticker, ?string $dateFrom, ?string $dateTo): array
     {
-        $url = "/eod/{$ticker}?from={$dateFrom}&to={$dateTo}&api_token={$this->apiToken}&fmt=json";
+        $url = "/eod/{$ticker}?api_token={$this->apiToken}&fmt=json";
+
+        if ($dateFrom) {
+            $url .= "&from={$dateFrom}";
+        }
+
+        if ($dateTo) {
+            $url .= "&to={$dateTo}";
+        }
 
         $data = $this->getRequest($url);
 
