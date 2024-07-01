@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace src\DataStructure;
+namespace Avk\DataStructure;
 
 readonly class Holding
 {

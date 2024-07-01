@@ -1,9 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace src\Command;
+namespace Avk\Command;
 
-use src\View\Presenter;
-use src\View\TextColorizer;
+use Avk\DataStructure\Command;
+use Avk\DataStructure\CommandOption;
+use Avk\View\Presenter;
+use Avk\View\TextColorizer;
 
 class CommandProcessor
 {
@@ -15,7 +17,11 @@ class CommandProcessor
     public function __construct()
     {
         $this->presenter = new Presenter();
-        $this->commands = CommandDefinitions::COMMANDS;
+    }
+
+    private function parseYamlCommands(): void
+    {
+        $this->commands = yaml_parse_file(ROOT_PATH . '/src/Command/commands.yaml');
     }
 
     /**
@@ -23,12 +29,14 @@ class CommandProcessor
      */
     public function main(array $argv): void
     {
+        $this->parseYamlCommands();
+
         if (count($argv) < 2) {
             $this->printAvailableCommands();
             exit(1);
         }
 
-        $command = $argv[1];
+        $commandName = $argv[1];
 
         $remainingArgs = array_slice($argv, 2);
 
@@ -40,31 +48,33 @@ class CommandProcessor
             }
         }
 
-        if (is_numeric($command) || !array_key_exists($command, $this->commands)) {
-            $this->unknownCommand($command);
-            $this->printAvailableCommands();
-            exit(1);
-        }
+        // if (is_numeric($command) || !array_key_exists($command, $this->commands)) {
+        //     $this->unknownCommand($command);
+        //     $this->printAvailableCommands();
+        //     exit(1);
+        // }
 
-        $this->validateOptions($command, $options);
+        $command = $this->getCommand($commandName, $options);
+
+        $this->validateOptions($command->name, $options);
 
         $startTime = microtime(true);
 
-        switch ($command) {
+        switch ($command->name) {
             case 'help':
                 $this->printAvailableCommands();
                 break;
             case 'calculate':
-                (new CalculateProfitCommand($options))->execute();
+                (new CalculateProfitCommand($command, $this->presenter))->execute();
                 break;
             case 'generate-isin-list':
-                (new GenerateIsinListCommand($options))->execute();
+                (new GenerateIsinListCommand($command, $this->presenter))->execute();
                 break;
             case 'transaction':
-                (new TransactionCommand($options))->execute();
+                (new TransactionCommand($command, $this->presenter))->execute();
                 break;
             case 'pp-export':
-                (new PortfolioPerformanceExportCommand($options))->execute();
+                (new PortfolioPerformanceExportCommand($command, $this->presenter))->execute();
                 break;
             default:
                 $this->unknownCommand($command);
@@ -83,7 +93,7 @@ class CommandProcessor
      */
     protected function validateOptions(string $command, array $options): void
     {
-        $availableOptions = $this->commands[$command]['options'] ?? null;
+        $availableOptions = $this->commands['commands'][$command]['options'] ?? null;
         if ($availableOptions === null) {
             return;
         }
@@ -94,7 +104,7 @@ class CommandProcessor
                 $this->printAvailableCommands($command);
                 exit(1);
             } else {
-                $requiresValue = $availableOptions[$option]['require-value'];
+                $requiresValue = $availableOptions[$option]['require-value'] ?? false;
                 if ($requiresValue && $value === true) {
                     echo TextColorizer::colorText("Option '$option' requires a value\n\n", 'red');
                     $this->printAvailableCommands($command);
@@ -111,18 +121,18 @@ class CommandProcessor
 
     protected function printAvailableCommands(?string $command = null): void
     {
-        if ($command && array_key_exists($command, $this->commands)) {
+        if ($command && array_key_exists($command, $this->commands['commands'])) {
             echo TextColorizer::colorText("Command: ", 'cyan') .  $command . "\n";
-            echo $this->commands[$command]['description'] . "\n";
+            echo $this->commands['commands'][$command]['description'] . "\n";
             echo TextColorizer::colorText("Options:\n", 'cyan');
 
-            foreach ($this->commands[$command]['options'] as $option => $details) {
+            foreach ($this->commands['commands'][$command]['options'] as $option => $details) {
                 echo TextColorizer::colorText("  --$option\n", 'blue');
                 echo "    " . $details['description'] . "\n";
             }
         } else {
             echo TextColorizer::colorText("Available commands:\n\n", 'pink');
-            foreach ($this->commands as $command => $commandDetails) {
+            foreach ($this->commands['commands'] as $command => $commandDetails) {
                 echo TextColorizer::colorText("Command: ", 'cyan') .  $command . "\n";
                 echo $commandDetails['description'] . "\n";
 
@@ -138,5 +148,65 @@ class CommandProcessor
                 echo "\n";
             }
         }
+    }
+
+    protected function toCamelCase(string $value): string
+    {
+        $value = str_replace('-', ' ', $value);
+        $value = str_replace('_', ' ', $value);
+        $value = ucwords($value);
+        $value = str_replace(' ', '', $value);
+        $value = lcfirst($value);
+        
+        return $value;
+    }
+
+    protected function getCommand(string $commandName, array $options): Command
+    {
+        if (!isset($this->commands['commands'][$commandName])) {
+            $this->unknownCommand($commandName);
+            $this->printAvailableCommands();
+            exit(1);
+        }
+
+        $commandData = $this->commands['commands'][$commandName];
+
+        $commandOptions = [];
+        foreach ($commandData['options'] as $name => $commandOption) {
+            if (isset($options[$name])) {
+                $commandOptions[$name] = new CommandOption(
+                    // $this->toCamelCase($name),
+                    $name,
+                    $options[$name],
+                    $commandData['options'][$name]['default'] ?? null,
+                    $commandData['options'][$name]['require-value'] ?? false
+                );
+            } else {
+                $commandOptions[$name] = new CommandOption(
+                    // $this->toCamelCase($name),
+                    $name,
+                    $commandData['options'][$name]['default'] ?? null,
+                    $commandData['options'][$name]['default'] ?? null,
+                    $commandData['options'][$name]['require-value'] ?? false
+                );
+            }
+        }
+        // foreach ($options as $name => $value) {
+        //     if (isset($commandData['options'][$name])) {
+        //         $commandOptions[$this->toCamelCase($name)] = new CommandOption(
+        //             $this->toCamelCase($name),
+        //             $value,
+        //             $commandData['options'][$name]['default'] ?? null,
+        //             $commandData['options'][$name]['require-value'] ?? false
+        //         );
+        //     }
+        // }
+
+        $command = new Command(
+            $commandName,
+            $commandOptions
+        );
+
+        return $command;
     }
 }

@@ -1,15 +1,15 @@
 <?php
 
-namespace src\Service\Performance;
+namespace Avk\Service\Performance;
 
 use DateTime;
 use Exception;
-use src\DataStructure\FinancialAsset;
-use src\DataStructure\Transaction;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
-use src\Service\Transaction\TransactionMapper;
-use src\View\Logger;
+use Avk\DataStructure\FinancialAsset;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
+use Avk\Service\Transaction\TransactionMapper;
+use Avk\View\Logger;
 use stdClass;
 
 class TimeWeightedReturn

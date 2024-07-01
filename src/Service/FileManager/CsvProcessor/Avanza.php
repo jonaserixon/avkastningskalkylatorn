@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace src\Service\FileManager\CsvProcessor;
+namespace Avk\Service\FileManager\CsvProcessor;
 
 use Exception;
-use src\DataStructure\Transaction;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
-use src\Service\Utility;
-use src\View\Logger;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
+use Avk\Service\Utility;
+use Avk\View\Logger;
 
 class Avanza extends CsvProcessor
 {

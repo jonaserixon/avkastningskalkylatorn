@@ -20,6 +20,13 @@ RUN chmod +x /usr/local/bin/phan.phar
 # Install AST (For Phan)
 RUN pecl install ast && docker-php-ext-enable ast
 
+# YAML
+RUN apt-get update && apt-get install -y \
+    libyaml-dev \
+    && pecl install yaml \
+    && docker-php-ext-enable yaml \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # BCMath
 RUN docker-php-ext-install bcmath
 

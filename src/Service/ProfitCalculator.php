@@ -1,16 +1,16 @@
 <?php declare(strict_types=1);
 
-namespace src\Service;
+namespace Avk\Service;
 
 use Exception;
-use src\DataStructure\AssetPerformance;
-use src\DataStructure\FinancialAsset;
-use src\DataStructure\FinancialOverview;
-use src\DataStructure\Transaction;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
-use src\Service\FileManager\CsvProcessor\StockPrice;
-use src\View\Logger;
+use Avk\DataStructure\AssetPerformance;
+use Avk\DataStructure\FinancialAsset;
+use Avk\DataStructure\FinancialOverview;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
+use Avk\Service\FileManager\CsvProcessor\StockPrice;
+use Avk\View\Logger;
 use stdClass;
 
 class ProfitCalculator

@@ -1,69 +1,38 @@
 <?php declare(strict_types=1);
 
-namespace src\Command;
+namespace Avk\Command;
 
-use src\Enum\Bank;
-use src\Service\FileManager\PPExporter;
-use src\Service\Transaction\TransactionLoader;
-use src\View\Logger;
+use Avk\Enum\Bank;
+use Avk\Service\FileManager\PPExporter;
+use Avk\Service\Transaction\TransactionLoader;
+use Avk\View\Logger;
 use stdClass;
 
-class PortfolioPerformanceExportCommand extends CommandProcessor
+class PortfolioPerformanceExportCommand extends CommandBase
 {
-    /** @var mixed[] */
-    private array $options;
-
-    /**
-     * @param mixed[] $options
-     */
-    public function __construct(array $options)
-    {
-        $this->options = $options;
-
-        parent::__construct();
-    }
-
-    public function getParsedOptions(): stdClass
-    {
-        $commandOptions = $this->commands['transaction']['options'];
-
-        $options = new stdClass();
-        $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
-        $options->bank = $this->options['bank'] ?? null;
-        $options->isin = $this->options['isin'] ?? null;
-        $options->asset = $this->options['asset'] ?? null;
-        $options->dateFrom = $this->options['date-from'] ?? null;
-        $options->dateTo = $this->options['date-to'] ?? null;
-        $options->account = $this->options['account'] ?? null;
-        $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
-
-        return $options;
-    }
-
     public function execute(): void
     {
-        $options = $this->getParsedOptions();
-
         $transactionLoader = new TransactionLoader(
-            $options->bank,
-            $options->isin,
-            $options->asset,
-            $options->dateFrom,
-            $options->dateTo,
+            $this->command->getOption('bank')->value,
+            $this->command->getOption('isin')->value,
+            $this->command->getOption('asset')->value,
+            $this->command->getOption('date-from')->value,
+            $this->command->getOption('date-to')->value,
+            // $this->command->getOption('current-holdings')->value,
             false,
-            $options->account
+            $this->command->getOption('account')->value
         );
 
         $transactions = $transactionLoader->getTransactions();
 
         // $assets = $transactionLoader->getFinancialAssets($transactions);
 
-        $ppExporter = new PPExporter($transactions, $options->exportCsv);
+        $ppExporter = new PPExporter($transactions, $this->command->getOption('export-csv')->value);
 
-        if (!$options->bank) {
+        if (!$this->command->getOption('bank')->value) {
             Logger::getInstance()->addWarning('Bank not provided');
         } else {
-            $bank = Bank::tryFrom(mb_strtoupper($options->bank));
+            $bank = Bank::tryFrom(mb_strtoupper($this->command->getOption('bank')->value));
             if ($bank === Bank::NORDNET) {
                 $ppExporter->exportNordnetDividends();
                 $ppExporter->exportNordnetAccountTransactions();

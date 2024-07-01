@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace src\Service\Transaction;
+namespace Avk\Service\Transaction;
 
-use src\DataStructure\FinancialAsset;
-use src\DataStructure\FinancialOverview;
-use src\DataStructure\Transaction;
-use src\Enum\TransactionType;
-use src\Service\Utility;
-use src\View\Logger;
+use Avk\DataStructure\FinancialAsset;
+use Avk\DataStructure\FinancialOverview;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\TransactionType;
+use Avk\Service\Utility;
+use Avk\View\Logger;
 
 class TransactionMapper
 {

@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace src\DataStructure;
+namespace Avk\DataStructure;
 
-use src\Enum\TransactionType;
+use Avk\Enum\TransactionType;
 
 class FinancialAsset
 {

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace src\Service;
+namespace Avk\Service;
 
 use Exception;
 

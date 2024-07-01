@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace src\View;
+namespace Avk\View;
 
-use src\DataStructure\FinancialOverview;
-use src\DataStructure\FinancialAsset;
-use src\Enum\TransactionType;
+use Avk\DataStructure\FinancialOverview;
+use Avk\DataStructure\FinancialAsset;
+use Avk\Enum\TransactionType;
 
 class Presenter
 {

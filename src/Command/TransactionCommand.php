@@ -1,65 +1,31 @@
 <?php declare(strict_types=1);
 
-namespace src\Command;
+namespace Avk\Command;
 
 use Exception;
-use src\DataStructure\FinancialAsset;
-use src\DataStructure\Transaction;
-use src\Enum\TransactionType;
-use src\Service\FileManager\Exporter;
-use src\Service\ProfitCalculator;
-use src\Service\Transaction\TransactionLoader;
-use src\Service\Utility;
-use src\View\Logger;
-use src\View\TextColorizer;
+use Avk\DataStructure\FinancialAsset;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\TransactionType;
+use Avk\Service\FileManager\Exporter;
+use Avk\Service\ProfitCalculator;
+use Avk\Service\Transaction\TransactionLoader;
+use Avk\Service\Utility;
+use Avk\View\Logger;
+use Avk\View\TextColorizer;
 use stdClass;
 
-class TransactionCommand extends CommandProcessor
+class TransactionCommand extends CommandBase
 {
-    /** @var mixed[] */
-    private array $options;
-
-    /**
-     * @param mixed[] $options
-     */
-    public function __construct(array $options)
-    {
-        $this->options = $options;
-
-        parent::__construct();
-    }
-
-    public function getParsedOptions(): stdClass
-    {
-        $commandOptions = $this->commands['transaction']['options'];
-
-        $options = new stdClass();
-        $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
-        $options->bank = $this->options['bank'] ?? null;
-        $options->isin = $this->options['isin'] ?? null;
-        $options->asset = $this->options['asset'] ?? null;
-        $options->dateFrom = $this->options['date-from'] ?? null;
-        $options->dateTo = $this->options['date-to'] ?? null;
-        $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
-        $options->cashFlow = $this->options['cash-flow'] ?? null;
-        $options->account = $this->options['account'] ?? null;
-        $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
-
-        return $options;
-    }
-
     public function execute(): void
     {
-        $options = $this->getParsedOptions();
-
         $transactionLoader = new TransactionLoader(
-            $options->bank,
-            $options->isin,
-            $options->asset,
-            $options->dateFrom,
-            $options->dateTo,
-            $options->currentHoldings,
-            $options->account
+            $this->command->getOption('bank')->value,
+            $this->command->getOption('isin')->value,
+            $this->command->getOption('asset')->value,
+            $this->command->getOption('date-from')->value,
+            $this->command->getOption('date-to')->value,
+            $this->command->getOption('current-holdings')->value,
+            $this->command->getOption('account')->value
         );
 
         $transactions = $transactionLoader->getTransactions();
@@ -116,10 +82,10 @@ class TransactionCommand extends CommandProcessor
         return;
         */
 
-        if ($options->cashFlow) {
+        if ($this->command->getOption('cash-flow')->value) {
             $assets = $transactionLoader->getFinancialAssets($transactions);
 
-            $profitCalculator = new ProfitCalculator($options->currentHoldings);
+            $profitCalculator = new ProfitCalculator($this->command->getOption('current-holdings')->value);
             $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
             foreach ($result->overview->cashFlows as $cashFlow) {
@@ -133,7 +99,7 @@ class TransactionCommand extends CommandProcessor
                 echo $res . PHP_EOL;
             }
 
-            if ($options->exportCsv) {
+            if ($this->command->getOption('export-csv')->value) {
                 $cashFlowArray = [];
                 foreach ($result->overview->cashFlows as $cashFlow) {
                     $amount = $cashFlow->rawAmount;
@@ -183,7 +149,7 @@ class TransactionCommand extends CommandProcessor
 
         Logger::getInstance()->printInfos();
 
-        if ($options->displayLog) {
+        if ($this->command->getOption('display-log')->value) {
             Logger::getInstance()
                 ->printNotices()
                 ->printWarnings();

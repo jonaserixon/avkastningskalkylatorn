@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace src\DataStructure;
+namespace Avk\DataStructure;
 
 use DateTime;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
 
 readonly class Transaction
 {

@@ -1,70 +1,35 @@
 <?php declare(strict_types=1);
 
-namespace src\Command;
+namespace Avk\Command;
 
+use Avk\Command\CommandProcessor;
+use Avk\DataStructure\Command;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
+use Avk\Service\Performance\TimeWeightedReturn;
+use Avk\Service\ProfitCalculator;
+use Avk\Service\Transaction\TransactionLoader;
+use Avk\Service\Transaction\TransactionMapper;
+use Avk\Service\Utility;
+use Avk\View\Logger;
+use Avk\View\Presenter;
+use Avk\View\TextColorizer;
 use DateTime;
 use Exception;
-use src\Command\CommandProcessor;
-use src\DataStructure\Transaction;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
-use src\Service\Performance\TimeWeightedReturn;
-use src\Service\ProfitCalculator;
-use src\Service\Transaction\TransactionLoader;
-use src\Service\Transaction\TransactionMapper;
-use src\Service\Utility;
-use src\View\Logger;
-use src\View\TextColorizer;
-use stdClass;
 
-class CalculateProfitCommand extends CommandProcessor
+class CalculateProfitCommand extends CommandBase
 {
-    /** @var mixed[] */
-    private array $options;
-
-    /**
-     * @param mixed[] $options
-     */
-    public function __construct(array $options)
-    {
-        $this->options = $options;
-
-        parent::__construct();
-    }
-
-    public function getParsedOptions(): stdClass
-    {
-        $commandOptions = $this->commands['calculate']['options'];
-
-        $options = new stdClass();
-        $options->verbose = $this->options['verbose'] ?? $commandOptions['verbose']['default'];
-        // $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
-        $options->bank = $this->options['bank'] ?? null;
-        $options->isin = $this->options['isin'] ?? null;
-        $options->asset = $this->options['asset'] ?? null;
-        $options->dateFrom = $this->options['date-from'] ?? null;
-        $options->dateTo = $this->options['date-to'] ?? null;
-        $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
-        $options->overview = $this->options['overview'] ?? $commandOptions['overview']['default'];
-        $options->account = $this->options['account'] ?? null;
-        $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
-        $options->TWR = $this->options['twr'] ?? null;
-
-        return $options;
-    }
-
     public function execute(): void
     {
-        $options = $this->getParsedOptions();
-
         $transactionLoader = new TransactionLoader(
-            $options->bank,
-            $options->isin,
-            $options->asset,
-            $options->dateFrom,
-            $options->dateTo,
-            $options->currentHoldings,
-            $options->account
+            $this->command->getOption('bank')->value,
+            $this->command->getOption('isin')->value,
+            $this->command->getOption('asset')->value,
+            $this->command->getOption('date-from')->value,
+            $this->command->getOption('date-to')->value,
+            $this->command->getOption('current-holdings')->value,
+            $this->command->getOption('account')->value
         );
 
         $transactionLoader->overview->firstTransactionDate = '';
@@ -83,9 +48,16 @@ class CalculateProfitCommand extends CommandProcessor
 
         $portfolio = json_decode($portfolio);
 
-        if ($options->TWR) {
+        // if ($options->TWR) {
+        if ($this->command->getOption('twr')->value) {
             $profitCalculator = new TimeWeightedReturn($transactionMapper);
-            $twrResult = $profitCalculator->calculate($portfolio, $options->dateFrom, $options->dateTo, $options->bank);
+            $twrResult = $profitCalculator->calculate(
+                $portfolio,
+                // $options->dateFrom,
+                $this->command->getOption('date-from')->value,
+                $this->command->getOption('date-to')->value,
+                $this->command->getOption('bank')->value
+            );
 
             echo "\nSubperiod Returns:\n";
             foreach ($twrResult->returns as $index => $return) {
@@ -151,10 +123,10 @@ class CalculateProfitCommand extends CommandProcessor
             $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
             */
     
-            $profitCalculator = new ProfitCalculator($options->currentHoldings);
+            $profitCalculator = new ProfitCalculator($this->command->getOption('current-holdings')->value);
             $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
     
-            if ($options->verbose) {
+            if ($this->command->getOption('verbose')->value) {
                 $this->presenter->displayDetailedAssets($result->assets);
             } else {
                 $this->presenter->generateAssetTable($result->overview, $result->assets);
@@ -175,7 +147,7 @@ class CalculateProfitCommand extends CommandProcessor
                 }
             }
     
-            if ($options->overview) {
+            if ($this->command->getOption('overview')->value) {
                 $this->presenter->displayInvestmentReport($result->overview, $result->assets);
             }
     
@@ -188,7 +160,7 @@ class CalculateProfitCommand extends CommandProcessor
 
         Logger::getInstance()->printInfos();
 
-        if ($options->displayLog) {
+        if ($this->command->getOption('display-log')->value) {
             Logger::getInstance()
                 ->printNotices()
                 ->printWarnings();
