@@ -12,7 +12,6 @@ use Avk\Service\Transaction\TransactionLoader;
 use Avk\Service\Utility;
 use Avk\View\Logger;
 use Avk\View\TextColorizer;
-use stdClass;
 
 class TransactionCommand extends CommandBase
 {

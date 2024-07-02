@@ -2,8 +2,6 @@
 
 namespace Avk\Command;
 
-use Avk\Command\CommandProcessor;
-use Avk\DataStructure\Command;
 use Avk\DataStructure\Transaction;
 use Avk\Enum\Bank;
 use Avk\Enum\TransactionType;
@@ -13,7 +11,6 @@ use Avk\Service\Transaction\TransactionLoader;
 use Avk\Service\Transaction\TransactionMapper;
 use Avk\Service\Utility;
 use Avk\View\Logger;
-use Avk\View\Presenter;
 use Avk\View\TextColorizer;
 use DateTime;
 use Exception;

@@ -3,7 +3,7 @@ commands:
     description: "Prints available commands and their options"
 
   calculate:
-    description: "Filters"
+    description: "Calculate profits on investments"
     options:
       export-csv:
         description: "Generate and export CSV file"
@@ -61,75 +61,75 @@ commands:
       description: "List transactions"
       options:
         export-csv:
-        description: "Generate and export CSV file"
-        default: false
-        require_value: false
-      bank:
-        description: "Filter on bank(s)"
-        require_value: true
-      account:
-        description: "Filter on account(s)"
-        require_value: true
-      date-from:
-        description: "Filter from <date> (YYYY-MM-DD)"
-        require_value: true
-      date-to:
-        description: "Filter to <date> (YYYY-MM-DD)"
-        require_value: true
-      type:
-        description: "Filter on type"
-        require_value: true
-      isin:
-        description: "Filter on ISIN(s)"
-        require_value: true
-      current-holdings:
-        description: "Filter on current holdings"
-        default: false
-        require_value: false
-      asset:
-        description: "Filter on asset(s)"
-        require_value: true
-      fee:
-        description: "Filter on fee"
-        require_value: false
-      cash-flow:
-        description: "Display cash flow"
-        require_value: false
-      display-log:
-        description: "Display log messages"
-        default: false
-        require_value: false
+          description: "Generate and export CSV file"
+          default: false
+          require_value: false
+        bank:
+          description: "Filter on bank(s)"
+          require_value: true
+        account:
+          description: "Filter on account(s)"
+          require_value: true
+        date-from:
+          description: "Filter from <date> (YYYY-MM-DD)"
+          require_value: true
+        date-to:
+          description: "Filter to <date> (YYYY-MM-DD)"
+          require_value: true
+        type:
+          description: "Filter on type"
+          require_value: true
+        isin:
+          description: "Filter on ISIN(s)"
+          require_value: true
+        current-holdings:
+          description: "Filter on current holdings"
+          default: false
+          require_value: false
+        asset:
+          description: "Filter on asset(s)"
+          require_value: true
+        fee:
+          description: "Filter on fee"
+          require_value: false
+        cash-flow:
+          description: "Display cash flow"
+          require_value: false
+        display-log:
+          description: "Display log messages"
+          default: false
+          require_value: false
 
     pp-export:
       description: "Export transactions to Portfolio Performance format"
       options:
         export-csv:
-        description: "Generate and export CSV file"
-        default: false
-        require_value: false
-      bank:
-        description: "Filter on bank(s)"
-        require_value: true
-      account:
-        description: "Filter on account(s)"
-        require_value: true
-      date-from:
-        description: "Filter from <date> (YYYY-MM-DD)"
-        require_value: true
-      date-to:
-        description: "Filter to <date> (YYYY-MM-DD)"
-        require_value: true
-      type:
-        description: "Filter on type"
-        require_value: true
-      isin:
-        description: "Filter on ISIN(s)"
-        require_value: true
-      asset:
-        description: "Filter on asset(s)"
-        require_value: true
-      display-log:
-        description: "Display log messages"
-        default: false
-        require_value: false
+          description: "Generate and export CSV file"
+          default: false
+          require_value: false
+        bank:
+          description: "Filter on bank(s)"
+          require_value: true
+        account:
+          description: "Filter on account(s)"
+          require_value: true
+        date-from:
+          description: "Filter from <date> (YYYY-MM-DD)"
+          require_value: true
+        date-to:
+          description: "Filter to <date> (YYYY-MM-DD)"
+          require_value: true
+        type:
+          description: "Filter on type"
+          require_value: true
+        isin:
+          description: "Filter on ISIN(s)"
+          require_value: true
+        asset:
+          description: "Filter on asset(s)"
+          require_value: true
+        display-log:
+          description: "Display log messages"
+          default: false
+          require_value: false
         

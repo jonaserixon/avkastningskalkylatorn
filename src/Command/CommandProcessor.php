@@ -17,10 +17,6 @@ class CommandProcessor
     public function __construct()
     {
         $this->presenter = new Presenter();
-    }
-
-    private function parseYamlCommands(): void
-    {
         $this->commands = yaml_parse_file(ROOT_PATH . '/src/Command/commands.yaml');
     }
 
@@ -29,8 +25,6 @@ class CommandProcessor
      */
     public function main(array $argv): void
     {
-        $this->parseYamlCommands();
-
         if (count($argv) < 2) {
             $this->printAvailableCommands();
             exit(1);
@@ -47,12 +41,6 @@ class CommandProcessor
                 $options[$option[0]] = $option[1] ?? true;
             }
         }
-
-        // if (is_numeric($command) || !array_key_exists($command, $this->commands)) {
-        //     $this->unknownCommand($command);
-        //     $this->printAvailableCommands();
-        //     exit(1);
-        // }
 
         $command = $this->getCommand($commandName, $options);
 
@@ -150,17 +138,9 @@ class CommandProcessor
         }
     }
 
-    protected function toCamelCase(string $value): string
-    {
-        $value = str_replace('-', ' ', $value);
-        $value = str_replace('_', ' ', $value);
-        $value = ucwords($value);
-        $value = str_replace(' ', '', $value);
-        $value = lcfirst($value);
-        
-        return $value;
-    }
-
+    /**
+     * @param mixed[] $options
+     */
     protected function getCommand(string $commandName, array $options): Command
     {
         if (!isset($this->commands['commands'][$commandName])) {
@@ -174,38 +154,20 @@ class CommandProcessor
         $commandOptions = [];
         foreach ($commandData['options'] as $name => $commandOption) {
             if (isset($options[$name])) {
-                $commandOptions[$name] = new CommandOption(
-                    // $this->toCamelCase($name),
-                    $name,
-                    $options[$name],
-                    $commandData['options'][$name]['default'] ?? null,
-                    $commandData['options'][$name]['require-value'] ?? false
-                );
+                $value = $options[$name];
             } else {
-                $commandOptions[$name] = new CommandOption(
-                    // $this->toCamelCase($name),
-                    $name,
-                    $commandData['options'][$name]['default'] ?? null,
-                    $commandData['options'][$name]['default'] ?? null,
-                    $commandData['options'][$name]['require-value'] ?? false
-                );
+                $value = $commandOption['default'] ?? null;
             }
-        }
-        // foreach ($options as $name => $value) {
-        //     if (isset($commandData['options'][$name])) {
-        //         $commandOptions[$this->toCamelCase($name)] = new CommandOption(
-        //             $this->toCamelCase($name),
-        //             $value,
-        //             $commandData['options'][$name]['default'] ?? null,
-        //             $commandData['options'][$name]['require-value'] ?? false
-        //         );
-        //     }
-        // }
 
-        $command = new Command(
-            $commandName,
-            $commandOptions
-        );
+            $commandOptions[$name] = new CommandOption(
+                $name,
+                $value,
+                $commandData['options'][$name]['default'] ?? null,
+                $commandData['options'][$name]['require-value'] ?? false
+            );
+        }
+
+        $command = new Command($commandName, $commandOptions);
 
         return $command;
     }

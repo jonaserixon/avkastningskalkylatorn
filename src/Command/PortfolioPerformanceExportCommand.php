@@ -6,7 +6,6 @@ use Avk\Enum\Bank;
 use Avk\Service\FileManager\PPExporter;
 use Avk\Service\Transaction\TransactionLoader;
 use Avk\View\Logger;
-use stdClass;
 
 class PortfolioPerformanceExportCommand extends CommandBase
 {
