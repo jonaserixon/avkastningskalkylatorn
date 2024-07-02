@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\View;
+namespace Avk\View;
 
 class Logger
 {
@@ -119,5 +119,10 @@ class Logger
         }
 
         return $this;
+    }
+
+    public function printMessage(string $message): void
+    {
+        echo $message . PHP_EOL;
     }
 }

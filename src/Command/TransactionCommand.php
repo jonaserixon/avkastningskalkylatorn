@@ -1,61 +1,30 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\Command;
+namespace Avk\Command;
 
 use Exception;
-use src\DataStructure\FinancialAsset;
-use src\DataStructure\Transaction;
-use src\Service\Transaction\TransactionLoader;
-use src\Service\Utility;
-use src\View\Logger;
-use stdClass;
+use Avk\DataStructure\FinancialAsset;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\TransactionType;
+use Avk\Service\FileManager\Exporter;
+use Avk\Service\ProfitCalculator;
+use Avk\Service\Transaction\TransactionLoader;
+use Avk\Service\Utility;
+use Avk\View\Logger;
+use Avk\View\TextColorizer;
 
-class TransactionCommand extends CommandProcessor
+class TransactionCommand extends CommandBase
 {
-    /** @var mixed[] */
-    private array $options;
-
-    /**
-     * @param mixed[] $options
-     */
-    public function __construct(array $options)
-    {
-        $this->options = $options;
-
-        parent::__construct();
-    }
-
-    public function getParsedOptions(): stdClass
-    {
-        $commandOptions = $this->commands['transaction']['options'];
-
-        $options = new stdClass();
-        $options->exportCsv = $this->options['export-csv'] ?? $commandOptions['export-csv']['default'];
-        $options->bank = $this->options['bank'] ?? null;
-        $options->isin = $this->options['isin'] ?? null;
-        $options->asset = $this->options['asset'] ?? null;
-        $options->dateFrom = $this->options['date-from'] ?? null;
-        $options->dateTo = $this->options['date-to'] ?? null;
-        $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
-        $options->cashFlow = $this->options['cash-flow'] ?? null;
-        $options->account = $this->options['account'] ?? null;
-        $options->displayLog = $this->options['display-log'] ?? $commandOptions['display-log']['default'];
-
-        return $options;
-    }
-
     public function execute(): void
     {
-        $options = $this->getParsedOptions();
-
         $transactionLoader = new TransactionLoader(
-            $options->bank,
-            $options->isin,
-            $options->asset,
-            $options->dateFrom,
-            $options->dateTo,
-            $options->currentHoldings,
-            $options->account
+            $this->command->getOption('bank')->value,
+            $this->command->getOption('isin')->value,
+            $this->command->getOption('asset')->value,
+            $this->command->getOption('date-from')->value,
+            $this->command->getOption('date-to')->value,
+            $this->command->getOption('current-holdings')->value,
+            $this->command->getOption('account')->value
         );
 
         $transactions = $transactionLoader->getTransactions();
@@ -64,12 +33,58 @@ class TransactionCommand extends CommandProcessor
         $this->generatePortfolio($assets, $transactions);
 
         /*
-        return;
+        if (!file_exists(ROOT_PATH . '/resources/tmp/historical_prices')) {
+            mkdir(ROOT_PATH . '/resources/tmp/historical_prices', 0777, true);
+        }
 
-        if ($options->cashFlow) {
+        $tickers = file_get_contents(ROOT_PATH . '/resources/tmp/tickers.json');
+        $tickers = json_decode($tickers);
+
+        foreach ($tickers as $tickerInfo) {
+            if ($options->isin !== null && $options->isin !== $tickerInfo->isin) {
+                continue;
+            }
+
+            if ($tickerInfo->ticker === null) {
+                echo "No ticker for {$tickerInfo->name}" . PHP_EOL;
+                continue;
+            }
+
+            $historicalPricesFile = ROOT_PATH . '/resources/tmp/historical_prices/' . $tickerInfo->isin . '.json';
+            if (!file_exists($historicalPricesFile) || filesize($historicalPricesFile) === 0) {
+                echo "Fetching historical prices for {$tickerInfo->name}" . PHP_EOL;
+                $historicalPrices = $transactionLoader->getHistoricalPrices($tickerInfo->ticker, $transactions[0]->getDateString(), date('Y-m-d'));
+                file_put_contents($historicalPricesFile, json_encode($historicalPrices, JSON_PRETTY_PRINT));
+            } else {
+                $existingHistoricalPrices = json_decode(file_get_contents($historicalPricesFile), true);
+                if (empty($existingHistoricalPrices)) {
+                    continue;
+                }
+
+                $lastDate = array_keys($existingHistoricalPrices)[count($existingHistoricalPrices) - 1];
+                $dateFrom = new DateTime($lastDate);
+                $dateFrom->modify('+1 day');
+
+                if ($dateFrom > date_create() || $dateFrom->diff(date_create())->days > 30) {
+                    continue;
+                }
+
+                echo "Updating historical prices for {$tickerInfo->name}" . PHP_EOL;
+
+                $historicalPrices = $transactionLoader->getHistoricalPrices($tickerInfo->ticker, $dateFrom->format('Y-m-d'), date('Y-m-d'));
+
+                $updatedHistoricalPrices = array_merge($existingHistoricalPrices, $historicalPrices);
+                file_put_contents($historicalPricesFile, json_encode($updatedHistoricalPrices, JSON_PRETTY_PRINT));
+            }
+        }
+
+        return;
+        */
+
+        if ($this->command->getOption('cash-flow')->value) {
             $assets = $transactionLoader->getFinancialAssets($transactions);
 
-            $profitCalculator = new ProfitCalculator($options->currentHoldings);
+            $profitCalculator = new ProfitCalculator($this->command->getOption('current-holdings')->value);
             $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
             foreach ($result->overview->cashFlows as $cashFlow) {
@@ -83,12 +98,12 @@ class TransactionCommand extends CommandProcessor
                 echo $res . PHP_EOL;
             }
 
-            if ($options->exportCsv) {
+            if ($this->command->getOption('export-csv')->value) {
                 $cashFlowArray = [];
                 foreach ($result->overview->cashFlows as $cashFlow) {
                     $amount = $cashFlow->rawAmount;
                     if ($cashFlow->getTypeName() === 'deposit') {
-                        $amount = $amount * -1;
+                        $amount *= -1;
                     } elseif ($cashFlow->getTypeName() === 'withdrawal') {
                         $amount = abs($amount);
                     }
@@ -130,11 +145,10 @@ class TransactionCommand extends CommandProcessor
                 echo $res . PHP_EOL;
             }
         }
-        */
 
         Logger::getInstance()->printInfos();
 
-        if ($options->displayLog) {
+        if ($this->command->getOption('display-log')->value) {
             Logger::getInstance()
                 ->printNotices()
                 ->printWarnings();
@@ -185,7 +199,8 @@ class TransactionCommand extends CommandProcessor
         // Skriv till en temporär fil först
         $result = file_put_contents(
             $tmpFile,
-            json_encode([
+            json_encode(
+                [
                     'portfolioTransactions' => $assetsWithTransactions,
                     'accountTransactions' => $nonAssetTransactions
                 ],

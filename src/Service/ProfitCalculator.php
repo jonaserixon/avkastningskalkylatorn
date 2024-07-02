@@ -1,16 +1,16 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\Service;
+namespace Avk\Service;
 
 use Exception;
-use src\DataStructure\AssetReturn;
-use src\DataStructure\FinancialAsset;
-use src\DataStructure\FinancialOverview;
-use src\DataStructure\Transaction;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
-use src\Service\FileManager\CsvProcessor\StockPrice;
-use src\View\Logger;
+use Avk\DataStructure\AssetPerformance;
+use Avk\DataStructure\FinancialAsset;
+use Avk\DataStructure\FinancialOverview;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
+use Avk\Service\FileManager\CsvProcessor\StockPrice;
+use Avk\View\Logger;
 use stdClass;
 
 class ProfitCalculator
@@ -124,7 +124,7 @@ class ProfitCalculator
             $result->assets = $assets;
         }
 
-        $overview->returns = $this->calculateTotalReturnForFinancialOverview($overview);
+        $overview->performance = $this->calculateTotalReturnForFinancialOverview($overview);
 
         $result->overview = $overview;
         $this->calculateCurrentHoldingsWeighting($result->overview, $result->assets);
@@ -170,7 +170,7 @@ class ProfitCalculator
     }
     */
 
-    private function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetReturn
+    private function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetPerformance
     {
         $totalReturnInclFees = 0;
         $totalReturnInclFees += $overview->totalSellAmount;
@@ -183,7 +183,7 @@ class ProfitCalculator
         $totalReturnInclFees += $overview->totalForeignWithholdingTax;
         $totalReturnInclFees += $overview->totalReturnedForeignWithholdingTax;
 
-        $result = new AssetReturn();
+        $result = new AssetPerformance();
         $result->totalReturnInclFees = $totalReturnInclFees;
 
         /*

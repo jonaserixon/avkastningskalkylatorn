@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\Service\FileManager\CsvProcessor;
+namespace Avk\Service\FileManager\CsvProcessor;
 
 use Exception;
-use src\DataStructure\Transaction;
-use src\Service\Utility;
+use Avk\DataStructure\Transaction;
+use Avk\Service\Utility;
 
 abstract class CsvProcessor
 {

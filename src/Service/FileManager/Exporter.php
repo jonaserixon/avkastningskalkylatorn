@@ -1,9 +1,9 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\Service\FileManager;
+namespace Avk\Service\FileManager;
 
 use Exception;
-use src\View\Logger;
+use Avk\View\Logger;
 
 class Exporter
 {

@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\Service;
+namespace Avk\Service;
 
 use Exception;
 
@@ -15,7 +15,7 @@ class Utility
 
     public static function isNearlyZero(float|string $value, float $tolerance = 1e-12): bool
     {
-        $value = static::formatNumberForBCMath(abs($value));
+        $value = static::formatNumberForBCMath(abs((float) $value));
         $tolerance = static::formatNumberForBCMath($tolerance);
         return bccomp($value, $tolerance, 15) < 0;
     }

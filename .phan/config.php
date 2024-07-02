@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 // See more phan config options at: https://github.com/phan/phan/blob/v5/.phan/config.php and https://github.com/phan/phan/wiki/Incrementally-Strengthening-Analysis
 
 $config = [
@@ -22,12 +20,15 @@ $config = [
         'RedundantAssignmentPlugin',
         'ShortArrayPlugin',
         'SimplifyExpressionPlugin',
-        // 'StrictLiteralComparisonPlugin',
+        'UnsafeCodePlugin',
+        'DeprecateAliasPlugin',
+        'UseReturnValuePlugin',
         'UnknownElementTypePlugin',
+        // 'StrictLiteralComparisonPlugin',
         // 'WhitespacePlugin',
         // 'PossiblyStaticMethodPlugin',
-        'UseReturnValuePlugin',
     ],
+    'plugin_config' => [],
     'directory_list' => [],
     'exclude_analysis_directory_list' => [],
     'exclude_file_list' => [],
@@ -50,12 +51,13 @@ $config = [
     'null_casts_as_any_type' => false,
     'null_casts_as_array' => false,
     'array_casts_as_null' => false,
-
+    'check_docblock_signature_return_type_match' => true,
+    'check_docblock_signature_param_type_match' => true,
     // 'dead_code_detection' => true,
     // 'error_prone_truthy_condition_detection' => true,
 ];
 
-function getDirectoriesWithPhpFiles($rootDir, &$subdirs = [], $baseDir = '')
+function getDirectoriesWithPhpFiles(string $rootDir, array &$subdirs = [], string $baseDir = ''): void
 {
     $currentDir = $rootDir . '' . $baseDir;
 

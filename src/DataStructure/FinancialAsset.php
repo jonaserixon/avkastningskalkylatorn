@@ -1,8 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\DataStructure;
+namespace Avk\DataStructure;
 
-use src\Enum\TransactionType;
+use Avk\Enum\TransactionType;
 
 class FinancialAsset
 {
@@ -21,7 +21,7 @@ class FinancialAsset
     private ?float $currentValueOfShares = 0;
     private ?string $firstTransactionDate = null;
     private ?string $lastTransactionDate = null;
-    public ?AssetReturn $assetReturn = null;
+    public ?AssetPerformance $performance = null;
 
     // TODO: move this to the AssetReturn structure.
     public float $realizedGainLoss = 0;

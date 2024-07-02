@@ -1,11 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\DataStructure;
+namespace Avk\DataStructure;
 
 use Exception;
-use src\DataStructure\Transaction;
-use src\Enum\Bank;
-use src\Enum\TransactionType;
+use Avk\DataStructure\Transaction;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
 
 // TODO: more consistent naming.
 
@@ -30,7 +30,7 @@ class FinancialOverview
     public float $withdrawalAmountTotal = 0;
     public string $firstTransactionDate = '';
     public string $lastTransactionDate = '';
-    public ?AssetReturn $returns = null;
+    public ?AssetPerformance $performance = null;
     // public float $totalProfitInclFees = 0;
 
     /**

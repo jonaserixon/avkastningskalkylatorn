@@ -1,55 +1,22 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\Command;
+namespace Avk\Command;
 
-use src\Service\FileManager\Exporter;
-use src\Service\Transaction\TransactionLoader;
-use stdClass;
+use Avk\Service\FileManager\Exporter;
+use Avk\Service\Transaction\TransactionLoader;
 
-class GenerateIsinListCommand extends CommandProcessor
+class GenerateIsinListCommand extends CommandBase
 {
-    /** @var mixed[] */
-    private array $options;
-
-    /**
-     * @param mixed[] $options
-     */
-    public function __construct(array $options)
-    {
-        $this->options = $options;
-
-        parent::__construct();
-    }
-
-    public function getParsedOptions(): stdClass
-    {
-        $commandOptions = $this->commands['calculate']['options'];
-
-        $options = new stdClass();
-        $options->verbose = $this->options['verbose'] ?? $commandOptions['verbose']['default'];
-        $options->bank = $this->options['bank'] ?? null;
-        $options->isin = $this->options['isin'] ?? null;
-        $options->asset = $this->options['asset'] ?? null;
-        $options->dateFrom = $this->options['date-from'] ?? null;
-        $options->dateTo = $this->options['date-to'] ?? null;
-        $options->currentHoldings = $this->options['current-holdings'] ?? $commandOptions['current-holdings']['default'];
-        $options->account = $this->options['account'] ?? null;
-
-        return $options;
-    }
-
     public function execute(): void
     {
-        $options = $this->getParsedOptions();
-
         $transactionLoader = new TransactionLoader(
-            $options->bank,
-            $options->isin,
-            $options->asset,
-            $options->dateFrom,
-            $options->dateTo,
-            $options->currentHoldings,
-            $options->account
+            $this->command->getOption('bank')->value,
+            $this->command->getOption('isin')->value,
+            $this->command->getOption('asset')->value,
+            $this->command->getOption('date-from')->value,
+            $this->command->getOption('date-to')->value,
+            $this->command->getOption('current-holdings')->value,
+            $this->command->getOption('account')->value
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());

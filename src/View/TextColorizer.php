@@ -1,6 +1,6 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\View;
+namespace Avk\View;
 
 use InvalidArgumentException;
 

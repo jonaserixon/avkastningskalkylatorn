@@ -1,10 +1,10 @@
-<?php
+<?php declare(strict_types=1);
 
-namespace src\View;
+namespace Avk\View;
 
-use src\DataStructure\FinancialOverview;
-use src\DataStructure\FinancialAsset;
-use src\Enum\TransactionType;
+use Avk\DataStructure\FinancialOverview;
+use Avk\DataStructure\FinancialAsset;
+use Avk\Enum\TransactionType;
 
 class Presenter
 {
@@ -59,11 +59,11 @@ class Presenter
                 echo PHP_EOL;
             }
 
-            if ($asset->assetReturn) {
-                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($asset->assetReturn->totalReturnExclFees) . ' SEK' . PHP_EOL;
-                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($asset->assetReturn->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
+            if ($asset->performance) {
+                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($asset->performance->totalReturnExclFees) . ' SEK' . PHP_EOL;
+                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($asset->performance->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
 
-                echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($asset->assetReturn->totalReturnInclFees) . ' SEK' . PHP_EOL;
+                echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($asset->performance->totalReturnInclFees) . ' SEK' . PHP_EOL;
             }
 
             echo PHP_EOL;
@@ -175,12 +175,12 @@ class Presenter
         $totalReturn += $overview->totalTax;
         echo str_pad(" ", 30) . "Totalt avkastning (inkl. avgifter, källskatt, skatt, räntor): {$this->colorPicker($totalReturn)} SEK" . PHP_EOL;
         
-        if (isset($overview->returns->xirr)) {
+        if (isset($overview->performance->xirr)) {
             echo str_pad("Avkastningsberäkningar:", 30) . PHP_EOL;
-            echo str_pad(" ", 30) . "XIRR: {$this->colorPicker($overview->returns->xirr)} %" . PHP_EOL;
+            echo str_pad(" ", 30) . "XIRR: {$this->colorPicker($overview->performance->xirr)} %" . PHP_EOL;
         }
 
-        // echo $this->formatNumber($overview->returns->totalReturnInclFees) . PHP_EOL;
+        // echo $this->formatNumber($overview->performance->totalReturnInclFees) . PHP_EOL;
 
         echo PHP_EOL . str_repeat("=", 70) . PHP_EOL;
     }
@@ -211,7 +211,7 @@ class Presenter
         echo PHP_EOL;
         echo 'Tot. nuvarande innehav: ' . $this->colorPicker($overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
-        echo 'Tot. avkastning (inkl. avgifter, källskatt, skatt): ' . $this->colorPicker($overview->returns->totalReturnInclFees) . ' SEK' . PHP_EOL;
+        echo 'Tot. avkastning (inkl. avgifter, källskatt, skatt): ' . $this->colorPicker($overview->performance->totalReturnInclFees) . ' SEK' . PHP_EOL;
         echo PHP_EOL;
     }
     */
@@ -241,7 +241,7 @@ class Presenter
         }
 
         foreach ($assets as $asset) {
-            if (!$asset->assetReturn) {
+            if (!$asset->performance) {
                 // continue;
             }
 
@@ -282,7 +282,7 @@ class Presenter
         $this->printHorizontalLine($colWidths);
 
         foreach ($assets as $asset) {
-            if (!$asset->assetReturn) {
+            if (!$asset->performance) {
                 // continue;
             }
             $name = $asset->name;
