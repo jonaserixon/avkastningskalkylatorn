@@ -180,7 +180,7 @@ class TransactionCommand extends CommandBase
 
         $hash = md5($string);
         if (file_exists(ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json")) {
-            // return;
+            return;
         }
 
         $assetsWithTransactions = [];

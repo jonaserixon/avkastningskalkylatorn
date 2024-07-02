@@ -71,7 +71,7 @@ class Custom extends CsvProcessor
             $currency = $row['Currency'];
             $isin = $row['ISIN'];
             $type = $transactionType;
-            $bank = Bank::tryFrom($row['Bank']);
+            $bank = Bank::tryFrom($row['Bank']) ?? Bank::NOT_SPECIFIED;
 
             // TODO: implement support for new isin codes (such as when share splits occur)
             $isin = $row['ISIN'];
@@ -115,25 +115,5 @@ class Custom extends CsvProcessor
         $normalizedInput = static::normalizeInput($input);
 
         return TransactionType::tryFrom($normalizedInput);
-
-        $mapping = [
-            'Buy' => 'buy',
-            'Sell' => 'sell',
-            'Dividend' => 'dividend',
-            'Other' => 'other',
-            'Share transfer' => 'share_transfer',
-            'Deposit' => 'deposit',
-            'Withdrawal' => 'withdrawal',
-            'Interest' => 'interest',
-            'Tax' => 'tax',
-            'Foreign witholding tax' => 'foreign_withholding_tax',
-            'Share loan payout' => 'share_loan_payout',
-        ];
-
-        if (array_key_exists($normalizedInput, $mapping)) {
-            return TransactionType::tryFrom($mapping[$normalizedInput]);
-        }
-
-        return null;
     }
 }

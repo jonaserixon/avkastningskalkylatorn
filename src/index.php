@@ -17,6 +17,7 @@ try {
         IMPORT_DIR . '/banks',
         IMPORT_DIR . '/banks/avanza',
         IMPORT_DIR . '/banks/nordnet',
+        IMPORT_DIR . '/banks/custom',
         STOCK_PRICE_DIR,
         EXPORT_DIR
     ];
