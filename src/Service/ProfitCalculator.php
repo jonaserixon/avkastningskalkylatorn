@@ -103,7 +103,6 @@ class ProfitCalculator
                 // $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
 
                 $isMissingPricePerShare = (int) $asset->getCurrentNumberOfShares() > 0 && !$currentPricePerShare;
-
                 if ($isMissingPricePerShare) {
                     $currentHoldingsMissingPricePerShare[] = $asset->name . ' (' . $asset->isin . ')';
                 }

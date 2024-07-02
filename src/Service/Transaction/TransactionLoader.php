@@ -2,14 +2,15 @@
 
 namespace Avk\Service\Transaction;
 
-use Exception;
 use Avk\DataStructure\FinancialAsset;
 use Avk\DataStructure\FinancialOverview;
 use Avk\DataStructure\Transaction;
 use Avk\Service\API\Eod\EodWrapper;
 use Avk\Service\FileManager\CsvProcessor\Avanza;
+use Avk\Service\FileManager\CsvProcessor\Custom;
 use Avk\Service\FileManager\CsvProcessor\Nordnet;
 use Avk\Service\FileManager\CsvProcessor\StockPrice;
+use Exception;
 
 class TransactionLoader
 {
@@ -78,7 +79,8 @@ class TransactionLoader
     {
         $transactions = array_merge(
             (new Avanza())->parseBankTransactions(),
-            (new Nordnet())->parseBankTransactions()
+            (new Nordnet())->parseBankTransactions(),
+            (new Custom())->parseBankTransactions()
         );
 
         $transactions = $this->filterTransactions($transactions);

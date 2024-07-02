@@ -165,8 +165,9 @@ class TransactionCommand extends CommandBase
         // $nordnetFiles = glob(IMPORT_DIR . '/banks/nordnet/*.csv');
         $avanzaFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/avanza');
         $nordnetFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/nordnet');
+        $customFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/custom');
 
-        $files = [$avanzaFile, $nordnetFile];
+        $files = [$avanzaFile, $nordnetFile, $customFile];
 
         $string = '';
         foreach ($files as $file) {
@@ -179,7 +180,7 @@ class TransactionCommand extends CommandBase
 
         $hash = md5($string);
         if (file_exists(ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json")) {
-            return;
+            // return;
         }
 
         $assetsWithTransactions = [];
