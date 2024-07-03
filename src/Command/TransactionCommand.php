@@ -165,8 +165,9 @@ class TransactionCommand extends CommandBase
         // $nordnetFiles = glob(IMPORT_DIR . '/banks/nordnet/*.csv');
         $avanzaFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/avanza');
         $nordnetFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/nordnet');
+        $customFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/custom');
 
-        $files = [$avanzaFile, $nordnetFile];
+        $files = [$avanzaFile, $nordnetFile, $customFile];
 
         $string = '';
         foreach ($files as $file) {

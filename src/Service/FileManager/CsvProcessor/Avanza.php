@@ -57,7 +57,7 @@ class Avanza extends CsvProcessor
 
             $date = date_create($row['Datum']);
             if ($date === false) {
-                Logger::getInstance()->addWarning("Could not parse date: {$row['Datum']} when importing Avaanza transactions.");
+                Logger::getInstance()->addWarning("Could not parse date: {$row['Datum']} when importing Avanza transactions.");
                 continue;
             }
 
