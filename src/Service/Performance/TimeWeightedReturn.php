@@ -2,14 +2,14 @@
 
 namespace Avk\Service\Performance;
 
-use DateTime;
-use Exception;
 use Avk\DataStructure\FinancialAsset;
+use Avk\DataStructure\Portfolio;
 use Avk\DataStructure\Transaction;
-use Avk\Enum\Bank;
 use Avk\Enum\TransactionType;
 use Avk\Service\Transaction\TransactionMapper;
 use Avk\View\Logger;
+use DateTime;
+use Exception;
 use stdClass;
 
 class TimeWeightedReturn
@@ -21,7 +21,7 @@ class TimeWeightedReturn
         $this->transactionMapper = $transactionMapper;
     }
 
-    public function calculate(stdClass $portfolio, ?string $filterDateFrom = null, ?string $filterDateTo = null, ?string $filterBank = null): stdClass
+    public function calculate(Portfolio $portfolio, ?string $filterDateFrom = null, ?string $filterDateTo = null, ?string $filterBank = null): stdClass
     {
         echo 'Calculating TWR...' . PHP_EOL;
 
@@ -44,6 +44,7 @@ class TimeWeightedReturn
         $assets = [];
         $historicalPricesCache = [];
         $returns = [];
+        $totalValues = [];
         foreach ($subPeriodDates as $subPeriod) {
             $startDateString = $subPeriod[0];
             $endDateString = $subPeriod[1];
@@ -128,7 +129,12 @@ class TimeWeightedReturn
             }
 
             $twr *= (1 + $return);
-            $returns[] = $return;
+            $returns[] = [
+                'endDate' => $endDateString,
+                'return' => $return
+            ];
+
+            $totalValues[$endDateString] = $endValue;
 
             /*
             print_r([
@@ -147,7 +153,7 @@ class TimeWeightedReturn
 
             $index++;
 
-            echo "\r\033[K";
+            echo "\r";
             echo "Processing sub-period " . $index . ' / ' . count($subPeriodDates);
         }
 
@@ -156,11 +162,12 @@ class TimeWeightedReturn
         $result = new stdClass();
         $result->twr = $twr;
         $result->returns = $returns;
+        $result->totalValues = $totalValues;
 
         return $result;
     }
 
-    private function createSubPeriods(stdClass $portfolio, ?string $filterDateFrom, ?string $filterDateTo, ?string $filterBank): stdClass
+    private function createSubPeriods(Portfolio $portfolio, ?string $filterDateFrom, ?string $filterDateTo, ?string $filterBank): stdClass
     {
         $subPeriodDates = [];
         $subPeriodIndex = 0;
@@ -170,81 +177,51 @@ class TimeWeightedReturn
         $dateTo = $filterDateTo ? new DateTime($filterDateTo) : null;
 
         $cashFlowTransactions = [];
-        foreach ($portfolio->accountTransactions as $row) {
-            if ($filterBank && mb_strtoupper($filterBank) !== $row->bank) {
+        foreach ($portfolio->accountTransactions as $index => $transaction) {
+            if ($filterBank && mb_strtoupper($filterBank) !== $transaction->bank->value) {
                 continue;
             }
 
-            $transactionType = TransactionType::from($row->type);
-
-            if (!in_array($transactionType, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL])) {
+            if (!in_array($transaction->type, [TransactionType::DEPOSIT, TransactionType::WITHDRAWAL])) {
+                continue;
+            }
+            if (($dateFrom !== null && $transaction->date < $dateFrom) ||
+                ($dateTo !== null && $transaction->date > $dateTo)
+            ) {
                 continue;
             }
 
-            if (($dateFrom !== null && new DateTime($row->date->date) < $dateFrom) || ($dateTo !== null && new DateTime($row->date->date) > $dateTo)) {
-                continue;
+            // The first period should start with a transaction amount of more than x kr.
+            if ($index > 0 || ($index < 1 && $transaction->rawAmount > 100)) {
+                // Initialize a new subperiod.
+                if (!isset($subPeriodDates[$subPeriodIndex])) {
+                    $subPeriodDates[$subPeriodIndex] = [];
+                }
+
+                // If the current subperiod has two dates, move to the next subperiod.
+                if (count($subPeriodDates[$subPeriodIndex]) === 2) {
+                    $previousDate = $subPeriodDates[$subPeriodIndex][1];
+
+                    $subPeriodIndex++;
+                    $subPeriodDates[$subPeriodIndex][] = $previousDate;
+                }
+
+                // Add the date to the current subperiod.
+                if (!in_array($transaction->getDateString(), $subPeriodDates[$subPeriodIndex])) {
+                    $subPeriodDates[$subPeriodIndex][] = $transaction->getDateString();
+                }
             }
-
-            $transaction = new Transaction(
-                new DateTime($row->date->date),
-                Bank::from($row->bank),
-                $row->account,
-                $transactionType,
-                $row->name,
-                $row->description,
-                $row->rawQuantity,
-                $row->rawPrice,
-                $row->pricePerShareSEK,
-                $row->rawAmount,
-                $row->commission,
-                $row->currency,
-                $row->isin,
-                $row->exchangeRate
-            );
-
-            // Initialize a new subperiod.
-            if (!isset($subPeriodDates[$subPeriodIndex])) {
-                $subPeriodDates[$subPeriodIndex] = [];
-            }
-
-            // If the current subperiod has two dates, move to the next subperiod.
-            if (count($subPeriodDates[$subPeriodIndex]) === 2) {
-                $previousDate = $subPeriodDates[$subPeriodIndex][1];
-
-                $subPeriodIndex++;
-                $subPeriodDates[$subPeriodIndex][] = $previousDate;
-            }
-
-            // Add the date to the current subperiod.
-            if (!in_array($transaction->getDateString(), $subPeriodDates[$subPeriodIndex])) {
-                $subPeriodDates[$subPeriodIndex][] = $transaction->getDateString();
-            }
+            
 
             $cashFlowTransactions[] = $transaction;
         }
 
         $portfolioTransactions = [];
-        foreach ($portfolio->portfolioTransactions as $row) {
-            foreach ($row->transactions as &$transactionRow) {
-                if ($filterBank && mb_strtoupper($filterBank) !== $transactionRow->bank) {
+        foreach ($portfolio->portfolioTransactions as $portfolioTransaction) {
+            foreach ($portfolioTransaction->transactions as $transaction) {
+                if ($filterBank && mb_strtoupper($filterBank) !== $transaction->bank->value) {
                     continue;
                 }
-                $transaction = new Transaction(
-                    new DateTime($transactionRow->date->date),
-                    Bank::from($transactionRow->bank),
-                    $transactionRow->account,
-                    TransactionType::from($transactionRow->type),
-                    $transactionRow->name,
-                    $transactionRow->description,
-                    $transactionRow->rawQuantity,
-                    $transactionRow->rawPrice,
-                    $transactionRow->pricePerShareSEK,
-                    $transactionRow->rawAmount,
-                    $transactionRow->commission,
-                    $transactionRow->currency,
-                    $transactionRow->isin,
-                    $transactionRow->exchangeRate
-                );
 
                 $portfolioTransactions[] = $transaction;
             }

@@ -2,6 +2,7 @@
 
 namespace Avk\Command;
 
+use Avk\Enum\CommandOptionName;
 use Avk\Service\FileManager\Exporter;
 use Avk\Service\Transaction\TransactionLoader;
 
@@ -10,13 +11,13 @@ class GenerateIsinListCommand extends CommandBase
     public function execute(): void
     {
         $transactionLoader = new TransactionLoader(
-            $this->command->getOption('bank')->value,
-            $this->command->getOption('isin')->value,
-            $this->command->getOption('asset')->value,
-            $this->command->getOption('date-from')->value,
-            $this->command->getOption('date-to')->value,
-            $this->command->getOption('current-holdings')->value,
-            $this->command->getOption('account')->value
+            $this->command->getOption(CommandOptionName::BANK)->value,
+            $this->command->getOption(CommandOptionName::ISIN)->value,
+            $this->command->getOption(CommandOptionName::ASSET)->value,
+            $this->command->getOption(CommandOptionName::DATE_FROM)->value,
+            $this->command->getOption(CommandOptionName::DATE_TO)->value,
+            $this->command->getOption(CommandOptionName::CURRENT_HOLDINGS)->value,
+            $this->command->getOption(CommandOptionName::ACCOUNT)->value
         );
 
         $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());

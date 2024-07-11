@@ -18,22 +18,26 @@ class Presenter
 
             echo TextColorizer::colorText($this->createSeparator('-', $asset->name .' ('.$asset->isin.')'), 'pink') . PHP_EOL;
 
-            echo $this->addTabs('Köpbelopp:') . TextColorizer::colorText(number_format($asset->getBuyAmount(), 2, '.', ' '), 'cyan') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Säljbelopp:') . TextColorizer::colorText(number_format($asset->getSellAmount(), 2, '.', ' '), 'blue') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Utdelningar:') . $this->colorPicker($asset->getDividendAmount()) . ' SEK' . PHP_EOL;
-
+            echo $this->addTabs('Köpbelopp:') . TextColorizer::colorText($this->formatNumber($asset->getBuyAmount()), 'blue') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Säljbelopp:') . TextColorizer::colorText($this->formatNumber($asset->getSellAmount()), 'blue') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Anskaffningsvärde:') . TextColorizer::colorText($this->formatNumber($asset->costBasis), 'blue') . ' SEK' . PHP_EOL;
             echo PHP_EOL;
 
-            echo $this->addTabs('Tot. courtage:', 50) . TextColorizer::colorText($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount(), 'red') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage köp:', 50) . TextColorizer::colorText($asset->getCommissionBuyAmount(), 'red') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage sälj:', 50) . TextColorizer::colorText($asset->getCommissionSellAmount(), 'red') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Tot. avgifter:', 50) . TextColorizer::colorText($asset->getFeeAmount(), 'red') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. courtage:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()), 'red') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage köp:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionBuyAmount()), 'red') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Courtage sälj:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionSellAmount()), 'red') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Tot. avgifter:', 50) . TextColorizer::colorText($this->formatNumber($asset->getFeeAmount()), 'red') . ' SEK' . PHP_EOL;
             echo $this->addTabs('Utländsk källskatt:') . $this->colorPicker($asset->getForeignWithholdingTaxAmount()) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
-            echo $this->addTabs('Första transaktionen: ', 50) . $asset->getFirstTransactionDate() . PHP_EOL;
-            echo $this->addTabs('Senaste transaktionen: ', 50) . $asset->getLastTransactionDate() . PHP_EOL;
+            echo $this->addTabs('Orealiserad vinst/förlust:') . $this->colorPicker($asset->unrealizedGainLoss) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Realiserad vinst/förlust:') . $this->colorPicker($asset->realizedGainLoss) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Utdelningar:') . $this->colorPicker($asset->getDividendAmount()) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Absolut avkastning:') . $this->colorPicker(0) . ' SEK' . PHP_EOL; // TODO
+            
+            // echo $this->addTabs('Första transaktionen: ', 50) . $asset->getFirstTransactionDate() . PHP_EOL;
+            // echo $this->addTabs('Senaste transaktionen: ', 50) . $asset->getLastTransactionDate() . PHP_EOL;
 
             echo PHP_EOL;
 
@@ -51,7 +55,7 @@ class Presenter
 
                 if ($asset->getCurrentValueOfShares() && $asset->getCurrentPricePerShare()) {
                     echo $this->addTabs('Nuvarande pris/aktie') . number_format($asset->getCurrentPricePerShare(), 2, '.', ' ') . ' SEK' . PHP_EOL;
-                    echo $this->addTabs('Nuvarande markn.värde av aktier:') . number_format($asset->getCurrentValueOfShares(), 2, '.', ' ') . ' SEK ' . PHP_EOL;
+                    echo $this->addTabs('Nuvarande värde:') . number_format($asset->getCurrentValueOfShares(), 2, '.', ' ') . ' SEK ' . PHP_EOL;
                 } else {
                     echo TextColorizer::colorText('** Saknar kurspris **', 'yellow') . PHP_EOL;
                 }
@@ -355,7 +359,7 @@ class Presenter
         echo '|' . PHP_EOL;
     }
 
-    public function printRelativeProgressBar(string $label, float $value, float $maxValue): void
+    public function printRelativeProgressBarPercentage(string $label, float $value, float $maxValue): void
     {
         $maxWidth = 50;
         $relativeWidth = ($value / $maxValue) * $maxWidth;
@@ -366,6 +370,21 @@ class Presenter
         $bar .= TextColorizer::colorText(str_repeat('█', $currentWidth), 'blue');
         $bar .= str_repeat(' ', $maxWidth - $currentWidth);
         $bar .= '| ' . TextColorizer::colorText(sprintf("%.2f%%", $value), 'cyan');
+
+        echo $bar . PHP_EOL;
+    }
+
+    public function printRelativeProgressBarAmount(string $label, float $value, float $maxValue): void
+    {
+        $maxWidth = 50;
+        $relativeWidth = ($value / $maxValue) * $maxWidth;
+        $currentWidth = (int) round($relativeWidth);
+
+        $bar = str_pad($this->truncateName($label, 20), 20) . ' |';
+
+        $bar .= TextColorizer::colorText(str_repeat('█', $currentWidth), 'blue');
+        $bar .= str_repeat(' ', $maxWidth - $currentWidth);
+        $bar .= '| ' . TextColorizer::colorText($value, 'cyan');
 
         echo $bar . PHP_EOL;
     }

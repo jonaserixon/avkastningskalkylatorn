@@ -26,10 +26,6 @@ class Nordnet extends CsvProcessor
             throw new Exception('Failed to read headers from file: ' . basename($filePath));
         }
 
-        if (count($headers) !== 29) {
-            throw new Exception('Invalid Nordnet import file: ' . basename($filePath));
-        }
-
         fclose($handle);
 
         return true;

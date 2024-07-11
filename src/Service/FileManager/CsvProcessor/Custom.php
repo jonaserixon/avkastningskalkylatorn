@@ -2,8 +2,6 @@
 
 namespace Avk\Service\FileManager\CsvProcessor;
 
-// TODO: rewrite this using JSON.
-
 use Exception;
 use Avk\DataStructure\Transaction;
 use Avk\Enum\Bank;

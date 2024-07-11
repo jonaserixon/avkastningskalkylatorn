@@ -3,6 +3,7 @@
 namespace Avk\Command;
 
 use Avk\Enum\Bank;
+use Avk\Enum\CommandOptionName;
 use Avk\Service\FileManager\PPExporter;
 use Avk\Service\Transaction\TransactionLoader;
 use Avk\View\Logger;
@@ -12,26 +13,25 @@ class PortfolioPerformanceExportCommand extends CommandBase
     public function execute(): void
     {
         $transactionLoader = new TransactionLoader(
-            $this->command->getOption('bank')->value,
-            $this->command->getOption('isin')->value,
-            $this->command->getOption('asset')->value,
-            $this->command->getOption('date-from')->value,
-            $this->command->getOption('date-to')->value,
-            // $this->command->getOption('current-holdings')->value,
+            $this->command->getOption(CommandOptionName::BANK)->value,
+            $this->command->getOption(CommandOptionName::ISIN)->value,
+            $this->command->getOption(CommandOptionName::ASSET)->value,
+            $this->command->getOption(CommandOptionName::DATE_FROM)->value,
+            $this->command->getOption(CommandOptionName::DATE_TO)->value,
             false,
-            $this->command->getOption('account')->value
+            $this->command->getOption(CommandOptionName::ACCOUNT)->value
         );
 
         $transactions = $transactionLoader->getTransactions();
 
         // $assets = $transactionLoader->getFinancialAssets($transactions);
 
-        $ppExporter = new PPExporter($transactions, $this->command->getOption('export-csv')->value);
+        $ppExporter = new PPExporter($transactions, $this->command->getOption(CommandOptionName::EXPORT_CSV)->value);
 
-        if (!$this->command->getOption('bank')->value) {
+        if (!$this->command->getOption(CommandOptionName::BANK)->value) {
             Logger::getInstance()->addWarning('Bank not provided');
         } else {
-            $bank = Bank::tryFrom(mb_strtoupper($this->command->getOption('bank')->value));
+            $bank = Bank::tryFrom(mb_strtoupper($this->command->getOption(CommandOptionName::BANK)->value));
             if ($bank === Bank::NORDNET) {
                 $ppExporter->exportNordnetDividends();
                 $ppExporter->exportNordnetAccountTransactions();

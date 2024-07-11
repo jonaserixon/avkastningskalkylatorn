@@ -4,6 +4,7 @@ namespace Avk\Command;
 
 use Avk\DataStructure\Command;
 use Avk\DataStructure\CommandOption;
+use Avk\Enum\CommandOptionName;
 use Avk\View\Presenter;
 use Avk\View\TextColorizer;
 
@@ -153,17 +154,19 @@ class CommandProcessor
 
         $commandOptions = [];
         foreach ($commandData['options'] as $name => $commandOption) {
-            if (isset($options[$name])) {
-                $value = $options[$name];
+            $optionName = CommandOptionName::from($name);
+
+            if (isset($options[$optionName->value])) {
+                $value = $options[$optionName->value];
             } else {
                 $value = $commandOption['default'] ?? null;
             }
 
-            $commandOptions[$name] = new CommandOption(
-                $name,
+            $commandOptions[$optionName->value] = new CommandOption(
+                $optionName,
                 $value,
-                $commandData['options'][$name]['default'] ?? null,
-                $commandData['options'][$name]['require-value'] ?? false
+                $commandData['options'][$optionName->value]['default'] ?? null,
+                $commandData['options'][$optionName->value]['require-value'] ?? false
             );
         }
 

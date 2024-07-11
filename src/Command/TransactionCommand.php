@@ -2,14 +2,11 @@
 
 namespace Avk\Command;
 
-use Exception;
-use Avk\DataStructure\FinancialAsset;
-use Avk\DataStructure\Transaction;
+use Avk\Enum\CommandOptionName;
 use Avk\Enum\TransactionType;
 use Avk\Service\FileManager\Exporter;
 use Avk\Service\ProfitCalculator;
 use Avk\Service\Transaction\TransactionLoader;
-use Avk\Service\Utility;
 use Avk\View\Logger;
 use Avk\View\TextColorizer;
 
@@ -18,19 +15,19 @@ class TransactionCommand extends CommandBase
     public function execute(): void
     {
         $transactionLoader = new TransactionLoader(
-            $this->command->getOption('bank')->value,
-            $this->command->getOption('isin')->value,
-            $this->command->getOption('asset')->value,
-            $this->command->getOption('date-from')->value,
-            $this->command->getOption('date-to')->value,
-            $this->command->getOption('current-holdings')->value,
-            $this->command->getOption('account')->value
+            $this->command->getOption(CommandOptionName::BANK)->value,
+            $this->command->getOption(CommandOptionName::ISIN)->value,
+            $this->command->getOption(CommandOptionName::ASSET)->value,
+            $this->command->getOption(CommandOptionName::DATE_FROM)->value,
+            $this->command->getOption(CommandOptionName::DATE_TO)->value,
+            $this->command->getOption(CommandOptionName::CURRENT_HOLDINGS)->value,
+            $this->command->getOption(CommandOptionName::ACCOUNT)->value
         );
 
         $transactions = $transactionLoader->getTransactions();
         $assets = $transactionLoader->getFinancialAssets($transactions);
 
-        $this->generatePortfolio($assets, $transactions);
+        $transactionLoader->generatePortfolio($assets, $transactions);
 
         /*
         if (!file_exists(ROOT_PATH . '/resources/tmp/historical_prices')) {
@@ -81,10 +78,10 @@ class TransactionCommand extends CommandBase
         return;
         */
 
-        if ($this->command->getOption('cash-flow')->value) {
+        if ($this->command->getOption(CommandOptionName::CASH_FLOW)->value) {
             $assets = $transactionLoader->getFinancialAssets($transactions);
 
-            $profitCalculator = new ProfitCalculator($this->command->getOption('current-holdings')->value);
+            $profitCalculator = new ProfitCalculator($this->command->getOption(CommandOptionName::CURRENT_HOLDINGS)->value);
             $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
 
             foreach ($result->overview->cashFlows as $cashFlow) {
@@ -98,7 +95,7 @@ class TransactionCommand extends CommandBase
                 echo $res . PHP_EOL;
             }
 
-            if ($this->command->getOption('export-csv')->value) {
+            if ($this->command->getOption(CommandOptionName::EXPORT_CSV)->value) {
                 $cashFlowArray = [];
                 foreach ($result->overview->cashFlows as $cashFlow) {
                     $amount = $cashFlow->rawAmount;
@@ -148,73 +145,10 @@ class TransactionCommand extends CommandBase
 
         Logger::getInstance()->printInfos();
 
-        if ($this->command->getOption('display-log')->value) {
+        if ($this->command->getOption(CommandOptionName::DISPLAY_LOG)->value) {
             Logger::getInstance()
                 ->printNotices()
                 ->printWarnings();
-        }
-    }
-
-    /**
-     * @param FinancialAsset[] $assets
-     * @param Transaction[] $transactions
-     */
-    public function generatePortfolio(array $assets, array $transactions): void
-    {
-        // $avanzaFiles = glob(IMPORT_DIR . '/banks/avanza/*.csv');
-        // $nordnetFiles = glob(IMPORT_DIR . '/banks/nordnet/*.csv');
-        $avanzaFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/avanza');
-        $nordnetFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/nordnet');
-        $customFile = Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/custom');
-
-        $files = [$avanzaFile, $nordnetFile, $customFile];
-
-        $string = '';
-        foreach ($files as $file) {
-            if ($file === null) {
-                continue;
-            }
-
-            $string .= filemtime($file) . ' ' . $file;
-        }
-
-        $hash = md5($string);
-        if (file_exists(ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json")) {
-            return;
-        }
-
-        $assetsWithTransactions = [];
-        foreach ($assets as $asset) {
-            $assetsWithTransactions[] = $asset->toArray();
-        }
-        $nonAssetTransactions = [];
-        foreach ($transactions as $transaction) {
-            if (empty($transaction->isin)) {
-                $nonAssetTransactions[] = $transaction;
-            }
-        }
-
-        $tmpFile = ROOT_PATH . '/resources/portfolio/tmp_portfolio.json';
-        $file = ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json";
-
-        // Skriv till en temporär fil först
-        $result = file_put_contents(
-            $tmpFile,
-            json_encode(
-                [
-                    'portfolioTransactions' => $assetsWithTransactions,
-                    'accountTransactions' => $nonAssetTransactions
-                ],
-                JSON_PRETTY_PRINT
-            )
-        );
-        if ($result === false) {
-            throw new Exception('Failed to write to temp file');
-        }
-
-        // Ersätt den gamla filen med den nya datan
-        if (!rename($tmpFile, $file)) {
-            throw new Exception('Failed to move new file over old file');
         }
     }
 }
