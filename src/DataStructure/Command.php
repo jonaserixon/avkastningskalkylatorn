@@ -1,7 +1,8 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Avk\DataStructure;
 
+use Avk\Enum\CommandOptionName;
 use Exception;
 
 readonly class Command
@@ -20,11 +21,11 @@ readonly class Command
         $this->options = $options;
     }
 
-    public function getOption(string $name): CommandOption
+    public function getOption(CommandOptionName $name): CommandOption
     {
-        $option = $this->options[$name] ?? null;
+        $option = $this->options[$name->value] ?? null;
         if ($option === null) {
-            throw new Exception("Option $name not found");
+            throw new Exception("Option $name->value not found");
         }
 
         return $option;

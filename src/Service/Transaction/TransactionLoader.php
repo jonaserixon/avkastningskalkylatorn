@@ -4,12 +4,18 @@ namespace Avk\Service\Transaction;
 
 use Avk\DataStructure\FinancialAsset;
 use Avk\DataStructure\FinancialOverview;
+use Avk\DataStructure\Portfolio;
+use Avk\DataStructure\PortfolioTransaction;
 use Avk\DataStructure\Transaction;
+use Avk\Enum\Bank;
+use Avk\Enum\TransactionType;
 use Avk\Service\API\Eod\EodWrapper;
 use Avk\Service\FileManager\CsvProcessor\Avanza;
 use Avk\Service\FileManager\CsvProcessor\Custom;
 use Avk\Service\FileManager\CsvProcessor\Nordnet;
 use Avk\Service\FileManager\CsvProcessor\StockPrice;
+use Avk\Service\Utility;
+use DateTime;
 use Exception;
 
 class TransactionLoader
@@ -105,6 +111,151 @@ class TransactionLoader
         });
 
         return $transactions;
+    }
+
+    /**
+     * @suppress PhanUndeclaredProperty
+     * @suppress PhanTypeMismatchArgumentInternalReal
+     */
+    public function getPortfolio(): ?Portfolio
+    {
+        $portfolioFile = Utility::getLatestModifiedFile(ROOT_PATH . '/resources/portfolio', 'json');
+        if (!$portfolioFile) {
+            // throw new Exception('No portfolio file found.');
+            return null;
+        }
+
+        $rawPortfolio = file_get_contents($portfolioFile);
+        if (!$rawPortfolio) {
+            // throw new Exception('Failed to read portfolio file.');
+            return null;
+        }
+
+        $rawPortfolio = json_decode($rawPortfolio);
+        if (!$rawPortfolio) {
+            return null;
+        }
+
+        $portfolio = new Portfolio();
+
+        if (isset($rawPortfolio->portfolioTransactions) && is_array($rawPortfolio->portfolioTransactions)) {
+            foreach ($rawPortfolio->portfolioTransactions as $rawPortfolioTransaction) {
+                $portfolioTransactions = [];
+
+                foreach ($rawPortfolioTransaction->transactions as $rawTransaction) {
+                    $transaction = new Transaction(
+                        new DateTime($rawTransaction->date->date),
+                        Bank::from($rawTransaction->bank),
+                        $rawTransaction->account,
+                        TransactionType::from($rawTransaction->type),
+                        $rawTransaction->name,
+                        $rawTransaction->description,
+                        $rawTransaction->rawQuantity,
+                        $rawTransaction->rawPrice,
+                        $rawTransaction->pricePerShareSEK,
+                        $rawTransaction->rawAmount,
+                        $rawTransaction->commission,
+                        $rawTransaction->currency,
+                        $rawTransaction->isin,
+                        $rawTransaction->exchangeRate
+                    );
+
+                    $portfolioTransactions[] = $transaction;
+                }
+
+                $portfolio->portfolioTransactions[] = new PortfolioTransaction(
+                    $rawPortfolioTransaction->name,
+                    $rawPortfolioTransaction->isin,
+                    $portfolioTransactions
+                );
+            }
+        }
+
+        if (isset($rawPortfolio->accountTransactions) && is_array($rawPortfolio->accountTransactions)) {
+            foreach ($rawPortfolio->accountTransactions as $rawAccountTransaction) {
+                $transaction = new Transaction(
+                    new DateTime($rawAccountTransaction->date->date),
+                    Bank::from($rawAccountTransaction->bank),
+                    $rawAccountTransaction->account,
+                    TransactionType::from($rawAccountTransaction->type),
+                    $rawAccountTransaction->name,
+                    $rawAccountTransaction->description,
+                    $rawAccountTransaction->rawQuantity,
+                    $rawAccountTransaction->rawPrice,
+                    $rawAccountTransaction->pricePerShareSEK,
+                    $rawAccountTransaction->rawAmount,
+                    $rawAccountTransaction->commission,
+                    $rawAccountTransaction->currency,
+                    $rawAccountTransaction->isin,
+                    $rawAccountTransaction->exchangeRate
+                );
+
+                $portfolio->accountTransactions[] = $transaction;
+            }
+        }
+
+        return $portfolio;
+    }
+
+    /**
+     * @param FinancialAsset[] $assets
+     * @param Transaction[] $transactions
+     */
+    public function generatePortfolio(array $assets, array $transactions): void
+    {
+        $files = [
+            Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/avanza'),
+            Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/nordnet'),
+            Utility::getLatestModifiedFile(IMPORT_DIR . '/banks/custom')
+        ];
+
+        $string = '';
+        foreach ($files as $file) {
+            if ($file === null) {
+                continue;
+            }
+
+            $string .= filemtime($file) . ' ' . $file;
+        }
+
+        $hash = md5($string);
+        if (file_exists(ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json")) {
+            return;
+        }
+
+        $assetsWithTransactions = [];
+        foreach ($assets as $asset) {
+            $assetsWithTransactions[] = $asset->toArray();
+        }
+        $nonAssetTransactions = [];
+        foreach ($transactions as $transaction) {
+            if (empty($transaction->isin)) {
+                $nonAssetTransactions[] = $transaction;
+            }
+        }
+
+        $tmpFile = ROOT_PATH . '/resources/portfolio/tmp_portfolio.json';
+        $file = ROOT_PATH . "/resources/portfolio/portfolio_{$hash}.json";
+
+        // Skriv till en temporär fil först
+        $result = file_put_contents(
+            $tmpFile,
+            json_encode(
+                [
+                    'portfolioTransactions' => $assetsWithTransactions,
+                    'accountTransactions' => $nonAssetTransactions
+                ],
+                JSON_PRETTY_PRINT
+            )
+        );
+        if ($result === false) {
+            throw new Exception('Failed to write to temp file');
+        }
+
+        // Ersätt den gamla filen med den nya datan
+        if (!rename($tmpFile, $file)) {
+            throw new Exception('Failed to move new file over old file');
+        }
     }
 
     /**

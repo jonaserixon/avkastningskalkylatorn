@@ -21,7 +21,7 @@ class TransactionMapper
     /**
      * @param Transaction[] $transactions
      */
-    public function _addTransactionsToAsset(string $isin, string $name, array $transactions): FinancialAsset
+    public function addTransactionsToAssetByIsin(string $isin, string $name, array $transactions): FinancialAsset
     {
         $asset = new FinancialAsset();
         $asset->isin = $isin;

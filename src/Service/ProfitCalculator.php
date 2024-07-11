@@ -75,7 +75,6 @@ class ProfitCalculator
                 $currentPricePerShare = $this->stockPrice->getCurrentPriceByIsin($asset->isin);
 
                 if ($currentPricePerShare && (int) $asset->getCurrentNumberOfShares() > 0) {
-                    // $asset->name = $this->stockPrice->getNameByIsin($asset->isin);
                     $currentValueOfShares = $asset->getCurrentNumberOfShares() * $currentPricePerShare;
 
                     $overview->totalCurrentHoldings += $currentValueOfShares;

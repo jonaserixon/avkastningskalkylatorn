@@ -1,14 +1,16 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Avk\DataStructure;
 
+use Avk\Enum\CommandOptionName;
+
 readonly class CommandOption {
-    public string $name;
+    public CommandOptionName $name;
     public mixed $value;
     public ?bool $defaultValue;
     public bool $requireValue;
 
-    public function __construct(string $name, mixed $value, ?bool $defaultValue, bool $requireValue)
+    public function __construct(CommandOptionName $name, mixed $value, ?bool $defaultValue, bool $requireValue)
     {
         $this->name = $name;
         $this->value = $value;
