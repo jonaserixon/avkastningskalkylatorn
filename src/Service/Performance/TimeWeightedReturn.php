@@ -59,12 +59,12 @@ class TimeWeightedReturn
 
             // PORTFOLIO TRANSACTIONS
             foreach ($portfolioTransactionsInSubPeriod as $transaction) {
-                if (!isset($assets[$transaction->isin])) {
-                    $newAsset = new FinancialAsset();
-                    $newAsset->name = $transaction->name;
-                    $newAsset->isin = $transaction->isin;
+                if ($transaction->isin === null) { // This should not be able to happen.
+                    throw new Exception('ISIN is missing for ' . $transaction->name);
+                }
 
-                    $assets[$transaction->isin] = $newAsset;
+                if (!isset($assets[$transaction->isin])) {
+                    $assets[$transaction->isin] = new FinancialAsset($transaction->name, $transaction->isin);
                 }
 
                 $this->transactionMapper->addTransactionsToExistingAsset($assets[$transaction->isin], $transaction);

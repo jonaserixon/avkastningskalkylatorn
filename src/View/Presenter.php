@@ -202,10 +202,6 @@ class Presenter
         }
 
         foreach ($assets as $asset) {
-            if (!$asset->performance) {
-                // continue;
-            }
-
             $name = $asset->name;
             if (mb_strlen($name) > $nameMaxLength) {
                 $name = $this->truncateName($name, $nameMaxLength);
@@ -243,9 +239,6 @@ class Presenter
         $this->printHorizontalLine($colWidths);
 
         foreach ($assets as $asset) {
-            if (!$asset->performance) {
-                // continue;
-            }
             $name = $asset->name;
             if (mb_strlen($name) > $nameMaxLength) {
                 $name = $this->truncateName($name, $nameMaxLength);

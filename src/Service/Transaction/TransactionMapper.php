@@ -23,9 +23,7 @@ class TransactionMapper
      */
     public function addTransactionsToAssetByIsin(string $isin, string $name, array $transactions): FinancialAsset
     {
-        $asset = new FinancialAsset();
-        $asset->isin = $isin;
-        $asset->name = $name;
+        $asset = new FinancialAsset($name, $isin);
         foreach ($transactions as $transaction) {
             $isin = $transaction->isin;
 
@@ -39,11 +37,6 @@ class TransactionMapper
             }
             if (!in_array($transaction->name, $asset->transactionNames)) {
                 $asset->transactionNames[] = $transaction->name;
-            }
-
-            // Only add actual assets.
-            if (!$asset->name) {
-                $asset->name = $transaction->name;
             }
 
             $asset->addTransaction($transaction);
@@ -70,11 +63,6 @@ class TransactionMapper
             $asset->transactionNames[] = $transaction->name;
         }
 
-        // Only add actual assets.
-        if (!$asset->name) {
-            $asset->name = $transaction->name;
-        }
-
         $asset->addTransaction($transaction);
 
         if (Utility::isNearlyZero($asset->getCurrentNumberOfShares())) {
@@ -99,10 +87,9 @@ class TransactionMapper
             }
 
             $asset = $assets[$isin] ?? null;
-            if (!$asset) {
-                $asset = new FinancialAsset();
-                $asset->isin = $isin;
-                $assets[$isin] = $asset;
+            if (!$asset) { // TODO: is this needed?
+                $assets[$isin] = new FinancialAsset($transaction->name, $isin);
+                $asset = $assets[$isin];
             }
 
             // $this->processTransactionType($asset, $transactions);
@@ -116,11 +103,6 @@ class TransactionMapper
             }
             if (!in_array($transaction->name, $asset->transactionNames)) {
                 $asset->transactionNames[] = $transaction->name;
-            }
-
-            // Only add actual assets.
-            if (!$asset->name) {
-                $asset->name = $transaction->name;
             }
 
             $asset->addTransaction($transaction);

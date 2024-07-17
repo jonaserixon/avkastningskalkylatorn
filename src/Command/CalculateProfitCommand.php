@@ -26,19 +26,10 @@ class CalculateProfitCommand extends CommandBase
             $this->command->getOption(CommandOptionName::ACCOUNT)->value
         );
 
-        $portfolio = $transactionLoader->getPortfolio();
+        $portfolio = $this->getPortfolio($transactionLoader);
         if (!$portfolio) {
-            $transactions = $transactionLoader->getTransactions();
-            $assets = $transactionLoader->getFinancialAssets($transactions);
-
-            $transactionLoader->generatePortfolio($assets, $transactions);
-
-            $portfolio = $transactionLoader->getPortfolio();
-
-            if (!$portfolio) {
-                Logger::getInstance()->addWarning('Portfölj saknas för att kunna utföra beräkningar.');
-                return;
-            }
+            Logger::getInstance()->printMessage('Portfölj saknas för att kunna utföra beräkningar.');
+            return;
         }
 
         $transactionMapper = new TransactionMapper($transactionLoader->overview);
@@ -46,7 +37,18 @@ class CalculateProfitCommand extends CommandBase
         if ($this->command->getOption(CommandOptionName::TWR)->value) {
             $this->calculateTwr($transactionMapper, $portfolio);
         } else {
-            $assets = [];
+            $this->displayPerformance($portfolio, $transactionLoader, $transactionMapper);
+        }
+
+        Logger::getInstance()
+            ->printInfos()
+            ->printNotices()
+            ->printWarnings();
+    }
+
+    private function displayPerformance(Portfolio $portfolio, TransactionLoader $transactionLoader, TransactionMapper $transactionMapper): void
+    {
+        $assets = [];
             foreach ($portfolio->portfolioTransactions as $row) {
                 $transactions = $transactionLoader->filterTransactions($row->transactions);
 
@@ -116,15 +118,6 @@ class CalculateProfitCommand extends CommandBase
             }
 
             $this->presenter->displayAssetNotices($result->assets);
-        }
-
-        Logger::getInstance()->printInfos();
-
-        if ($this->command->getOption(CommandOptionName::DISPLAY_LOG)->value) {
-            Logger::getInstance()
-                ->printNotices()
-                ->printWarnings();
-        }
     }
 
     private function calculateTwr(TransactionMapper $transactionMapper, Portfolio $portfolio): void
@@ -155,5 +148,23 @@ class CalculateProfitCommand extends CommandBase
         }
 
         echo PHP_EOL . 'Total TWR: ' . ($twrResult->twr * 100) . '%' . PHP_EOL;
+    }
+
+    private function getPortfolio(TransactionLoader $transactionLoader): ?Portfolio
+    {
+        $portfolio = $transactionLoader->getPortfolio();
+        if (!$portfolio) {
+            $transactions = $transactionLoader->getTransactions();
+            $assets = $transactionLoader->getFinancialAssets($transactions);
+
+            $transactionLoader->generatePortfolio($assets, $transactions);
+            $portfolio = $transactionLoader->getPortfolio();
+
+            if (!$portfolio) {
+                return null;
+            }
+        }
+
+        return $portfolio;
     }
 }

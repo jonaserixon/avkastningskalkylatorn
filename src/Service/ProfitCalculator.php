@@ -89,8 +89,6 @@ class ProfitCalculator
 
                     $asset->setCurrentPricePerShare($currentPricePerShare);
                     $asset->setCurrentValueOfShares($currentValueOfShares);
-                    // $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
-
                     $asset->setUnrealizedGainLoss($asset->getCurrentValueOfShares() - $asset->getCostBasis());
 
                     $filteredAssets[] = $asset;

@@ -6,26 +6,21 @@ use Avk\Enum\TransactionType;
 
 class FinancialAsset
 {
-    public string $name = '';
-    public ?string $isin = null;
+    public readonly string $name;
+    public readonly string $isin;
     private float $buy = 0;
     private float $sell = 0;
     private float $dividend = 0;
     private float $commissionBuy = 0;
     private float $commissionSell = 0;
     private float $fee = 0;
-    public float $preliminaryCurrencyExchangeRateFee = 0; // TODO: implement "preliminary" currency exchange rate based on isin
     private float $foreignWithholdingTax = 0;
     private float $currentNumberOfShares = 0;
     private ?float $currentPricePerShare = 0;
     private ?float $currentValueOfShares = 0;
-    public ?AssetPerformance $performance = null;
-
-    // TODO: move this to the AssetReturn structure.
     private float $realizedGainLoss = 0;
     private float $unrealizedGainLoss = 0;
     private float $costBasis = 0;
-    //
 
     /** @var string[] */
     public array $transactionNames = [];
@@ -38,6 +33,12 @@ class FinancialAsset
 
     /** @var Transaction[] */
     private array $transactions = [];
+
+    public function __construct(string $name, string $isin)
+    {
+        $this->name = $name;
+        $this->isin = $isin;
+    }
 
     /**
      * @return Transaction[]
