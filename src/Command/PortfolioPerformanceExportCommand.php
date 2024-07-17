@@ -22,6 +22,7 @@ class PortfolioPerformanceExportCommand extends CommandBase
             $this->command->getOption(CommandOptionName::ACCOUNT)->value
         );
 
+        // TODO: hämta portfolio transaktioner här.
         $transactions = $transactionLoader->getTransactions();
 
         // $assets = $transactionLoader->getFinancialAssets($transactions);

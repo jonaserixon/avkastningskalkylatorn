@@ -60,9 +60,6 @@ class TransactionLoader
      */
     public function getFinancialAssets(array $transactions): array
     {
-        $this->overview->firstTransactionDate = $transactions[0]->getDateString();
-        $this->overview->lastTransactionDate = $transactions[count($transactions) - 1]->getDateString();
-
         $assets = $this->transactionMapper->addTransactionsToAsset($transactions);
 
         if (empty($assets)) {
@@ -194,6 +191,8 @@ class TransactionLoader
             }
         }
 
+        // $this->overview = new FinancialOverview();
+
         return $portfolio;
     }
 
@@ -256,6 +255,8 @@ class TransactionLoader
         if (!rename($tmpFile, $file)) {
             throw new Exception('Failed to move new file over old file');
         }
+
+        $this->overview = new FinancialOverview(); // Reset overview
     }
 
     /**

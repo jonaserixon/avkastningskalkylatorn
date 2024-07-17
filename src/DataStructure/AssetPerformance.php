@@ -4,9 +4,9 @@ namespace Avk\DataStructure;
 
 class AssetPerformance
 {
-    public float $totalReturnInclFees = 0;
+    public float $absolutePerformance = 0;
     public ?float $xirr = null;
-    // public $realizedGainLoss;
-    // public $unrealizedGainLoss;
-    // public $costBasis;
+    public float $realizedGainLoss = 0;
+    public float $unrealizedGainLoss = 0;
+    public float $costBasis = 0;
 }

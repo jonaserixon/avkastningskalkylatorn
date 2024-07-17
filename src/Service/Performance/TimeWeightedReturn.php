@@ -6,6 +6,7 @@ use Avk\DataStructure\FinancialAsset;
 use Avk\DataStructure\Portfolio;
 use Avk\DataStructure\Transaction;
 use Avk\Enum\TransactionType;
+use Avk\Service\API\Frankfurter\FrankfurterWrapper;
 use Avk\Service\Transaction\TransactionMapper;
 use Avk\View\Logger;
 use DateTime;
@@ -265,14 +266,6 @@ class TimeWeightedReturn
             }
         }
 
-        /*
-        $tickerIndex = array_search($asset->isin, array_column($tickers, 'isin'));
-        if ($tickerIndex === false) {
-            throw new Exception('Currency not found for ' . $asset->isin);
-        }
-        $currency = $tickers[$tickerIndex]->currency;
-        */
-
         if ($currency === null) {
             throw new Exception('Currency not found for ' . $isin);
         }
@@ -288,7 +281,12 @@ class TimeWeightedReturn
             }
 
             if ($exchangeRateNotFound) {
-                throw new Exception('Exchange rate not found for ' . $currency . ' on ' . $endDateString);
+                // TODO: add the result to the historical_currency.csv file
+                $frankfurter = new FrankfurterWrapper();
+                $exchangeRate = $frankfurter->getExchangeRateByCurrencyAndDate($currency, $endDateString);
+
+                Logger::getInstance()->printMessage('Fetching exchange rate for ' . $currency . ' on ' . $endDateString . ' from Frankfurter API');
+                // throw new Exception('Exchange rate not found for ' . $currency . ' on ' . $endDateString);
             }
         }
 

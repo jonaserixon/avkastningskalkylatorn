@@ -52,8 +52,8 @@ class ProfitCalculator
                 });
 
                 $result = $this->calculateRealizedGains($mergedTransactions);
-                $asset->realizedGainLoss = $result->realizedGain;
-                $asset->costBasis = $result->remainingCostBase;
+                $asset->setRealizedGainLoss($result->realizedGain);
+                $asset->setCostBasis($result->remainingCostBase);
             }
             unset($mergedTransactions);
 
@@ -67,7 +67,7 @@ class ProfitCalculator
                 }
 
                 if ($shareTransferQuantity != 0) {
-                    Logger::getInstance()->addNotice("Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->costBasis + $shareTransferAmount, 3) . ")");
+                    Logger::getInstance()->addNotice("Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->getCostBasis() + $shareTransferAmount, 3) . ")");
                 }
             }
 
@@ -86,13 +86,12 @@ class ProfitCalculator
                         '-',
                         Bank::NOT_SPECIFIED
                     );
-                    $overview->lastTransactionDate = date('Y-m-d');
 
                     $asset->setCurrentPricePerShare($currentPricePerShare);
                     $asset->setCurrentValueOfShares($currentValueOfShares);
                     // $asset->assetReturn = $this->calculateTotalReturnForAsset($asset);
 
-                    $asset->unrealizedGainLoss = $asset->getCurrentValueOfShares() - $asset->costBasis;
+                    $asset->setUnrealizedGainLoss($asset->getCurrentValueOfShares() - $asset->getCostBasis());
 
                     $filteredAssets[] = $asset;
 
@@ -122,7 +121,7 @@ class ProfitCalculator
             $result->assets = $assets;
         }
 
-        $overview->performance = $this->calculateTotalReturnForFinancialOverview($overview);
+        $overview->setPerformance($this->calculateTotalReturnForFinancialOverview($overview, $result->assets));
 
         $result->overview = $overview;
         $this->calculateCurrentHoldingsWeighting($result->overview, $result->assets);
@@ -168,21 +167,34 @@ class ProfitCalculator
     }
     */
 
-    private function calculateTotalReturnForFinancialOverview(FinancialOverview $overview): AssetPerformance
+    /**
+     * @param FinancialAsset[] $assets
+     */
+    private function calculateTotalReturnForFinancialOverview(FinancialOverview $overview, array $assets): AssetPerformance
     {
-        $totalReturnInclFees = 0;
-        $totalReturnInclFees += $overview->totalSellAmount;
-        $totalReturnInclFees += $overview->totalDividend;
-        $totalReturnInclFees += $overview->totalCurrentHoldings;
-        $totalReturnInclFees += $overview->totalBuyAmount;
-        $totalReturnInclFees += $overview->totalFee;
-        $totalReturnInclFees += $overview->totalTax;
-        $totalReturnInclFees += $overview->totalInterest;
-        $totalReturnInclFees += $overview->totalForeignWithholdingTax;
-        $totalReturnInclFees += $overview->totalReturnedForeignWithholdingTax;
+        // $totalReturnInclFees = 0;
+        // $totalReturnInclFees += $overview->totalSellAmount;
+        // $totalReturnInclFees += $overview->totalDividend;
+        // $totalReturnInclFees += $overview->totalCurrentHoldings;
+        // $totalReturnInclFees += $overview->totalBuyAmount;
+        // $totalReturnInclFees += $overview->totalFee;
+        // $totalReturnInclFees += $overview->totalTax;
+        // $totalReturnInclFees += $overview->totalInterest;
+        // $totalReturnInclFees += $overview->totalForeignWithholdingTax;
+        // $totalReturnInclFees += $overview->totalReturnedForeignWithholdingTax;
 
-        $result = new AssetPerformance();
-        $result->totalReturnInclFees = $totalReturnInclFees;
+        $performance = new AssetPerformance();
+        // $result->absolutePerformance = $totalReturnInclFees;
+
+        $totalRealizedCapitalGainLoss = 0;
+        $totalUnrealizedCapitalGainLoss = 0;
+        foreach ($assets as $asset) {
+            $totalRealizedCapitalGainLoss += $asset->getRealizedGainLoss();
+            $totalUnrealizedCapitalGainLoss += $asset->getUnrealizedGainLoss();
+        }
+
+        $performance->realizedGainLoss = $totalRealizedCapitalGainLoss;
+        $performance->unrealizedGainLoss = $totalUnrealizedCapitalGainLoss;
 
         /*
         $cashFlowArray = [];
@@ -215,10 +227,10 @@ class ProfitCalculator
         if ($xirr === null) {
             Logger::getInstance()->addNotice("XIRR did not converge for holding cash flows");
         } else {
-            $result->xirr = $xirr * 100;
+            $performance->xirr = $xirr * 100;
         }
 
-        return $result;
+        return $performance;
     }
 
     /*

@@ -28,10 +28,7 @@ class FinancialOverview
     public array $currentHoldingsWeighting = [];
     public float $depositAmountTotal = 0;
     public float $withdrawalAmountTotal = 0;
-    public string $firstTransactionDate = '';
-    public string $lastTransactionDate = '';
-    public ?AssetPerformance $performance = null;
-    // public float $totalProfitInclFees = 0;
+    private ?AssetPerformance $performance = null;
 
     /**
      * List of all cash flows
@@ -39,8 +36,6 @@ class FinancialOverview
      * @var Transaction[]
      */
     public array $cashFlows = [];
-
-    // TODO: think about where to put all of this shit.
 
     public function addCashFlow(string $date, float $amount, string $name, TransactionType $type, string $account, Bank $bank): void
     {
@@ -85,5 +80,29 @@ class FinancialOverview
         }
 
         return $balance;
+    }
+
+    public function getPerformance(): AssetPerformance
+    {
+        if ($this->performance === null) {
+            $this->performance = new AssetPerformance();
+        }
+
+        return $this->performance;
+    }
+
+    public function setPerformance(AssetPerformance $performance): void
+    {
+        $this->performance = $performance;
+    }
+
+    public function getFirstTransactionDate(): ?string
+    {
+        return $this->cashFlows[0]->getDateString();
+    }
+
+    public function getLastTransactionDate(): ?string
+    {
+        return $this->cashFlows[count($this->cashFlows) - 1]->getDateString();
     }
 }

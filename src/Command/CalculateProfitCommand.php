@@ -26,14 +26,11 @@ class CalculateProfitCommand extends CommandBase
             $this->command->getOption(CommandOptionName::ACCOUNT)->value
         );
 
-        $transactionLoader->overview->firstTransactionDate = '';
-        $transactionLoader->overview->lastTransactionDate = '';
-        $transactionMapper = new TransactionMapper($transactionLoader->overview);
-
         $portfolio = $transactionLoader->getPortfolio();
         if (!$portfolio) {
             $transactions = $transactionLoader->getTransactions();
             $assets = $transactionLoader->getFinancialAssets($transactions);
+
             $transactionLoader->generatePortfolio($assets, $transactions);
 
             $portfolio = $transactionLoader->getPortfolio();
@@ -44,13 +41,19 @@ class CalculateProfitCommand extends CommandBase
             }
         }
 
-        // if ($options->TWR) {
+        $transactionMapper = new TransactionMapper($transactionLoader->overview);
+
         if ($this->command->getOption(CommandOptionName::TWR)->value) {
             $this->calculateTwr($transactionMapper, $portfolio);
         } else {
             $assets = [];
             foreach ($portfolio->portfolioTransactions as $row) {
                 $transactions = $transactionLoader->filterTransactions($row->transactions);
+
+                if (count($transactions) === 0) {
+                    continue;
+                }
+
                 $asset = $transactionMapper->addTransactionsToAssetByIsin($row->isin, $row->name, $transactions);
                 $assets[] = $asset;
             }
@@ -61,28 +64,22 @@ class CalculateProfitCommand extends CommandBase
                     $transactionMapper->handleNonAssetTransactionType($transaction);
                 }
             }
-            
-            /*
-            $assets = $transactionLoader->getFinancialAssets($transactionLoader->getTransactions());
-            */
-    
+
             $profitCalculator = new ProfitCalculator($this->command->getOption(CommandOptionName::CURRENT_HOLDINGS)->value);
             $result = $profitCalculator->calculate($assets, $transactionLoader->overview);
-    
+
             if ($this->command->getOption(CommandOptionName::VERBOSE)->value) {
                 $this->presenter->displayDetailedAssets($result->assets);
             } else {
                 $this->presenter->generateAssetTable($result->overview, $result->assets);
             }
-    
-            // $this->presenter->displayFinancialOverview($result->overview);
-    
+
             if (!empty($result->overview->currentHoldingsWeighting)) {
                 $weightings = array_values($result->overview->currentHoldingsWeighting);
-    
+
                 if (!empty($weightings)) {
                     echo PHP_EOL . TextColorizer::backgroundColor('Portföljviktning:', 'pink', 'black') . PHP_EOL. PHP_EOL;
-    
+
                     $maxValue = max($weightings);
                     foreach ($result->overview->currentHoldingsWeighting as $isin => $weight) {
                         $this->presenter->printRelativeProgressBarPercentage($isin, $weight, $maxValue);
@@ -111,13 +108,13 @@ class CalculateProfitCommand extends CommandBase
             }
 
             if ($this->command->getOption(CommandOptionName::OVERVIEW)->value) {
-                $this->presenter->displayInvestmentReport($result->overview, $result->assets);
+                $this->presenter->displayInvestmentReport($result->overview);
             }
-    
+
             foreach ($result->currentHoldingsMissingPricePerShare as $companyMissingPrice) {
                 Logger::getInstance()->addInfo('Kurspris saknas för ' . $companyMissingPrice);
             }
-    
+
             $this->presenter->displayAssetNotices($result->assets);
         }
 

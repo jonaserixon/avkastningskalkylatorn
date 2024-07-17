@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\View;
 
@@ -20,32 +22,36 @@ class Presenter
 
             echo $this->addTabs('Köpbelopp:') . TextColorizer::colorText($this->formatNumber($asset->getBuyAmount()), 'blue') . ' SEK' . PHP_EOL;
             echo $this->addTabs('Säljbelopp:') . TextColorizer::colorText($this->formatNumber($asset->getSellAmount()), 'blue') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Anskaffningsvärde:') . TextColorizer::colorText($this->formatNumber($asset->costBasis), 'blue') . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Anskaffningsvärde:') . TextColorizer::colorText($this->formatNumber($asset->getCostBasis()), 'blue') . ' SEK' . PHP_EOL;
+
             echo PHP_EOL;
 
             echo $this->addTabs('Tot. courtage:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()), 'red') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage köp:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionBuyAmount()), 'red') . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Courtage sälj:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionSellAmount()), 'red') . ' SEK' . PHP_EOL;
+            // echo $this->addTabs('Courtage köp:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionBuyAmount()), 'red') . ' SEK' . PHP_EOL;
+            // echo $this->addTabs('Courtage sälj:', 50) . TextColorizer::colorText($this->formatNumber($asset->getCommissionSellAmount()), 'red') . ' SEK' . PHP_EOL;
             echo $this->addTabs('Tot. avgifter:', 50) . TextColorizer::colorText($this->formatNumber($asset->getFeeAmount()), 'red') . ' SEK' . PHP_EOL;
             echo $this->addTabs('Utländsk källskatt:') . $this->colorPicker($asset->getForeignWithholdingTaxAmount()) . ' SEK' . PHP_EOL;
 
             echo PHP_EOL;
 
-            echo $this->addTabs('Orealiserad vinst/förlust:') . $this->colorPicker($asset->unrealizedGainLoss) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Realiserad vinst/förlust:') . $this->colorPicker($asset->realizedGainLoss) . ' SEK' . PHP_EOL;
+            $absolutePerformance = $asset->getDividendAmount() + $asset->getRealizedGainLoss() + $asset->getUnrealizedGainLoss() + $asset->getFeeAmount() - $asset->getCommissionBuyAmount() - $asset->getCommissionSellAmount();
+
+            echo $this->addTabs('Orealiserad vinst/förlust:') . $this->colorPicker($asset->getUnrealizedGainLoss()) . ' SEK' . PHP_EOL;
+            echo $this->addTabs('Realiserad vinst/förlust:') . $this->colorPicker($asset->getRealizedGainLoss()) . ' SEK' . PHP_EOL;
             echo $this->addTabs('Utdelningar:') . $this->colorPicker($asset->getDividendAmount()) . ' SEK' . PHP_EOL;
-            echo $this->addTabs('Absolut avkastning:') . $this->colorPicker(0) . ' SEK' . PHP_EOL; // TODO
-            
-            // echo $this->addTabs('Första transaktionen: ', 50) . $asset->getFirstTransactionDate() . PHP_EOL;
-            // echo $this->addTabs('Senaste transaktionen: ', 50) . $asset->getLastTransactionDate() . PHP_EOL;
+            echo $this->addTabs('Absolut avkastning:') . $this->colorPicker($absolutePerformance) . ' SEK' . PHP_EOL;
+
+            echo PHP_EOL;
+
+            echo $this->addTabs('Antal transaktioner: ', 50) . count($asset->getTransactions()) . PHP_EOL;
+            echo $this->addTabs('Första transaktionen: ', 50) . $asset->getFirstTransactionDate() . PHP_EOL;
+            echo $this->addTabs('Senaste transaktionen: ', 50) . $asset->getLastTransactionDate() . PHP_EOL;
 
             echo PHP_EOL;
 
             foreach ($asset->bankAccounts as $bank => $accounts) {
-                echo $this->addTabs('Bank:', 50) . $bank . PHP_EOL;
-                foreach ($accounts as $account) {
-                    echo $this->addTabs('Konto:', 50) . $account . PHP_EOL;
-                }
+                $accountsStr = implode(', ', $accounts);
+                echo $this->addTabs('Bank:', 50) . $bank . ' (' . $accountsStr . ')' . PHP_EOL;
             }
 
             echo PHP_EOL;
@@ -63,22 +69,14 @@ class Presenter
                 echo PHP_EOL;
             }
 
-            if ($asset->performance) {
-                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($asset->performance->totalReturnExclFees) . ' SEK' . PHP_EOL;
-                // echo $this->addTabs('Tot. avkastning:') . $this->colorPicker($asset->performance->totalReturnExclFeesPercent) . ' %' . PHP_EOL;
-
-                echo $this->addTabs('Tot. avkastning (m. avgifter):', 50) . $this->colorPicker($asset->performance->totalReturnInclFees) . ' SEK' . PHP_EOL;
-            }
-
             echo PHP_EOL;
         }
     }
 
-    /**
-     * @param FinancialAsset[] $assets
-     */
-    public function displayInvestmentReport(FinancialOverview $overview, array $assets): void
+    public function displayInvestmentReport(FinancialOverview $overview): void
     {
+        $performance = $overview->getPerformance();
+
         $numberOfBuys = 0;
         $numberOfSells = 0;
         $numberOfDeposits = 0;
@@ -103,7 +101,7 @@ class Presenter
         }
 
         echo PHP_EOL . TextColorizer::backgroundColor(str_pad("=== Investment Report ===", 70, "=", STR_PAD_BOTH), 'white') . PHP_EOL . PHP_EOL;
-        echo "Från {$overview->firstTransactionDate} till {$overview->lastTransactionDate}" . PHP_EOL . PHP_EOL;
+        echo "Från {$overview->getFirstTransactionDate()} till {$overview->getLastTransactionDate()}" . PHP_EOL . PHP_EOL;
 
         // 1. Investments
         echo TextColorizer::backgroundColor("1. Investeringar:") . PHP_EOL;
@@ -112,25 +110,17 @@ class Presenter
         echo str_pad(" ", 30) . "Antal köp: {$numberOfBuys} st" . PHP_EOL;
         echo str_pad(" ", 30) . "Totala sälj: {$this->formatNumber($overview->totalSellAmount)} SEK" . PHP_EOL;
         echo str_pad(" ", 30) . "Antal sälj: {$numberOfSells} st" . PHP_EOL;
-        
+
         echo str_pad("Utdelningar:", 30) . PHP_EOL;
         echo str_pad(" ", 30) . "Totala utdelningar: {$this->colorPicker($overview->totalDividend)} SEK" . PHP_EOL;
         echo str_pad(" ", 30) . "Antal utdelningar: {$numberOfDividends} st" . PHP_EOL;
         echo str_pad(" ", 30) . "Betald utländsk källskatt: {$this->colorPicker($overview->totalForeignWithholdingTax)} SEK" . PHP_EOL;
         echo str_pad(" ", 30) . "Återbetald utländsk källskatt: {$this->colorPicker($overview->totalReturnedForeignWithholdingTax)} SEK" . PHP_EOL;
 
-        // TODO: calculate this elsewhere
-        $totalRealizedCapitalGainLoss = 0;
-        $totalUnrealizedCapitalGainLoss = 0;
-        foreach ($assets as $asset) {
-            $totalRealizedCapitalGainLoss += $asset->realizedGainLoss;
-            $totalUnrealizedCapitalGainLoss += $asset->unrealizedGainLoss;
-        }
-
         echo str_pad("Kapitalvinster", 30) . PHP_EOL;
-        echo str_pad(" ", 30) . "Totalt realiserade kapitalvinster/förlust: {$this->colorPicker($totalRealizedCapitalGainLoss)} SEK" . PHP_EOL;
-        echo str_pad(" ", 30) . "Totalt orealiserade kapitalvinster/förlust: {$this->colorPicker($totalUnrealizedCapitalGainLoss)} SEK" . PHP_EOL;
-        
+        echo str_pad(" ", 30) . "Totalt realiserade kapitalvinster/förlust: {$this->colorPicker($performance->realizedGainLoss)} SEK" . PHP_EOL;
+        echo str_pad(" ", 30) . "Totalt orealiserade kapitalvinster/förlust: {$this->colorPicker($performance->unrealizedGainLoss)} SEK" . PHP_EOL;
+
         // 2. Banking Transactions
         echo PHP_EOL;
         echo TextColorizer::backgroundColor("2. Banktransaktioner:") . PHP_EOL;
@@ -165,60 +155,27 @@ class Presenter
         echo str_pad(" ", 30) . "Totalt likvider: " . $this->formatNumber($overview->calculateBalance($overview->cashFlows) - $overview->totalCurrentHoldings) . " SEK" . PHP_EOL;
         echo str_pad("Totalt portföljvärde:", 30) . PHP_EOL;
         echo str_pad(" ", 30) . "Totalt portföljvärde: {$this->formatNumber($overview->calculateBalance($overview->cashFlows))} SEK" . PHP_EOL;
-        echo str_pad("Totalt avkastning:", 30) . PHP_EOL;
+        echo str_pad("Total avkastning:", 30) . PHP_EOL;
 
-        // TODO: calculate this elsewhere
-        $totalReturn = 0;
-        $totalReturn += $totalRealizedCapitalGainLoss;
-        $totalReturn += $totalUnrealizedCapitalGainLoss;
-        $totalReturn += $overview->totalDividend;
-        $totalReturn += $overview->totalInterest;
-        $totalReturn += $overview->totalReturnedForeignWithholdingTax;
-        $totalReturn += $overview->totalForeignWithholdingTax;
-        $totalReturn += $overview->totalFee;
-        $totalReturn += $overview->totalTax;
-        echo str_pad(" ", 30) . "Totalt avkastning (inkl. avgifter, källskatt, skatt, räntor): {$this->colorPicker($totalReturn)} SEK" . PHP_EOL;
-        
-        if (isset($overview->performance->xirr)) {
+        $absolutePerformance = 0;
+        $absolutePerformance += $performance->realizedGainLoss;
+        $absolutePerformance += $performance->unrealizedGainLoss;
+        $absolutePerformance += $overview->totalDividend;
+        $absolutePerformance += $overview->totalInterest;
+        $absolutePerformance += $overview->totalReturnedForeignWithholdingTax;
+        $absolutePerformance += $overview->totalForeignWithholdingTax;
+        $absolutePerformance += $overview->totalFee;
+        $absolutePerformance += $overview->totalTax;
+        $absolutePerformance -= $overview->totalBuyCommission + $overview->totalSellCommission;
+        echo str_pad(" ", 30) . "Total avkastning (inkl. avgifter, källskatt, skatt, räntor): {$this->colorPicker($absolutePerformance)} SEK" . PHP_EOL;
+
+        if ($performance->xirr !== null) {
             echo str_pad("Avkastningsberäkningar:", 30) . PHP_EOL;
-            echo str_pad(" ", 30) . "XIRR: {$this->colorPicker($overview->performance->xirr)} %" . PHP_EOL;
+            echo str_pad(" ", 30) . "XIRR: {$this->colorPicker($performance->xirr)} %" . PHP_EOL;
         }
-
-        // echo $this->formatNumber($overview->performance->totalReturnInclFees) . PHP_EOL;
 
         echo PHP_EOL . str_repeat("=", 70) . PHP_EOL;
     }
-
-    /*
-    public function displayFinancialOverview(FinancialOverview $overview): void
-    {
-        $currentBalance = $overview->calculateBalance($overview->cashFlows) - $overview->totalCurrentHoldings;
-        echo 'Saldo (likvider): ' . $this->colorPicker($currentBalance) . ' SEK' . PHP_EOL;
-        echo 'Totalt värde: ' . $this->colorPicker($overview->calculateBalance($overview->cashFlows)) . ' SEK' . PHP_EOL;
-
-        echo 'Tot. courtage: ' . $this->redText($overview->totalBuyCommission + $overview->totalSellCommission) . ' SEK' . PHP_EOL;
-        echo 'Tot. köp-courtage: ' . $this->redText($overview->totalBuyCommission) . ' SEK' . PHP_EOL;
-        echo 'Tot. sälj-courtage: ' . $this->redText($overview->totalSellCommission) . ' SEK' . PHP_EOL;
-        echo 'Tot. avgifter: ' . $this->redText($overview->totalFee) . ' SEK' . PHP_EOL;
-        echo 'Tot. skatt: ' . $this->redText($overview->totalTax) . ' SEK' . PHP_EOL;
-        echo 'Tot. utländsk källskatt: ' . $this->redText($overview->totalForeignWithholdingTax) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. återbetald utländsk källskatt: ' . $this->colorPicker($overview->totalReturnedForeignWithholdingTax) . ' SEK' . PHP_EOL;
-        echo 'Tot. utdelningar: ' . $this->colorPicker($overview->totalDividend) . ' SEK' . PHP_EOL;
-        echo 'Tot. ränta: ' . $this->colorPicker($overview->totalInterest) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. köpbelopp: ' . $this->colorPicker($overview->totalBuyAmount) . ' SEK' . PHP_EOL;
-        echo 'Tot. säljbelopp: ' . $this->colorPicker($overview->totalSellAmount) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. insättningar: ' . $this->colorPicker($overview->depositAmountTotal) . ' SEK' . PHP_EOL;
-        echo 'Tot. uttag: ' . $this->colorPicker($overview->withdrawalAmountTotal) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. nuvarande innehav: ' . $this->colorPicker($overview->totalCurrentHoldings) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-        echo 'Tot. avkastning (inkl. avgifter, källskatt, skatt): ' . $this->colorPicker($overview->performance->totalReturnInclFees) . ' SEK' . PHP_EOL;
-        echo PHP_EOL;
-    }
-    */
 
     /**
      * @param FinancialAsset[] $assets
@@ -256,9 +213,9 @@ class Presenter
 
             $colWidths[0] = max($colWidths[0], mb_strlen($name));
             $colWidths[1] = max($colWidths[1], mb_strlen((string) $asset->isin));
-            $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($asset->costBasis)));
-            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->realizedGainLoss)));
-            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($asset->unrealizedGainLoss)));
+            $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($asset->getCostBasis())));
+            $colWidths[3] = max($colWidths[3], mb_strlen($this->formatNumber($asset->getRealizedGainLoss())));
+            $colWidths[4] = max($colWidths[4], mb_strlen($this->formatNumber($asset->getUnrealizedGainLoss())));
             $colWidths[5] = max($colWidths[5], mb_strlen($this->formatNumber($asset->getDividendAmount())));
             $colWidths[6] = max($colWidths[6], mb_strlen($this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount())));
             $colWidths[7] = max($colWidths[7], mb_strlen($this->formatNumber((float) $asset->getCurrentValueOfShares())));
@@ -269,9 +226,9 @@ class Presenter
         $totalUnrealizedCapitalGainLoss = 0;
         $totalCostBasis = 0;
         foreach ($assets as $asset) {
-            $totalRealizedCapitalGainLoss += $asset->realizedGainLoss;
-            $totalUnrealizedCapitalGainLoss += $asset->unrealizedGainLoss;
-            $totalCostBasis += $asset->costBasis;
+            $totalRealizedCapitalGainLoss += $asset->getRealizedGainLoss();
+            $totalUnrealizedCapitalGainLoss += $asset->getUnrealizedGainLoss();
+            $totalCostBasis += $asset->getCostBasis();
         }
 
         $colWidths[2] = max($colWidths[2], mb_strlen($this->formatNumber($totalCostBasis)));
@@ -296,9 +253,9 @@ class Presenter
             $this->printRow([
                 $name,
                 $asset->isin,
-                $this->formatNumber($asset->costBasis),
-                $this->formatNumber($asset->realizedGainLoss),
-                $this->formatNumber($asset->unrealizedGainLoss),
+                $this->formatNumber($asset->getCostBasis()),
+                $this->formatNumber($asset->getRealizedGainLoss()),
+                $this->formatNumber($asset->getUnrealizedGainLoss()),
                 $this->formatNumber($asset->getDividendAmount()),
                 $this->formatNumber($asset->getCommissionBuyAmount() + $asset->getCommissionSellAmount()),
                 $this->formatNumber((float) $asset->getCurrentValueOfShares())
@@ -306,7 +263,7 @@ class Presenter
             $this->printHorizontalLine($colWidths);
         }
 
-        
+
 
         $this->printRow([
             'Summering:',
