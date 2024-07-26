@@ -66,7 +66,7 @@ class ProfitCalculator
                     $shareTransferQuantity += $shareTransfer->rawQuantity;
                 }
 
-                if ($shareTransferQuantity != 0) {
+                if ($shareTransferQuantity !== 0.0) {
                     Logger::getInstance()->addNotice("Share transfer(s) for {$asset->name} needs to be double checked. Amount: " . $shareTransferAmount . " (" . round($asset->getCostBasis() + $shareTransferAmount, 3) . ")");
                 }
             }
@@ -329,7 +329,7 @@ class ProfitCalculator
                     $totalQuantity = bcsub((string) $totalQuantity, $quantity, $scale);
                 }
             } elseif ($transaction->getTypeName() === 'share_split') {
-                if ($totalQuantity != 0) {
+                if ($totalQuantity != 0) { // @phan-suppress-current-line PhanPluginComparisonNotStrictForScalar
                     $totalQuantity += $transaction->rawQuantity;
                 }
             }
@@ -340,7 +340,7 @@ class ProfitCalculator
         }
 
         // Om det inte finns några aktier kvar så kan vi anta att det inte finns något anskaffningsvärde kvar.
-        if ($totalCost != 0 && ($actualQuantity == 0 || Utility::isNearlyZero($totalQuantity))) {
+        if ($totalCost != 0 && ($actualQuantity == 0 || Utility::isNearlyZero($totalQuantity))) { // @phan-suppress-current-line PhanPluginComparisonNotStrictForScalar
             Logger::getInstance()->addNotice("No shares left for {$transactions[0]->name} ({$transactions[0]->isin}) " . $totalCost);
             $totalCost = '0.0';
         }

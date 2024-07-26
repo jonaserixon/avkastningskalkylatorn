@@ -360,7 +360,7 @@ class Presenter
             $halfLine = str_repeat($character, (int) floor($lineLength / 2));
             $line = $halfLine . $text . $halfLine;
 
-            if ($lineLength % 2 == 1) {
+            if ($lineLength % 2 === 1) {
                 $line .= $character;
             }
         } else {
@@ -381,7 +381,7 @@ class Presenter
 
     public function colorPicker(float $value): string
     {
-        if ($value == 0) {
+        if ((int) $value === 0) {
             return TextColorizer::colorText($this->formatNumber($value), 'blue');
         }
 
