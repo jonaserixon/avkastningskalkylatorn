@@ -17,12 +17,6 @@ class Logger
 
     private function __construct() {}
 
-    /*
-    private function __clone() {}
-
-    private function __wakeup() {}
-    */
-
     public static function getInstance(): Logger
     {
         if (self::$instance === null) {

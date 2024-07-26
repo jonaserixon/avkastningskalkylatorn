@@ -27,10 +27,6 @@ class Avanza extends CsvProcessor
             throw new Exception('Failed to read headers from file: ' . basename($filePath));
         }
 
-        if (count($headers) !== 11) {
-            throw new Exception('Invalid Avanza import file: ' . basename($filePath));
-        }
-
         fclose($handle);
 
         return true;

@@ -95,6 +95,9 @@ commands:
       cash-flow:
         description: "Display cash flow"
         require_value: false
+      cash-flow-dates:
+        description: "Display cash flow dates"
+        require_value: false
       display-log:
         description: "Display log messages"
         default: false

@@ -19,4 +19,5 @@ enum CommandOptionName: string
     case TYPE = 'type';
     case FEE = 'fee';
     case CASH_FLOW = 'cash-flow';
+    case CASH_FLOW_DATES = 'cash-flow-dates';
 }

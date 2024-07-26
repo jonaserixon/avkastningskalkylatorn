@@ -19,26 +19,26 @@ parameters:
     paths:
         - ../src
 
-    checkUninitializedProperties: true
-    checkBenevolentUnionTypes: true
-    checkDynamicProperties: true
-    checkFunctionNameCase: true
-    checkTooWideReturnTypesInProtectedAndPublicMethods: true
-    reportAnyTypeWideningInVarTag: true
-    checkMissingOverrideMethodAttribute: true
     checkAlwaysTrueCheckTypeFunctionCall: true
-    checkInternalClassCaseSensitivity: true
-    reportStaticMethodSignatures: true
-    reportAlwaysTrueInLastCondition: true
-    reportWrongPhpDocTypeInVarTag: true
-    polluteScopeWithLoopInitialAssignments: true
-    polluteScopeWithAlwaysIterableForeach: true
     checkAlwaysTrueInstanceof: true
     checkAlwaysTrueStrictComparison: true
+    checkBenevolentUnionTypes: true
+    checkDynamicProperties: true
     checkExplicitMixedMissingReturn: true
+    checkFunctionNameCase: true
+    checkInternalClassCaseSensitivity: true
+    checkMissingOverrideMethodAttribute: true
+    checkTooWideReturnTypesInProtectedAndPublicMethods: true
+    checkUninitializedProperties: true
+    polluteScopeWithAlwaysIterableForeach: true
+    polluteScopeWithLoopInitialAssignments: true
+    rememberPossiblyImpureFunctionValues: true
+    reportAlwaysTrueInLastCondition: true
+    reportAnyTypeWideningInVarTag: true
     reportMaybesInMethodSignatures: true
     reportMaybesInPropertyPhpDocTypes: true
-    rememberPossiblyImpureFunctionValues: true
     reportPossiblyNonexistentConstantArrayOffset: true
+    reportStaticMethodSignatures: true
+    reportWrongPhpDocTypeInVarTag: true
     # reportPossiblyNonexistentGeneralArrayOffset: true
     # checkImplicitMixed: true
