@@ -21,16 +21,26 @@ jobs:
           level=$(grep 'level:' ./phpstan/phpstan.neon | cut -d ':' -f2 | xargs)
           echo "::set-output name=level::$level"
       
-      - name: Update Gist
-        uses: conradj/gist-action@v2
+      - name: Update Gist with GitHub Script
+        uses: actions/github-script@v6
         with:
-          gist_id: ${{ secrets.STAN_GIST_ID }}
-          filename: 'phpstan-level.json'
-          token: ${{ secrets.GITHUB_TOKEN }}
-          content: |
+          script: |
+            const gistId = ${{ secrets.STAN_GIST_ID }};
+            const filename = 'phpstan-level.json';
+            const content = `
             {
               "schemaVersion": 1,
               "label": "phpstan",
               "message": "level ${{ steps.phpstan-level.outputs.level }}",
               "color": "blue"
             }
+            `;
+            const gist = await github.rest.gists.get({
+              gist_id: gistId
+            });
+            const files = {};
+            files[filename] = { content: content };
+            await github.rest.gists.update({
+              gist_id: gistId,
+              files: files
+            });
