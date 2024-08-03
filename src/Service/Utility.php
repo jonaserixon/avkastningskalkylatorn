@@ -3,6 +3,7 @@
 namespace Avk\Service;
 
 use Exception;
+use stdClass;
 
 class Utility
 {
@@ -57,5 +58,27 @@ class Utility
         }
     
         return $latestFile;
+    }
+
+    /**
+     * @return mixed[]|stdClass
+     */
+    public static function jsonDecodeFromFile(string $filePath): array|stdClass
+    {
+        if (!is_file($filePath) || !is_readable($filePath)) {
+            throw new Exception('File does not exist or is not readable.');
+        }
+
+        $json = file_get_contents($filePath);
+        if ($json === false) {
+            throw new Exception('Failed to read file.');
+        }
+
+        $data = json_decode($json);
+        if ($data === null) {
+            throw new Exception('Failed to decode JSON.');
+        }
+
+        return $data;
     }
 }

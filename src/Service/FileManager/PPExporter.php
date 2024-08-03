@@ -2,13 +2,14 @@
 
 namespace Avk\Service\FileManager;
 
-use Exception;
 use Avk\DataStructure\TickerInfo;
 use Avk\DataStructure\Transaction;
 use Avk\Enum\TransactionType;
 use Avk\Service\API\Frankfurter\FrankfurterWrapper;
 use Avk\Service\FileManager\Exporter;
+use Avk\Service\Utility;
 use Avk\View\Logger;
+use Exception;
 
 class PPExporter
 {
@@ -38,14 +39,9 @@ class PPExporter
      */
     private function parseTickerInfo(): array
     {
-        $tickers = file_get_contents(ROOT_PATH . '/resources/tmp/tickers.json');
-        if ($tickers === false) {
-            throw new Exception('Could not read tickers.json');
-        }
-
-        $tickers = json_decode($tickers);
-        if ($tickers === null) {
-            throw new Exception('Could not decode tickers.json');
+        $tickers = Utility::jsonDecodeFromFile(ROOT_PATH . '/resources/tmp/tickers.json');
+        if (!is_array($tickers)) {
+            throw new Exception('Failed to parse tickers.json');
         }
 
         $tickerInfos = [];
