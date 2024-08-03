@@ -26,7 +26,7 @@ jobs:
         with:
           script: |
             const gistId = '${{ secrets.STAN_GIST_ID }}';
-            const filename = 'phpstan-level.json';
+            const filename = 'phpstan_badge.json';
             const content = `
             {
               "schemaVersion": 1,
