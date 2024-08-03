@@ -24,7 +24,7 @@ jobs:
       - name: Update Gist
         env:
           GIST_ID: ${{ secrets.GIST_ID }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Antag att du har lagrat din PAT som GITHUB_TOKEN i secrets
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           curl -L \
             -X PATCH \
