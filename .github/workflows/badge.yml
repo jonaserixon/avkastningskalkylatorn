@@ -31,5 +31,5 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.GIST_TOKEN }}" \
             https://api.github.com/gists/${{ secrets.STAN_GIST_ID }} \
-            -d '{"description":"Updated gist description via curl","files":{"README.md":{"content":"Hello World from GitHub Actions using curl"}}}'
+            -d '{"files":{"phpstan_badge.json":{"content":"test"}}}'
       
