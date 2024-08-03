@@ -1,3 +1,5 @@
+![](https://img.shields.io/badge/dynamic/json?url=https://gist.githubusercontent.com/jonaserixon/c2588864dd9a54c8540f244a87732c7e/raw/phpstan_badge.json&label=phpstan&query=$.message&color=blue&style=flat)
+
 # Avkastningskalkylatorn
 
 ### Setup the project
