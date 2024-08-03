@@ -4,6 +4,14 @@
 1. Download the repo
 2. Run `docker-compose up --build`
 
+### Features
+- Parse transactions from Avanza, Nordnet or custom format.
+- Get details such as absolute returns, fees, taxes, purchase value and more.
+- Dividend and investment overview reports.
+- Calculate TWR (Time-Weighted Rate of Return).
+- Export transactions to [Portfolio Performance](https://github.com/portfolio-performance/portfolio) format.
+- Filter and calculate based on transactions, assets, dates etc. with support of exporting the results to csv format.
+
 ### Usage
 More info to be added.
 
