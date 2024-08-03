@@ -31,5 +31,5 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${{ secrets.GIST_TOKEN }}" \
             https://api.github.com/gists/${{ secrets.STAN_GIST_ID }} \
-            -d '{"files":{"phpstan_badge.json":{"content":"test"}}}'
+            -d '{"files":{"phpstan_badge.json":{"content":"{\"schemaVersion\": 1, \"label\": \"phpstan\", \"message\": \"level ${{ steps.phpstan-level.outputs.level }}\", \"color\": \"blue\"}"}}}'
       
