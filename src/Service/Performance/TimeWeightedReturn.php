@@ -8,6 +8,7 @@ use Avk\DataStructure\Transaction;
 use Avk\Enum\TransactionType;
 use Avk\Service\API\Frankfurter\FrankfurterWrapper;
 use Avk\Service\Transaction\TransactionMapper;
+use Avk\Service\Utility;
 use Avk\View\Logger;
 use DateTime;
 use Exception;
@@ -31,11 +32,10 @@ class TimeWeightedReturn
         $accountTransactions = $subPeriods->accountTransactions;
         $portfolioTransactions = $subPeriods->portfolioTransactions;
 
-        $tickers = file_get_contents(ROOT_PATH . '/resources/tmp/tickers.json');
-        if ($tickers === false) {
-            throw new Exception('Failed to read tickers.json');
+        $tickers = Utility::jsonDecodeFromFile(ROOT_PATH . '/resources/tmp/tickers.json');
+        if (!is_array($tickers)) {
+            throw new Exception('Failed to decode tickers.json');
         }
-        $tickers = json_decode($tickers);
 
         $historicalCurrencyExchangeRates = $this->getHistoricalExchangeRates(ROOT_PATH . '/resources/tmp/historical_currency.csv');
 

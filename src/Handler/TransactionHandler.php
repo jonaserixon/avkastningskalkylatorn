@@ -7,6 +7,7 @@ use Avk\Enum\TransactionType;
 use Avk\Service\FileManager\Exporter;
 use Avk\Service\ProfitCalculator;
 use Avk\Service\Transaction\TransactionLoader;
+use Avk\Service\Utility;
 use Avk\View\Presenter;
 use Avk\View\TextColorizer;
 
@@ -140,11 +141,10 @@ class TransactionHandler
             mkdir(ROOT_PATH . '/resources/tmp/historical_prices', 0777, true);
         }
 
-        $tickers = file_get_contents(ROOT_PATH . '/resources/tmp/tickers.json');
-        if (!$tickers) {
+        $tickers = Utility::jsonDecodeFromFile(ROOT_PATH . '/resources/tmp/tickers.json');
+        if (!is_array($tickers)) {
             return;
         }
-        $tickers = json_decode($tickers);
 
         foreach ($tickers as $tickerInfo) {
             if ($filterIsin !== null && $filterIsin !== $tickerInfo->isin) {

@@ -122,20 +122,11 @@ class TransactionLoader
             return null;
         }
 
-        $rawPortfolio = file_get_contents($portfolioFile);
-        if (!$rawPortfolio) {
-            // throw new Exception('Failed to read portfolio file.');
-            return null;
-        }
-
-        $rawPortfolio = json_decode($rawPortfolio);
-        if (!$rawPortfolio) {
-            return null;
-        }
+        $rawPortfolio = Utility::jsonDecodeFromFile($portfolioFile);
 
         $portfolio = new Portfolio();
 
-        if (isset($rawPortfolio->portfolioTransactions) && is_array($rawPortfolio->portfolioTransactions)) {
+        if (is_object($rawPortfolio) && isset($rawPortfolio->portfolioTransactions) && is_array($rawPortfolio->portfolioTransactions)) {
             foreach ($rawPortfolio->portfolioTransactions as $rawPortfolioTransaction) {
                 $portfolioTransactions = [];
 
@@ -168,7 +159,7 @@ class TransactionLoader
             }
         }
 
-        if (isset($rawPortfolio->accountTransactions) && is_array($rawPortfolio->accountTransactions)) {
+        if (is_object($rawPortfolio) && isset($rawPortfolio->accountTransactions) && is_array($rawPortfolio->accountTransactions)) {
             foreach ($rawPortfolio->accountTransactions as $rawAccountTransaction) {
                 $transaction = new Transaction(
                     new DateTime($rawAccountTransaction->date->date),
