@@ -25,27 +25,24 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const gistId = '${{ secrets.STAN_GIST_ID }}';
-            const filename = 'phpstan-level.json';
-            const content = `
-            {
-              "schemaVersion": 1,
-              "label": "phpstan",
-              "message": "level ${{ steps.phpstan-level.outputs.level }}",
-              "color": "blue"
-            }
-            `;
-            const octokit = github.getOctokit(process.env.MY_PAT);
-      
-            // Använd Octokit för att hämta och uppdatera Gist
-            const gist = await octokit.rest.gists.get({
-              gist_id: gistId
+            const octokit = require('@octokit/rest')({
+              auth: '${{ secrets.GIST_TOKEN }}'
             });
-            const files = {};
-            files[filename] = { content: content };
+      
+            const gistId = '${{ secrets.GIST_ID }}';
+            const files = {
+              'phpstan-level.json': {
+                content: `
+                {
+                  "schemaVersion": 1,
+                  "label": "phpstan",
+                  "message": "level ${{ steps.phpstan-level.outputs.level }}",
+                  "color": "blue"
+                }`
+              }
+            };
+      
             await octokit.rest.gists.update({
               gist_id: gistId,
               files: files
             });
-        env:
-          MY_PAT: ${{ secrets.GIST_TOKEN }}
