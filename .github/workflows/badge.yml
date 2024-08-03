@@ -26,19 +26,25 @@ jobs:
         with:
           script: |
             const gistId = '${{ secrets.STAN_GIST_ID }}';
-            const filename = 'phpstan_badge.json';
-            const content = `
-            {
-              "schemaVersion": 1,
-              "label": "phpstan",
-              "message": "level ${{ steps.phpstan-level.outputs.level }}",
-              "color": "blue"
-            }
-            `;
-            const files = {};
-            files[filename] = { content: content };
-            
-            await github.rest.gists.update({
+            const token = '${{ secrets.GIST_TOKEN }}';
+            const headers = {
+              'Accept': 'application/vnd.github+json',
+              'Authorization': `Bearer ${token}`
+            };
+      
+            const data = {
+              description: "An updated gist description",
+              files: {
+                "README.md": {
+                  content: "Hello World from GitHub"
+                }
+              }
+            };
+      
+            const response = await github.request('PATCH /gists/{gist_id}', {
               gist_id: gistId,
-              files: files
+              headers: headers,
+              data: data
             });
+      
+            console.log(response.data);
