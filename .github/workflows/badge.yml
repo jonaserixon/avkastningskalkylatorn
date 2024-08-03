@@ -11,6 +11,9 @@ on:
 jobs:
   update-gist:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      gists: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -35,12 +38,17 @@ jobs:
               "color": "blue"
             }
             `;
-            const gist = await github.rest.gists.get({
+            const octokit = github.getOctokit(process.env.MY_PAT);
+      
+            // Använd Octokit för att hämta och uppdatera Gist
+            const gist = await octokit.rest.gists.get({
               gist_id: gistId
             });
             const files = {};
             files[filename] = { content: content };
-            await github.rest.gists.update({
+            await octokit.rest.gists.update({
               gist_id: gistId,
               files: files
             });
+        env:
+          MY_PAT: ${{ secrets.GIST_TOKEN }}
