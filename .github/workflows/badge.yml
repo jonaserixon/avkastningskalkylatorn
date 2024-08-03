@@ -20,31 +20,16 @@ jobs:
         run: |
           level=$(grep 'level:' ./phpstan/phpstan.neon | cut -d ':' -f2 | xargs)
           echo "::set-output name=level::$level"
+
+      - name: Update Gist
+        env:
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Antag att du har lagrat din PAT som GITHUB_TOKEN i secrets
+        run: |
+          curl -L \
+            -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.GIST_TOKEN }}" \
+            https://api.github.com/gists/${{ secrets.STAN_GIST_ID }} \
+            -d '{"description":"Updated gist description via curl","files":{"README.md":{"content":"Hello World from GitHub Actions using curl"}}}'
       
-      - name: Update Gist with GitHub Script
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const gistId = '${{ secrets.STAN_GIST_ID }}';
-            const token = '${{ secrets.GIST_TOKEN }}';
-            const headers = {
-              'Accept': 'application/vnd.github+json',
-              'Authorization': `Bearer ${token}`
-            };
-      
-            const data = {
-              description: "An updated gist description",
-              files: {
-                "README.md": {
-                  content: "Hello World from GitHub"
-                }
-              }
-            };
-      
-            const response = await github.request('PATCH /gists/{gist_id}', {
-              gist_id: gistId,
-              headers: headers,
-              data: data
-            });
-      
-            console.log(response.data);
