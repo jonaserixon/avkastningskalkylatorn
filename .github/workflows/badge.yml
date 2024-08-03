@@ -18,7 +18,7 @@ jobs:
       - name: Extract PHPStan level
         id: phpstan-level
         run: |
-          level=$(grep 'level:' ./phpstan/phpstan.neon | cut -d ':' -f2 | xargs)
+          level=$(grep 'level:' .phpstan/phpstan.neon | cut -d ':' -f2 | xargs)
           echo "::set-output name=level::$level"
 
       - name: Update Gist
