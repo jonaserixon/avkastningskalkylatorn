@@ -18,7 +18,7 @@ class CommandProcessor
     public function __construct()
     {
         $this->presenter = new Presenter();
-        $this->commands = yaml_parse_file(ROOT_PATH . '/resources/commands.yaml');
+        $this->commands = yaml_parse_file(ROOT_PATH . '/config/commands.yaml');
     }
 
     /**
