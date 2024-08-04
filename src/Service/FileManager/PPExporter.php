@@ -14,7 +14,6 @@ use Exception;
 class PPExporter
 {
     // TODO: för att slippa tvinga en "ticker.json" fil så kan man låta användaren skriva in saker via konsolen. Borde vara en option.
-    private bool $exportCsv;
 
     /** @var TickerInfo[] */
     private array $tickers;
@@ -24,11 +23,9 @@ class PPExporter
 
     /**
      * @param Transaction[] $transactions
-     * @param bool $exportCsv
      */
-    public function __construct(array $transactions, bool $exportCsv = false)
+    public function __construct(array $transactions)
     {
-        $this->exportCsv = $exportCsv;
         $this->transactions = $transactions;
 
         $this->tickers = $this->parseTickerInfo();
@@ -75,7 +72,7 @@ class PPExporter
         //     ];
         // }
 
-        if ($this->exportCsv && !empty($assetList)) {
+        if (!empty($assetList)) {
             Exporter::exportToCsv(
                 [
                     'Security Name',
@@ -133,7 +130,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -245,7 +242,7 @@ class PPExporter
         }
         */
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -345,7 +342,7 @@ class PPExporter
             ];
         }
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -437,7 +434,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -511,7 +508,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -621,7 +618,7 @@ class PPExporter
             print_r($skippedTransactions);
         }
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -721,7 +718,7 @@ class PPExporter
             ];
         }
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',
@@ -812,7 +809,7 @@ class PPExporter
             }
         }
 
-        if ($this->exportCsv && !empty($transactionArray)) {
+        if (!empty($transactionArray)) {
             Exporter::exportToCsv(
                 [
                     'Date',

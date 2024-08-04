@@ -27,7 +27,7 @@ class PortfolioPerformanceExportCommand extends CommandBase
 
         // $assets = $transactionLoader->getFinancialAssets($transactions);
 
-        $ppExporter = new PPExporter($transactions, $this->command->getOption(CommandOptionName::EXPORT_CSV)->value);
+        $ppExporter = new PPExporter($transactions);
 
         if (!$this->command->getOption(CommandOptionName::BANK)->value) {
             Logger::getInstance()->addWarning('Bank not provided');

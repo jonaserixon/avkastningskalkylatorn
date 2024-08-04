@@ -23,7 +23,7 @@ class Utility
 
     public static function formatNumberForBCMath(float $number, int $decimals = 15): string
     {
-        return number_format($number, $decimals, '.', ''); // Konverterar till sträng med 15 decimalers precision
+        return number_format($number, $decimals, '.', '');
     }
 
     public static function strContains(string $haystack, string $needle): bool

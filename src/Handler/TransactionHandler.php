@@ -1,11 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Avk\Handler;
 
 use Avk\DataStructure\Transaction;
 use Avk\Enum\TransactionType;
 use Avk\Service\FileManager\Exporter;
-use Avk\Service\ProfitCalculator;
+use Avk\Service\Performance\ProfitCalculator;
 use Avk\Service\Transaction\TransactionLoader;
 use Avk\Service\Utility;
 use Avk\View\Presenter;
