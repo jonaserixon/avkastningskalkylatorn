@@ -1,8 +1,7 @@
 <?php declare(strict_types=1);
 
-namespace Avk\Service;
+namespace Avk\Service\Performance;
 
-use Exception;
 use Avk\DataStructure\AssetPerformance;
 use Avk\DataStructure\FinancialAsset;
 use Avk\DataStructure\FinancialOverview;
@@ -10,7 +9,9 @@ use Avk\DataStructure\Transaction;
 use Avk\Enum\Bank;
 use Avk\Enum\TransactionType;
 use Avk\Service\FileManager\CsvProcessor\StockPrice;
+use Avk\Service\Utility;
 use Avk\View\Logger;
+use Exception;
 use stdClass;
 
 class ProfitCalculator
@@ -230,46 +231,6 @@ class ProfitCalculator
 
         return $performance;
     }
-
-    /*
-    public function _calculateRealizedGains(array $transactions): stdClass
-    {
-        $totalCost = 0;
-        $totalShares = 0;
-        $realizedGain = 0;
-
-        foreach ($transactions as $transaction) {
-            if ($transaction->type === 'buy') {
-                // Lägg till köpkostnad och öka antalet aktier
-                $totalCost += abs($transaction->rawAmount);
-                $totalShares += abs($transaction->rawQuantity);
-            } elseif ($transaction->type === 'sell') {
-                // Endast räkna kapitalvinst om det finns köpta aktier att sälja
-                if ($totalShares > 0 && $totalShares >= abs($transaction->rawQuantity)) {
-                    $costPerShare = $totalCost / $totalShares;
-                    $sellCost = $costPerShare * abs($transaction->rawQuantity);
-
-                    // Räkna ut kapitalvinsten för de sålda aktierna
-                    $realizedGain += (abs($transaction->rawAmount) - $sellCost);
-
-                    // Minska den totala kostnaden och antalet aktier
-                    $totalCost -= $sellCost;
-                    $totalShares -= abs($transaction->rawQuantity);
-                }
-            } elseif ($transaction->type === 'share_split') {
-                if ($totalShares != 0) {
-                    $totalShares += $transaction->rawQuantity;
-                }
-            }
-        }
-
-        $result = new stdClass();
-        $result->remainingCostBase = $totalCost;
-        $result->realizedGain = $realizedGain;
-
-        return $result;
-    }
-    */
 
     /**
      * Calculate realized gains and cost basis for a list of transactions.

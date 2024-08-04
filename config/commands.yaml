@@ -106,10 +106,6 @@ commands:
   pp-export:
     description: "Export transactions to Portfolio Performance format"
     options:
-      export-csv:
-        description: "Generate and export CSV file"
-        default: false
-        require_value: false
       bank:
         description: "Filter on bank(s)"
         require_value: true

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Avk\Service\Performance;
 
@@ -274,7 +274,7 @@ class TimeWeightedReturn
             $exchangeRateNotFound = true;
             foreach ($historicalCurrencyExchangeRates as $exchangeRateRow) {
                 if ($exchangeRateRow['Date'] === $endDateString) {
-                    $exchangeRate = $exchangeRateRow[$currency];
+                    $exchangeRate = floatval($exchangeRateRow[$currency]);
                     $exchangeRateNotFound = false;
                     break;
                 }

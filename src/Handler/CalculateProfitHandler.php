@@ -1,11 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Avk\Handler;
 
 use Avk\DataStructure\Portfolio;
 use Avk\Enum\TransactionType;
 use Avk\Service\Performance\TimeWeightedReturn;
-use Avk\Service\ProfitCalculator;
+use Avk\Service\Performance\ProfitCalculator;
 use Avk\Service\Transaction\TransactionLoader;
 use Avk\Service\Transaction\TransactionMapper;
 use Avk\View\Logger;
