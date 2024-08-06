@@ -160,14 +160,14 @@ abstract class CsvProcessor
 
     public static function convertNumericToFloat(string $value, int $numberOfDecimals = 2): ?float
     {
-        // if (empty($value)) {
-        //     return null;
-        // }
+        if (preg_match('/^-?\d+\.\d{2,}$/', $value)) {
+            $value = (float) $value;
+        } else {
+            $value = str_replace(' ', '', $value);
+            $value = str_replace(',', '.', str_replace('.', '', $value));
 
-        $value = str_replace(' ', '', $value);
-        $value = str_replace(',', '.', str_replace('.', '', $value));
-
-        $value = (float) $value;
+            $value = (float) $value;
+        }
 
         return round($value, $numberOfDecimals);
     }

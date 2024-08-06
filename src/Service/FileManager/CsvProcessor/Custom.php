@@ -11,7 +11,7 @@ use Avk\View\Logger;
 class Custom extends CsvProcessor
 {
     protected static string $DIR = IMPORT_DIR . '/banks/custom';
-    protected const CSV_SEPARATOR = ';';
+    protected const CSV_SEPARATOR = ',';
 
     protected function validateImportFile(string $filePath): bool
     {
@@ -23,10 +23,6 @@ class Custom extends CsvProcessor
         $headers = fgetcsv($handle, 1000, static::CSV_SEPARATOR);
         if ($headers === false) {
             throw new Exception('Failed to read headers from file: ' . basename($filePath));
-        }
-
-        if (count($headers) !== 11) {
-            throw new Exception('Invalid custom import file: ' . basename($filePath));
         }
 
         fclose($handle);
