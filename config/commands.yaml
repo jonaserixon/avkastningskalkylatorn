@@ -48,7 +48,7 @@ commands:
         require_value: false
 
   generate-isin-list:
-    description: "Generate a list of ISINs in csv onmat"
+    description: "Generate a list of ISINs in csv format"
     options:
       bank:
         description: "Generate ISIN list on bank(s)"
@@ -56,6 +56,10 @@ commands:
       account:
         description: "Generate ISIN list on account(s)"
         require_value: true
+
+  generate-ticker-list:
+    description: "Generate a list of tickers in json format to be used in the app"
+    options:
 
   transaction:
     description: "List transactions"

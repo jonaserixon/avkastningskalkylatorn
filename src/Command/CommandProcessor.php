@@ -59,6 +59,9 @@ class CommandProcessor
             case 'generate-isin-list':
                 (new GenerateIsinListCommand($command, $this->presenter))->execute();
                 break;
+            case 'generate-ticker-list':
+                (new GenerateTickerListCommand($command, $this->presenter))->execute();
+                break;
             case 'transaction':
                 (new TransactionCommand($command, $this->presenter))->execute();
                 break;
@@ -153,21 +156,23 @@ class CommandProcessor
         $commandData = $this->commands['commands'][$commandName];
 
         $commandOptions = [];
-        foreach ($commandData['options'] as $name => $commandOption) {
-            $optionName = CommandOptionName::from($name);
+        if (isset($commandData['options'])) {
+            foreach ($commandData['options'] as $name => $commandOption) {
+                $optionName = CommandOptionName::from($name);
 
-            if (isset($options[$optionName->value])) {
-                $value = $options[$optionName->value];
-            } else {
-                $value = $commandOption['default'] ?? null;
+                if (isset($options[$optionName->value])) {
+                    $value = $options[$optionName->value];
+                } else {
+                    $value = $commandOption['default'] ?? null;
+                }
+
+                $commandOptions[$optionName->value] = new CommandOption(
+                    $optionName,
+                    $value,
+                    $commandData['options'][$optionName->value]['default'] ?? null,
+                    $commandData['options'][$optionName->value]['require-value'] ?? false
+                );
             }
-
-            $commandOptions[$optionName->value] = new CommandOption(
-                $optionName,
-                $value,
-                $commandData['options'][$optionName->value]['default'] ?? null,
-                $commandData['options'][$optionName->value]['require-value'] ?? false
-            );
         }
 
         $command = new Command($commandName, $commandOptions);

@@ -33,13 +33,13 @@ class TransactionLoader
     public FinancialOverview $overview;
 
     public function __construct(
-        ?string $filterBank,
-        ?string $filterIsin,
-        ?string $filterAsset,
-        ?string $filterDateFrom,
-        ?string $filterDateTo,
-        bool $filterCurrentHoldings,
-        ?string $filterAccount
+        ?string $filterBank = null,
+        ?string $filterIsin = null,
+        ?string $filterAsset = null,
+        ?string $filterDateFrom = null,
+        ?string $filterDateTo = null,
+        bool $filterCurrentHoldings = false,
+        ?string $filterAccount = null
     ) {
         $this->filterBank = $filterBank;
         $this->filterIsin = $filterIsin;
