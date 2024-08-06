@@ -1,0 +1,45 @@
+Date,Bank,Account,Description,ISIN,TransactionType,Quantity, Price,Amount,Fee,Currency
+2020-01-01,Testbank,Testkonto,Insättning,,deposit, , ,50000.00,0,SEK
+2020-01-10,Testbank,Testkonto,Investor B,SE0015811963,buy,50.00,130.00,6516.00,16,SEK
+2020-01-15,Testbank,Testkonto,Volvo B,SE0000115446,buy,50.00,155.90,7812.00,17,SEK
+2020-01-15,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,buy,50.00,183.20,9178.00,18,SEK
+2020-01-15,Testbank,Testkonto,Tele2 B,SE0005190238,buy,50.00,138.00,6919.00,19,SEK
+2020-05-18,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,50.00,2.75,137.50,0,SEK
+2020-06-25,Testbank,Testkonto,Investor B,SE0015811963,dividend,50.00,2.25,112.50,0,SEK
+2020-10-07,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,50.00,2.75,137.50,0,SEK
+2020-10-07,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,50.00,3.50,175.00,0,SEK
+2021-01-01,Testbank,Testkonto,Insättning,,deposit, , ,50000.00,0,SEK
+2021-01-10,Testbank,Testkonto,Investor B,SE0015811963,buy,50.00,153.45,7688.50,16,SEK
+2021-01-15,Testbank,Testkonto,Volvo B,SE0000115446,buy,50.00,210.60,10547.00,17,SEK
+2021-01-15,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,buy,50.00,180.05,9020.50,18,SEK
+2021-01-15,Testbank,Testkonto,Tele2 B,SE0005190238,buy,50.00,116.20,5829.00,19,SEK
+2021-04-29,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,100.00,3.00,300.00,0,SEK
+2021-07-05,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,100.00,3.00,300.00,0,SEK
+2021-10-08,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,100.00,3.00,300.00,0,SEK
+2021-04-09,Testbank,Testkonto,Volvo B,SE0000115446,dividend,100.00,6.00,600.00,0,SEK
+2021-04-09,Testbank,Testkonto,Volvo B,SE0000115446,dividend,100.00,9.00,900.00,0,SEK
+2021-05-12,Testbank,Testkonto,Investor B,SE0015811963,dividend,100.00,2.50,250.00,0,SEK
+2021-11-11,Testbank,Testkonto,Investor B,SE0015811963,dividend,100.00,1.00,100.00,0,SEK
+2021-11-04,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,dividend,100.00,6.50,650.00,0,SEK
+2022-01-01,Testbank,Testkonto,Insättning,,deposit, , ,50000.00,0,SEK
+2022-01-10,Testbank,Testkonto,Investor B,SE0015811963,buy,50.00,218.80,10956.00,16,SEK
+2022-01-15,Testbank,Testkonto,Volvo B,SE0000115446,buy,50.00,220.25,11029.50,17,SEK
+2022-01-15,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,buy,50.00,174.72,8754.00,18,SEK
+2022-01-15,Testbank,Testkonto,Tele2 B,SE0005190238,buy,50.00,127.25,6381.50,19,SEK
+2022-05-05,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,150.00,13.00,1950.00,0,SEK
+2022-05-05,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,150.00,3.40,510.00,0,SEK
+2022-10-14,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,150.00,3.35,502.50,0,SEK
+2022-05-11,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,dividend,150.00,3.25,487.50,0,SEK
+2022-11-16,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,dividend,150.00,3.25,487.50,0,SEK
+2022-04-13,Testbank,Testkonto,Volvo B,SE0000115446,dividend,150.00,13.00,1950.00,0,SEK
+2023-01-01,Testbank,Testkonto,Insättning,,deposit, , ,50000.00,0,SEK
+2023-01-10,Testbank,Testkonto,Investor B,SE0015811963,buy,50.00,197.42,9887.00,16,SEK
+2023-01-15,Testbank,Testkonto,Volvo B,SE0000115446,buy,50.00,201.05,10069.50,17,SEK
+2023-01-15,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,buy,50.00,131.08,6572.00,18,SEK
+2023-01-15,Testbank,Testkonto,Tele2 B,SE0005190238,buy,50.00,94.64,4751.00,19,SEK
+2023-05-23,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,200.00,3.40,680.00,0,SEK
+2023-10-13,Testbank,Testkonto,Tele2 B,SE0005190238,dividend,200.00,3.40,680.00,0,SEK
+2023-05-11,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,dividend,200.00,3.25,650.00,0,SEK
+2023-11-15,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,dividend,200.00,3.25,650.00,0,SEK
+2023-04-13,Testbank,Testkonto,Volvo B,SE0000115446,dividend,200.00,14.00,2800.00,0,SEK
+2024-01-01,Testbank,Testkonto,Hennes & Mauritz B,SE0000106270,sell,200.00,176.24,35283.00,35,SEK
