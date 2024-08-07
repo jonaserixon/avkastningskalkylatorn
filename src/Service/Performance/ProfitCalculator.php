@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\Service\Performance;
 
@@ -321,7 +323,7 @@ class ProfitCalculator
         $totalWeightedCapital = 0;
         $previousDate = null;
         $currentCapital = 0;
-    
+
         foreach ($transactions as $transaction) {
             $transactionDate = new DateTime($transaction['date']);
             if ($previousDate !== null) {
@@ -332,17 +334,17 @@ class ProfitCalculator
             $currentCapital += $transaction['amount'];
             $previousDate = $transactionDate;
         }
-    
+
         // Hantera perioden från sista transaktionen till slutdatumet
         if ($previousDate !== null) {
             $daysInvested = $previousDate->diff($endDate)->days;
             $totalWeightedCapital += $currentCapital * $daysInvested;
         }
-    
+
         // Totala antal dagar från första transaktionsdatum till slutdatumet
         $firstTransactionDate = new DateTime($transactions[0]['date']);
         $totalDays = $firstTransactionDate->diff($endDate)->days;
-    
+
         if ($totalDays > 0) {
             return $totalWeightedCapital / $totalDays;
         } else {

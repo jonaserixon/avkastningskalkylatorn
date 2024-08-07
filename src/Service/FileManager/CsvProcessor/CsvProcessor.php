@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\Service\FileManager\CsvProcessor;
 
@@ -74,7 +76,7 @@ abstract class CsvProcessor
         if ($file === false) {
             throw new Exception('Failed to open file: ' . basename($fileName));
         }
-    
+
         $rawHeaders = fgetcsv($file, 0, $separator);
         if ($rawHeaders === false) {
             throw new Exception('Failed to read headers from file: ' . basename($fileName));
@@ -97,7 +99,7 @@ abstract class CsvProcessor
         while (($row = fgetcsv($file, 0, $separator)) !== false) {
             $data[] = array_combine($headers, $row);
         }
-    
+
         fclose($file);
 
         return $data;
@@ -105,7 +107,7 @@ abstract class CsvProcessor
 
     private function removeUtf8Bom(string $text): string
     {
-        $bom = pack('H*','EFBBBF');
+        $bom = pack('H*', 'EFBBBF');
         // Kontrollera om texten börjar med BOM
         if (substr($text, 0, strlen($bom)) === $bom) {
             // Ta bort BOM genom att klippa bort de första tre byten
@@ -113,12 +115,12 @@ abstract class CsvProcessor
         }
         return $text;
     }
-    
+
     private function cleanHeader(string $header): string
     {
         // Ta bort UTF-8 BOM
         $header = $this->removeUtf8Bom($header);
-    
+
         // Ta bort icke utskrivbara tecken och whitespace
         $header = preg_replace('/[\x00-\x1F\x7F]/u', '', $header);
         if ($header === null) {
@@ -126,7 +128,7 @@ abstract class CsvProcessor
         }
 
         $header = trim($header);
-    
+
         return $header;
     }
 

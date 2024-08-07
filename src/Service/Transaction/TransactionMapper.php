@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\Service\Transaction;
 
@@ -276,7 +278,7 @@ class TransactionMapper
             if (!empty($asset->isin)) {
                 $asset->addForeignWithholdingTax($transaction->rawAmount);
             }
-    
+
             $this->overview->totalForeignWithholdingTax += $transaction->rawAmount;
             $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
         }
@@ -296,12 +298,12 @@ class TransactionMapper
             if ($asset !== null) {
                 $asset->addFee($transaction->rawAmount);
             }
-    
+
             $this->overview->totalFee += $transaction->rawAmount;
             $this->overview->addCashFlow($transaction->getDateString(), $transaction->rawAmount, $transaction->name, $transaction->type, $transaction->account, $transaction->bank);
         }
     }
-    
+
     private function handleShareLoanPayoutTransaction(Transaction $transaction): void
     {
         if ($transaction->rawAmount !== null) {
@@ -317,7 +319,7 @@ class TransactionMapper
 
     // /**
     //  * Get the first and last buy/sell transaction date from a list of transactions.
-    //  * 
+    //  *
     //  * @param Transaction[] $transactions
     //  */
     // private function getInitialAndLastTransactionDate(array $transactions, ?string $firstTransactionDate, ?string $lastTransactionDate): stdClass

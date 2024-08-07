@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\Service;
 
@@ -39,14 +41,14 @@ class Utility
         if (!is_dir($directory) || !is_readable($directory)) {
             throw new Exception('Directory does not exist or is not readable.');
         }
-    
+
         $latestFile = null;
         $latestTime = 0;
         $files = glob($directory . '/*.' . $fileType);
         if ($files === false) {
             throw new Exception('Failed to read directory.');
         }
-    
+
         foreach ($files as $file) {
             if (is_file($file)) {
                 $modificationTime = filemtime($file);
@@ -56,7 +58,7 @@ class Utility
                 }
             }
         }
-    
+
         return $latestFile;
     }
 

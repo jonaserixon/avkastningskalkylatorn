@@ -1,6 +1,9 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\Service\API\Frankfurter;
+
 use Exception;
 use stdClass;
 

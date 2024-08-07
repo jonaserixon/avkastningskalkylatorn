@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\Service\Performance;
 
@@ -212,7 +214,7 @@ class TimeWeightedReturn
                     $subPeriodDates[$subPeriodIndex][] = $transaction->getDateString();
                 }
             }
-            
+
 
             $cashFlowTransactions[] = $transaction;
         }

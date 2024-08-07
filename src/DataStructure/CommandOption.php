@@ -1,10 +1,13 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Avk\DataStructure;
 
 use Avk\Enum\CommandOptionName;
 
-readonly class CommandOption {
+readonly class CommandOption
+{
     public CommandOptionName $name;
     public mixed $value;
     public ?bool $defaultValue;

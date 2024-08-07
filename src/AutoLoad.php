@@ -1,7 +1,8 @@
-<?php declare(strict_types=1);
+<?php
 
-spl_autoload_register(function (string $className): void
-{
+declare(strict_types=1);
+
+spl_autoload_register(function (string $className): void {
     $baseDir = __DIR__ . '/';
 
     $prefix = 'Avk\\';
